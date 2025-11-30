@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nba_score_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nba_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nba_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nba_score_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nba_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nba_score_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@nbascore.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - nba_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: nba_score_backend
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nba_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nba_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nba_score_db}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
+      API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    networks:
+      - nba_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+
+networks:
+  nba_network:
+    driver: bridge
