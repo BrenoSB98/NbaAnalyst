@@ -1,3 +1,3 @@
-from app.routers import nba #noqa: F401
+from .api import router
 
-__all__ = ["nba"]
+__all__ = ["router"]
