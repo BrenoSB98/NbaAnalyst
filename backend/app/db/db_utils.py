@@ -1,15 +1,15 @@
-from contextlib import contextmanager
+from typing import Generator
+from sqlalchemy.orm import Session
+from .session import SessionLocal
 
-from app.db.session import SessionLocal
 
-@contextmanager
-def get_db():
-    session = SessionLocal()
+def get_db() -> Generator[Session, None, None]:
+    db: Session = SessionLocal()
     try:
-        yield session
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise e
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
-        session.close()
+        db.close()

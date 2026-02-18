@@ -1,26 +1,25 @@
 from datetime import date, datetime
 from typing import Optional
-
 from pydantic import BaseModel, ConfigDict
-
 
 class SeasonBase(BaseModel):
     season: int
 
-
 class SeasonOut(SeasonBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class LeagueBase(BaseModel):
     code: str
     description: Optional[str] = None
 
-
 class LeagueOut(LeagueBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
-
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class TeamBase(BaseModel):
     name: str
@@ -31,11 +30,12 @@ class TeamBase(BaseModel):
     all_star: bool = False
     nba_franchise: bool = False
 
-
 class TeamOut(TeamBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
-
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class TeamLeagueInfoBase(BaseModel):
     team_id: int
@@ -43,11 +43,12 @@ class TeamLeagueInfoBase(BaseModel):
     conference: Optional[str] = None
     division: Optional[str] = None
 
-
 class TeamLeagueInfoOut(TeamLeagueInfoBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
-
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class GameBase(BaseModel):
     league: Optional[str] = None
@@ -71,11 +72,28 @@ class GameBase(BaseModel):
     home_team_id: int
     away_team_id: int
 
-
 class GameOut(GameBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
+    
+    model_config = ConfigDict(
+        from_attributes=True)
 
+class GameResponse(BaseModel):
+    id: int
+    league: Optional[str] = None
+    season: Optional[int] = None
+    date_start: Optional[datetime] = None
+    date_end: Optional[datetime] = None
+    status_short: Optional[int] = None
+    status_long: Optional[str] = None
+    arena_name: Optional[str] = None
+    arena_city: Optional[str] = None
+    home_team_id: Optional[int] = None
+    away_team_id: Optional[int] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class GameTeamScoreBase(BaseModel):
     game_id: int
@@ -91,10 +109,28 @@ class GameTeamScoreBase(BaseModel):
     linescore_q3: Optional[int] = None
     linescore_q4: Optional[int] = None
 
-
 class GameTeamScoreOut(GameTeamScoreBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
+class GameTeamScoreResponse(BaseModel):
+    game_id: int
+    team_id: int
+    is_home: Optional[bool] = None
+    win: Optional[int] = None
+    loss: Optional[int] = None
+    series_win: Optional[int] = None
+    series_loss: Optional[int] = None
+    points: Optional[int] = None
+    linescore_q1: Optional[int] = None
+    linescore_q2: Optional[int] = None
+    linescore_q3: Optional[int] = None
+    linescore_q4: Optional[int] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class GameTeamStatsBase(BaseModel):
     game_id: int
@@ -126,10 +162,10 @@ class GameTeamStatsBase(BaseModel):
     plus_minus: Optional[int] = None
     minutes: Optional[str] = None
 
-
 class GameTeamStatsOut(GameTeamStatsBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class TeamSeasonStatsBase(BaseModel):
     team_id: int
@@ -161,10 +197,10 @@ class TeamSeasonStatsBase(BaseModel):
     blocks: Optional[int] = None
     plus_minus: Optional[int] = None
 
-
 class TeamSeasonStatsOut(TeamSeasonStatsBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class PlayerBase(BaseModel):
     firstname: str
@@ -181,11 +217,39 @@ class PlayerBase(BaseModel):
     college: Optional[str] = None
     affiliation: Optional[str] = None
 
-
 class PlayerOut(PlayerBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
+class PlayerResponse(BaseModel):
+    id: int
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    birth_date: Optional[date] = None
+    birth_country: Optional[str] = None
+    height_feet: Optional[int] = None
+    height_inches: Optional[int] = None
+    weight_pounds: Optional[int] = None
+    college: Optional[str] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+class TeamResponse(BaseModel):
+    id: int
+    name: Optional[str] = None
+    nickname: Optional[str] = None
+    code: Optional[str] = None
+    city: Optional[str] = None
+    logo: Optional[str] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class PlayerTeamSeasonBase(BaseModel):
     player_id: int
@@ -196,11 +260,12 @@ class PlayerTeamSeasonBase(BaseModel):
     active: bool
     pos: Optional[str] = None
 
-
 class PlayerTeamSeasonOut(PlayerTeamSeasonBase):
     id: int
-    model_config = ConfigDict(from_attributes=True)
-
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class PlayerGameStatsBase(BaseModel):
     player_id: int
@@ -230,6 +295,39 @@ class PlayerGameStatsBase(BaseModel):
     plus_minus: Optional[int] = None
     comment: Optional[str] = None
 
-
 class PlayerGameStatsOut(PlayerGameStatsBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+class PlayerGameStatsResponse(BaseModel):
+    game_id: int
+    player_id: int
+    team_id: int
+    season: Optional[int] = None
+    pos: Optional[str] = None
+    minutes: Optional[str] = None
+    points: Optional[int] = None
+    fgm: Optional[int] = None
+    fga: Optional[int] = None
+    fgp: Optional[float] = None
+    ftm: Optional[int] = None
+    fta: Optional[int] = None
+    ftp: Optional[float] = None
+    tpm: Optional[int] = None
+    tpa: Optional[int] = None
+    tpp: Optional[float] = None
+    off_reb: Optional[int] = None
+    def_reb: Optional[int] = None
+    tot_reb: Optional[int] = None
+    assists: Optional[int] = None
+    p_fouls: Optional[int] = None
+    steals: Optional[int] = None
+    turnovers: Optional[int] = None
+    blocks: Optional[int] = None
+    plus_minus: Optional[int] = None
+    comment: Optional[str] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True
+    )
