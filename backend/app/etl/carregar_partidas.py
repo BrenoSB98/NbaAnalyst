@@ -1,54 +1,31 @@
-import logging
-
 from app.services import nba_api_client
 from app.db.models import Game, GameTeamScore, Team
 from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _processar_datetime
 
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-def carregar_partidas(season: int, date: str = None, team_id: int = None):
-    """
-    Carrega partidas da NBA para uma temporada específica
-    """
-    logger.info(f"Iniciando partidas NBA para season={season}, date={date}, team_id={team_id}")
+def carregar_partidas(season, date=None, team_id=None):
     dados_jogos = nba_api_client.get_games(season=season, date=date, team_id=team_id)
 
     if not dados_jogos:
-        logger.warning(f"API sem partidas para season={season}, team_id={team_id}.")
         return
-
-    total_jogos = len(dados_jogos)
-
-    jogos_carregados = 0
-    jogos_ignorados = 0
-    jogos_invalidos = 0
-    jogos_sem_times = 0
 
     for db in get_db():
         for item in dados_jogos:
             game_id = _normalizar_inteiro(item.get("id") or item.get("gameId"))
 
             if not game_id:
-                logger.warning(f"Dado de jogo sem ID válido. Pulando: {item}")
-                jogos_invalidos += 1
                 continue
 
             jogo_existente = db.query(Game).filter(Game.id == game_id).first()
             if jogo_existente:
-                jogos_ignorados += 1
                 continue
 
             liga = _normalizar_string(item.get("league"))
-            
+
             date_info = item.get("date", {}) or {}
             data_inicio = date_info.get("start")
             data_fim = date_info.get("end")
             duracao = _normalizar_string(date_info.get("duration"))
-            
             estagio = _normalizar_string(item.get("stage"))
 
             status = item.get("status", {}) or {}
@@ -74,23 +51,14 @@ def carregar_partidas(season: int, date: str = None, team_id: int = None):
             id_time_visitante = _normalizar_inteiro(info_time_visitante.get("id"))
 
             if not id_time_casa or not id_time_visitante:
-                logger.warning(
-                    f"Dado de time incompleto no jogo {game_id}: "
-                    f"home={id_time_casa}, away={id_time_visitante}. Pulando..."
-                )
-                jogos_invalidos += 1
                 continue
-            
+
             time_casa_existe = db.query(Team.id).filter(Team.id == id_time_casa).first()
             time_visitante_existe = db.query(Team.id).filter(Team.id == id_time_visitante).first()
+
             if not time_casa_existe or not time_visitante_existe:
-                logger.warning(
-                    f"Ignorando jogo {game_id}: "
-                    f"time casa {id_time_casa} ou time visitante {id_time_visitante} não existem na tabela teams."
-                )
-                jogos_sem_times += 1
                 continue
-            
+
             data_inicio_obj = _processar_datetime(data_inicio)
             data_fim_obj = _processar_datetime(data_fim)
 
@@ -115,7 +83,6 @@ def carregar_partidas(season: int, date: str = None, team_id: int = None):
                 away_team_id=id_time_visitante,
             )
             db.add(novo_jogo)
-            jogos_carregados += 1
 
             placares = item.get("scores", {}) or {}
             placar_casa = placares.get("home", {}) or {}
@@ -158,12 +125,6 @@ def carregar_partidas(season: int, date: str = None, team_id: int = None):
                 linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None,
             )
             db.add(placar_time_visitante)
-
-    logger.info(
-        f"Carga de partidas NBA concluída. "
-        f"{jogos_carregados} jogos carregados, {jogos_ignorados} já existiam, "
-        f"{jogos_invalidos} inválidos/incompletos, {jogos_sem_times} pulados (times não cadastrados)."
-    )
 
 if __name__ == "__main__":
     carregar_partidas(season=2016)
