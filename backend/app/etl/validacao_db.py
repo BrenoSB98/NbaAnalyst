@@ -1,16 +1,13 @@
 import os
 import sys
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from sqlalchemy import func, inspect
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_DIR = os.path.dirname(BASE_DIR)
@@ -31,7 +28,7 @@ def obter_pk(modelo):
         return pk_col[0]
     return None
 
-def obter_contagem_tabelas() -> Dict[str, int]:
+def obter_contagem_tabelas():
     sessao = SessionLocal()
     try:
         contagens: Dict[str, int] = {}
@@ -41,23 +38,14 @@ def obter_contagem_tabelas() -> Dict[str, int]:
         contagens["teams"] = sessao.query(func.count("*")).select_from(models.Team).scalar() or 0
         contagens["players"] = sessao.query(func.count("*")).select_from(models.Player).scalar() or 0
         contagens["games"] = sessao.query(func.count("*")).select_from(models.Game).scalar() or 0
-        contagens["game_team_scores"] = (
-            sessao.query(func.count("*")).select_from(models.GameTeamScore).scalar() or 0
-        )
-        contagens["player_game_stats"] = (
-            sessao.query(func.count("*")).select_from(models.PlayerGameStats).scalar() or 0
-        )
+        contagens["game_team_scores"] = (sessao.query(func.count("*")).select_from(models.GameTeamScore).scalar() or 0)
+        contagens["player_game_stats"] = (sessao.query(func.count("*")).select_from(models.PlayerGameStats).scalar() or 0)
 
         return contagens
     finally:
         sessao.close()
 
-
-def verificar_db() -> Dict[str, Any]:
-    """
-    Executa alguns checks simples de integridade entre tabelas.
-    """
-       
+def verificar_db():
     sessao = SessionLocal()
     resultados: Dict[str, Any] = {}
     
@@ -91,20 +79,17 @@ def verificar_db() -> Dict[str, Any]:
     finally:
         sessao.close()
 
-
-def reg_contagens(contagens: Dict[str, int]) -> None:
+def reg_contagens(contagens):
     logger.info("=== Resumo de contagem por tabela ===")
     for nome_tabela, quantidade in contagens.items():
         logger.info("- %s: %d registros", nome_tabela, quantidade)
 
-
-def reg_resumo(resultados: Dict[str, Any]) -> None:
+def reg_resumo(resultados):
     logger.info("=== Resumo de integridade básica ===")
     for chave, valor in resultados.items():
         logger.info("- %s: %s", chave, valor)
 
-
-def executar_validacao() -> None:
+def executar_validacao():
     logger.info("Iniciando validação completa do banco de dados...")
 
     contagens = obter_contagem_tabelas()
@@ -115,8 +100,7 @@ def executar_validacao() -> None:
 
     logger.info("Validação concluída.")
 
-
-def listar_ids_jogos_sem_scores(limit: int = 20) -> List[int]:
+def listar_ids_jogos_sem_scores(limit):
     sessao = SessionLocal()
     try:
         game_pk = obter_pk(models.Game)
@@ -127,7 +111,6 @@ def listar_ids_jogos_sem_scores(limit: int = 20) -> List[int]:
         return ids
     finally:
         sessao.close()
-
 
 if __name__ == "__main__":
     """
