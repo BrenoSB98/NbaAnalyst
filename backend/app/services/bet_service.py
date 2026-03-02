@@ -1,15 +1,16 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from app.db.models import Player, Team, Game, PlayerGameStats
-from app.services.prediction_service import prever_performance_jogador
-from app.services.analytics import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos
 import statistics
 from datetime import datetime, timedelta
 
+from sqlalchemy.orm import Session
+from sqlalchemy import func, and_
+
+from app.db.models import Player, Team, Game, PlayerGameStats
+from app.services.prediction_service import prever_performance_jogador
+from app.services.analytics_service import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos
+
 def calcular_coeficiente_variacao(db: Session, player_id: int, season: int, stat_name: str):
     estatistica = (db.query(PlayerGameStats).join(Game, PlayerGameStats.game_id == Game.id)
-             .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).all()
-             )
+             .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).all())
     
     if len(estatistica) < 5:
         return None

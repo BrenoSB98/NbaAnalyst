@@ -6,9 +6,7 @@ import numpy as np
 
 def executar_backtest_jogador(db: Session, player_id: int, season: int, stat_name: str = "points", limit_games: int = 10):
     jogos_reais = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id)
-                   .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3)
-                   .order_by(Game.date_start.asc()).all()
-                   )
+                   .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).order_by(Game.date_start.asc()).all())
 
     if len(jogos_reais) < 5:
         return {"error": "Dados insuficientes para backtest"}
@@ -28,15 +26,19 @@ def executar_backtest_jogador(db: Session, player_id: int, season: int, stat_nam
         erro = abs(predicao - valor_real)
         erros_absolutos.append(erro)
 
-        resultados.append({
+        resultado_jogo = {
             "game_id": jogo_obj.id,
             "date": jogo_obj.date_start,
             "real": valor_real,
             "predicao": predicao,
             "erro_absoluto": round(erro, 2)
-        })
+        }
+        resultados.append(resultado_jogo)
 
-    mae = round(np.mean(erros_absolutos), 2) if erros_absolutos else 0
+    mae = 0
+    if len(erros_absolutos) > 0:
+        soma_erros = sum(erros_absolutos)
+        mae = round(soma_erros / len(erros_absolutos), 2)
 
     return {
         "player_id": player_id,

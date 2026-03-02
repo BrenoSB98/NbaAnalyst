@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.db_utils import get_db
-from app.services.analytics import (
+from app.services.analytics_service import (
     buscar_top_pontuadores,
     buscar_top_assistencias,
     buscar_top_rebotes,

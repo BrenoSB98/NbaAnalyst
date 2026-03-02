@@ -1,41 +1,34 @@
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 
 class LeagueInfoResponse(BaseModel):
-    league_code: Optional[str] = Field(None, description="Código da liga")
-    conference: Optional[str] = Field(None, description="Conferência do time")
-    division: Optional[str] = Field(None, description="Divisão do time")
+    league_code: Optional[str] = None
+    conference: Optional[str] = None
+    division: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 
 class TeamResponse(BaseModel):
-    id: int = Field(..., description="ID único do time")
-    name: str = Field(..., description="Nome completo do time")
-    nickname: Optional[str] = Field(None, description="Apelido do time")
-    code: Optional[str] = Field(None, description="Código de 3 letras do time")
-    city: Optional[str] = Field(None, description="Cidade do time")
-    logo: Optional[str] = Field(None, description="URL do logo do time")
-    all_star: Optional[bool] = Field(False, description="Se é time All-Star")
-    nba_franchise: Optional[bool] = Field(True, description="Se é franquia NBA")
+    id: int
+    name: str
+    nickname: Optional[str] = None
+    code: Optional[str] = None
+    city: Optional[str] = None
+    logo: Optional[str] = None
+    all_star: Optional[bool] = False
+    nba_franchise: Optional[bool] = True
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 
 class TeamDetailResponse(TeamResponse):
-    league_info: Optional[LeagueInfoResponse] = Field(None, description="Informações de liga")
+    league_info: Optional[LeagueInfoResponse] = None
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 
 class TeamListResponse(BaseModel):
-    total: int = Field(..., description="Total de times encontrados")
-    page: int = Field(..., description="Página atual")
-    page_size: int = Field(..., description="Tamanho da página")
-    teams: list[TeamResponse] = Field(..., description="Lista de times")
+    total: int
+    page: int
+    page_size: int
+    teams: List[TeamResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

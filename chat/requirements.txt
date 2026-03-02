@@ -1,0 +1,10 @@
+streamlit
+python-decouple
+langchain
+langchain-openai
+langchain-chroma
+langchain-community
+chromadb
+pypdf
+sqlalchemy
+psycopg2-binary

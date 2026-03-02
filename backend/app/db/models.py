@@ -12,15 +12,14 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.db.base import Base
-
 
 class Season(Base):
     __tablename__ = "seasons"
 
     season = Column(Integer, primary_key=True)
-
 
 class League(Base):
     __tablename__ = "leagues"
@@ -30,7 +29,6 @@ class League(Base):
     description = Column(Text)
 
     teams_info = relationship("TeamLeagueInfo", back_populates="league")
-
 
 class Team(Base):
     __tablename__ = "teams"
@@ -53,7 +51,6 @@ class Team(Base):
     player_team_seasons = relationship("PlayerTeamSeason", back_populates="team")
     player_game_stats = relationship("PlayerGameStats", back_populates="team")
 
-
 class TeamLeagueInfo(Base):
     __tablename__ = "team_league_info"
 
@@ -69,7 +66,6 @@ class TeamLeagueInfo(Base):
 
     team = relationship("Team", back_populates="leagues_info")
     league = relationship("League", back_populates="teams_info")
-
 
 class Game(Base):
     __tablename__ = "games"
@@ -105,7 +101,7 @@ class Game(Base):
     scores = relationship("GameTeamScore", back_populates="game")
     stats = relationship("GameTeamStats", back_populates="game")
     player_game_stats = relationship("PlayerGameStats", back_populates="game")
-
+    predictions = relationship("Prediction", back_populates="game")
 
 class GameTeamScore(Base):
     __tablename__ = "game_team_scores"
@@ -129,7 +125,6 @@ class GameTeamScore(Base):
 
     game = relationship("Game", back_populates="scores")
     team = relationship("Team", back_populates="game_scores")
-
 
 class GameTeamStats(Base):
     __tablename__ = "game_team_stats"
@@ -166,7 +161,6 @@ class GameTeamStats(Base):
     game = relationship("Game", back_populates="stats")
     team = relationship("Team", back_populates="game_stats")
 
-
 class TeamSeasonStats(Base):
     __tablename__ = "team_season_stats"
 
@@ -201,7 +195,6 @@ class TeamSeasonStats(Base):
 
     team = relationship("Team", back_populates="team_season_stats")
 
-
 class Player(Base):
     __tablename__ = "players"
 
@@ -222,7 +215,7 @@ class Player(Base):
 
     team_seasons = relationship("PlayerTeamSeason", back_populates="player")
     game_stats = relationship("PlayerGameStats", back_populates="player")
-
+    predictions = relationship("Prediction", back_populates="player")
 
 class PlayerTeamSeason(Base):
     __tablename__ = "player_team_season"
@@ -243,7 +236,6 @@ class PlayerTeamSeason(Base):
     player = relationship("Player", back_populates="team_seasons")
     team = relationship("Team", back_populates="player_team_seasons")
     season_rel = relationship("Season")
-
 
 class PlayerGameStats(Base):
     __tablename__ = "player_game_stats"
@@ -279,3 +271,29 @@ class PlayerGameStats(Base):
     game = relationship("Game", back_populates="player_game_stats")
     team = relationship("Team", back_populates="player_game_stats")
     season_rel = relationship("Season")
+
+class Prediction(Base):
+    __tablename__ = "predictions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    player_id = Column(Integer, ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    opponent_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    season = Column(Integer, ForeignKey("seasons.season"), nullable=False)
+    is_home = Column(Integer, nullable=False)
+    predicted_points = Column(Numeric(6, 2))
+    predicted_assists = Column(Numeric(6, 2))
+    predicted_rebounds = Column(Numeric(6, 2))
+    predicted_steals = Column(Numeric(6, 2))
+    predicted_blocks = Column(Numeric(6, 2))
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("player_id", "game_id", name="uq_prediction_player_game"),
+    )
+
+    player = relationship("Player", back_populates="predictions")
+    game = relationship("Game", back_populates="predictions")
+    team = relationship("Team", foreign_keys=[team_id])
+    opponent_team = relationship("Team", foreign_keys=[opponent_team_id])

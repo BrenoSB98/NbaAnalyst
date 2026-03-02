@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.models import PlayerGameStats, Game
-from app.services.analytics import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_medias_contra_time, calcular_defesa_adversaria_stat, calcular_dias_descanso
+from app.services.analytics_service import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_medias_contra_time, calcular_defesa_adversaria_stat, calcular_dias_descanso
 import numpy as np
 from datetime import datetime
 

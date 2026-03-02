@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.db_utils import get_db
-from app.services.betting_service import identificar_oportunidades_over_under, identificar_high_confidence_bets, analisar_tendencias_jogador, calcular_coeficiente_variacao
+from app.services.bet_service import identificar_oportunidades_over_under, identificar_high_confidence_bets, analisar_tendencias_jogador, calcular_coeficiente_variacao
 
 router = APIRouter()
 

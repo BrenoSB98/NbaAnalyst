@@ -7,11 +7,16 @@ from sqlalchemy import func, or_, and_, desc
 
 from app.db.db_utils import get_db
 from app.db.models import Team, Game, GameTeamScore, GameTeamStats, Player, PlayerTeamSeason, PlayerGameStats, Season, League, TeamLeagueInfo, TeamSeasonStats
+from app.routers import analytics, predictions, bet, onerb
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+router.include_router(predictions.router, prefix="/predictions", tags=["Predictions"])
+router.include_router(bet.router, prefix="/bet", tags=["Betting"])
+router.include_router(onerb.router, prefix="/onerb", tags=["Onerb"])
 
 @router.get("/teams")
 def listar_times(page: int = Query(1, ge=1), page_size: int = Query(30, ge=1, le=100), nba_franchise: bool = Query(None), city: str = Query(None), name: str = Query(None), db: Session = Depends(get_db),):

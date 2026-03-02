@@ -56,19 +56,21 @@ services:
 
   onerb:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.backend
-    command: streamlit run /app/chat/app.py --server.port=8501 --server.address=0.0.0.0
+      context: .
+      dockerfile: Dockerfile.streamlit
+    command: streamlit run /app/chat/app.py --server.port=8502 --server.address=0.0.0.0
     env_file:
       - .env
     depends_on:
       - postgres
     ports:
-      - "8501:8501"
+      - "8502:8502"
     volumes:
-      - .:/app
+      - ./chat:/app/chat
+      - ./backend:/app/backend
     networks:
       - nba_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
