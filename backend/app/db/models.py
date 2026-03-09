@@ -297,3 +297,18 @@ class Prediction(Base):
     game = relationship("Game", back_populates="predictions")
     team = relationship("Team", foreign_keys=[team_id])
     opponent_team = relationship("Team", foreign_keys=[opponent_team_id])
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    full_name = Column(String, nullable=False)
+    birth_date = Column(Date, nullable=False)
+    favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    role = Column(String, nullable=False, default="user")
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False)
+
+    favorite_team = relationship("Team")

@@ -1,4 +1,5 @@
 from sqlalchemy import or_
+from datetime import datetime, timedelta
 
 from app.services import nba_api_client
 from app.db.models import Game, GameTeamStats, Team
@@ -72,13 +73,16 @@ def carregar_stats_times_jogo(game_id):
             )
             db.add(nova_stat)
 
-def carregar_stats_todos_times(season, team_id=None):
+def carregar_stats_todos_times(season, team_id=None, data=None):
     for db in get_db():
         consulta = db.query(Game).filter(Game.season == season)
 
         if team_id:
             consulta = consulta.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
-
+        if data:            
+            data_inicio = datetime.strptime(data, "%Y-%m-%d")
+            data_fim = data_inicio + timedelta(days=1)
+            consulta = consulta.filter(Game.date_start >= data_inicio, Game.date_start < data_fim)
         jogos = consulta.all()
 
         if not jogos:
@@ -91,4 +95,4 @@ def carregar_stats_todos_times(season, team_id=None):
                 continue
 
 if __name__ == "__main__":
-    carregar_stats_todos_times(season=2023)
+    carregar_stats_todos_times(season=2025)

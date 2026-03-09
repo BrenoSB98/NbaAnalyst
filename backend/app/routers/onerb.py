@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
+from app.routers.auth import obter_usuario_atual
 
 router = APIRouter()
 
 @router.get("/onerb", response_class=HTMLResponse, summary="Acesso ao Onerb NBA")
-def onerb():
+def onerb(usuario_atual=Depends(obter_usuario_atual)):
     html = """
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -18,7 +19,7 @@ def onerb():
         </style>
     </head>
     <body>
-        <iframe src="http://localhost:8501" allowfullscreen></iframe>
+        <iframe src="http://localhost:8502" allowfullscreen></iframe>
     </body>
     </html>
     """

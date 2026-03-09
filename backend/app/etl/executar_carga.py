@@ -1,6 +1,8 @@
 import argparse
+import logging
 import sys
 
+from app.core.logging_config import configurar_logging
 from app.etl.carregar_ligas import carregar_ligas
 from app.etl.carregar_temporadas import carregar_temporadas
 from app.etl.carregar_franquias import carregar_times
@@ -10,6 +12,21 @@ from app.etl.carregar_partidas import carregar_partidas
 from app.etl.carregar_stats_jogadores import carregar_stats_jogador, carregar_stats_todos_jogadores
 from app.etl.carregar_stats_times import carregar_stats_times_jogo, carregar_stats_todos_times
 
+configurar_logging()
+logger = logging.getLogger(__name__)
+
+def upsert(db, modelo, filtro, dados):
+    registro = db.query(modelo).filter_by(**filtro).first()
+
+    if registro:
+        for campo, valor in dados.items():
+            setattr(registro, campo, valor)
+    else:
+        novo = modelo(**{**filtro, **dados})
+        db.add(novo)
+
+    db.commit()
+    
 def main():
     parser = argparse.ArgumentParser(description="Script para executar cargas de dados na base de dados NBA.")
     parser.add_argument("--season", type=int, required=False, help="Ano da temporada")
@@ -41,40 +58,50 @@ def main():
 
     elif args.load == "jogadores":
         if not args.season and not args.team_id:
+            logger.error("Para carregar jogadores, informe --season e/ou --team_id.")
             sys.exit(1)
         carregar_jogadores(team_id=args.team_id, season=args.season)
 
     elif args.load == "jogadores_times":
         if not args.season:
+            logger.error("Para carregar jogadores por time, informe --season.")
             sys.exit(1)
         carregar_jogadores_franquias(season=args.season)
 
     elif args.load == "partidas":
         if not args.season:
+            logger.error("Para carregar partidas, informe --season.")
             sys.exit(1)
         carregar_partidas(season=args.season, date=args.date, team_id=args.team_id)
 
     elif args.load == "stats_jogador":
         if not args.game_id:
+            logger.error("Para carregar stats_jogador, informe --game_id.")
             sys.exit(1)
         carregar_stats_jogador(game_id=args.game_id)
 
     elif args.load == "stats_jogador_massa":
         if not args.season:
+            logger.error("Para carregar stats_jogador_massa, informe --season.")
             sys.exit(1)
         carregar_stats_todos_jogadores(season=args.season, team_id=args.team_id)
 
     elif args.load == "stats_times":
         if not args.game_id:
+            logger.error("Para carregar stats_times, informe --game_id.")
             sys.exit(1)
         carregar_stats_times_jogo(game_id=args.game_id)
 
     elif args.load == "stats_times_massa":
         if not args.season:
+            logger.error("Para carregar stats_times_massa, informe --season.")
             sys.exit(1)
         carregar_stats_todos_times(season=args.season, team_id=args.team_id)
 
     elif args.load == "all":
+        if not args.season:
+            logger.error("Para carregar all, informe --season.")
+            sys.exit(1)
         carregar_temporadas()
         carregar_ligas()
         carregar_times()

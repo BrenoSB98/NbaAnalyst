@@ -36,6 +36,17 @@ def carregar_jogadores(team_id=None, season=None):
 
             jogador_existente = db.query(Player).filter(Player.id == player_id).first()
             if jogador_existente:
+                jogador_existente.firstname = firstname
+                jogador_existente.lastname = lastname
+                jogador_existente.birth_date = data_nascimento_obj
+                jogador_existente.birth_country = pais_nascimento
+                jogador_existente.height_feet = altura_pes
+                jogador_existente.height_inches = altura_polegadas
+                jogador_existente.height_meters = altura_metros
+                jogador_existente.weight_pounds = peso_libras
+                jogador_existente.weight_kilograms = peso_quilos
+                jogador_existente.college = faculdade
+                jogador_existente.affiliation = afiliacao
                 continue
 
             dados_nascimento = item.get("birth", {})

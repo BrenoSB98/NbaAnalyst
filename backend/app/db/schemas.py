@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 class SeasonBase(BaseModel):
     season: int
@@ -331,3 +331,95 @@ class PlayerGameStatsResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+    
+class UserCreate(BaseModel):
+    email: EmailStr
+    full_name: str
+    birth_date: date
+    favorite_team_id: Optional[int] = None
+    password: str
+    confirm_password: str
+
+    @field_validator("confirm_password")
+    def senhas_devem_ser_iguais(cls, v, info):
+        if "password" in info.data and v != info.data["password"]:
+            raise ValueError("As senhas não coincidem.")
+        return v
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    birth_date: date
+    favorite_team_id: Optional[int] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class TeamAvgPointsResponse(BaseModel):
+    team_id: int
+    team_name: str
+    season: int
+    total_games: int
+    avg_points: float
+    avg_points_conceded: float
+
+class PlayerAvgStatsResponse(BaseModel):
+    player_id: int
+    player_name: str
+    season: int
+    total_games: int
+    avg_points: float
+    avg_assists: float
+    avg_rebounds: float
+    avg_steals: float
+    avg_blocks: float
+
+class TeamLastGamesResponse(BaseModel):
+    team_id: int
+    team_name: str
+    game_id: int
+    date: Optional[datetime]
+    opponent: str
+    points_scored: Optional[int]
+    points_conceded: Optional[int]
+    win: Optional[bool]
+
+class ResultadoJogo(BaseModel):
+    game_id: int
+    data: Optional[datetime] = None
+    real: float
+    predicao: float
+    erro_absoluto: float
+class BacktestMetrics(BaseModel):
+    jogador_id: int
+    nome_jogador: str
+    temporada: int
+    estatistica: str
+    total_testes: int
+    erro_medio_absoluto: Optional[float] = None
+    resultados_detalhados: list[ResultadoJogo]
+    
+class MediasJogador(BaseModel):
+    pontos: Optional[float] = None
+    assistencias: Optional[float] = None
+    rebotes: Optional[float] = None
+    roubos: Optional[float] = None
+    bloqueios: Optional[float] = None
+    turnovers: Optional[float] = None
+    fg_pct: Optional[float] = None
+    three_pct: Optional[float] = None
+    ft_pct: Optional[float] = None
+
+class AnalyticsSummary(BaseModel):
+    jogador_id: int
+    nome_jogador: str
+    temporada: int
+    jogos_analisados: int
+    medias: MediasJogador

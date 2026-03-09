@@ -1,7 +1,10 @@
 from datetime import datetime, timezone, timedelta
+import logging
 
 from app.db.models import Game, PlayerTeamSeason, Prediction
 from app.services.prediction_service import prever_multiplas_stats_jogador
+
+logger = logging.getLogger("manager_service")
 
 def _buscar_jogos_do_dia(db, season):
     agora = datetime.now(timezone.utc)
@@ -20,11 +23,11 @@ def _buscar_jogadores_do_time(db, team_id, season):
 
     return lista_player_ids
 
-def predicao_ja_existe(db, player_id, game_id):
+def _predicao_ja_existe(db, player_id, game_id):
     existente = db.query(Prediction).filter(Prediction.player_id == player_id, Prediction.game_id == game_id).first()
     return existente is not None
 
-def gerar_predicao(db, player_id, game_id, team_id, opponent_team_id, is_home, season):
+def _gerar_predicao(db, player_id, game_id, team_id, opponent_team_id, is_home, season):
     previsoes = prever_multiplas_stats_jogador(db=db, player_id=player_id, opponent_team_id=opponent_team_id, season=season, is_home=is_home)
 
     predicted_points = previsoes.get("points", 0.0)
@@ -69,25 +72,27 @@ def salvar_predicoes_dia_atual(db, season):
         jogadores_away = _buscar_jogadores_do_time(db=db, team_id=away_team_id, season=season)
 
         for player_id in jogadores_home:
-            if predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
+            if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
                 continue
 
             try:
-                gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=home_team_id, opponent_team_id=away_team_id, is_home=1, season=season)
-                total_geradas = total_geradas + 1
-            except Exception:
-                total_erros = total_erros + 1
+                _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=home_team_id, opponent_team_id=away_team_id, is_home=1, season=season)
+                total_geradas += 1
+            except Exception as e:
+                total_erros += 1
+                logger.error(f"Erro ao gerar previsão para jogador {player_id} no jogo {game_id}: {e}")
                 continue
 
         for player_id in jogadores_away:
-            if predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
+            if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
                 continue
 
             try:
-                gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=away_team_id, opponent_team_id=home_team_id, is_home=0, season=season)
-                total_geradas = total_geradas + 1
-            except Exception:
-                total_erros = total_erros + 1
+                _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=away_team_id, opponent_team_id=home_team_id, is_home=0, season=season)
+                total_geradas += 1
+            except Exception as e:
+                total_erros += 1
+                logger.error(f"Erro ao gerar previsão para jogador {player_id} no jogo {game_id}: {e}")
                 continue
     db.commit()
     return total_geradas

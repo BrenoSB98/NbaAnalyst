@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from app.services import nba_api_client
 from app.db.models import PlayerGameStats, Game, Player
 from app.db.db_utils import get_db
@@ -20,8 +22,14 @@ def carregar_stats_jogador(game_id):
             info_jogador = item.get("player")
             info_franquia = item.get("team")
 
-            id_jogador = info_jogador.get("id") if isinstance(info_jogador, dict) else None
-            id_franquia = info_franquia.get("id") if isinstance(info_franquia, dict) else None
+            if isinstance(info_jogador, dict):
+                id_jogador = info_jogador.get("id")     
+            else:
+                id_jogador = None
+            if isinstance(info_franquia, dict):
+                id_franquia = info_franquia.get("id")
+            else:
+                id_franquia = None
 
             if not id_jogador or not id_franquia:
                 continue
@@ -66,13 +74,16 @@ def carregar_stats_jogador(game_id):
             )
             db.add(nova_stats)
 
-def carregar_stats_todos_jogadores(season, team_id=None):
+def carregar_stats_todos_jogadores(season, team_id=None, data=None):
     for db in get_db():
         consulta = db.query(Game).filter(Game.season == season)
 
         if team_id:
             consulta = consulta.filter((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
-
+        if data:            
+            data_inicio = datetime.strptime(data, "%Y-%m-%d")
+            data_fim = data_inicio + timedelta(days=1)
+            consulta = consulta.filter(Game.date_start >= data_inicio, Game.date_start < data_fim)
         jogos = consulta.all()
 
         if not jogos:
@@ -85,4 +96,4 @@ def carregar_stats_todos_jogadores(season, team_id=None):
                 continue
 
 if __name__ == "__main__":
-    carregar_stats_todos_jogadores(season=2023)
+    carregar_stats_todos_jogadores(season=2025)

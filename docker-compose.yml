@@ -68,12 +68,120 @@ services:
     volumes:
       - ./chat:/app/chat
       - ./backend:/app/backend
+      - ./onerb_db:/app/onerb_db
     networks:
       - nba_network
     restart: unless-stopped
 
+  airflow-init:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_init
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION:-True}
+      AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-False}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
+      API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
+      NBA_SEASON: ${NBA_SEASON:-2025}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+    networks:
+      - nba_network
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create
+      --username ${AIRFLOW_ADMIN_USERNAME}
+      --password ${AIRFLOW_ADMIN_PASSWORD}
+      --firstname Admin
+      --lastname NBA
+      --role Admin
+      --email ${AIRFLOW_ADMIN_EMAIL}"
+    restart: on-failure
+
+  airflow-webserver:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_webserver
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION:-True}
+      AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-False}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
+      API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
+      NBA_SEASON: ${NBA_SEASON:-2025}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+    networks:
+      - nba_network
+    command: airflow webserver
+
+  airflow-scheduler:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_scheduler
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION:-True}
+      AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-False}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
+      API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
+      NBA_SEASON: ${NBA_SEASON:-2025}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+    networks:
+      - nba_network
+    command: airflow scheduler
+
 volumes:
   postgres_data:
+  onerb_db:
+  airflow_logs:
 
 networks:
   nba_network:

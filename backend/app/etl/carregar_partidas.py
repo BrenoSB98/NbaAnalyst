@@ -18,6 +18,12 @@ def carregar_partidas(season, date=None, team_id=None):
 
             jogo_existente = db.query(Game).filter(Game.id == game_id).first()
             if jogo_existente:
+                jogo_existente.status_short = status_curto
+                jogo_existente.status_long = status_longo
+                jogo_existente.periods_current = periodo_atual
+                jogo_existente.periods_end_of_period = fim_de_periodo
+                jogo_existente.date_end = data_fim_obj
+                jogo_existente.duration = duracao
                 continue
 
             liga = _normalizar_string(item.get("league"))

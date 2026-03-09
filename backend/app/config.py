@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    NBA_SEASON = int(os.getenv("NBA_SEASON", "2025"))
     POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
     POSTGRES_DB = os.getenv("POSTGRES_DB", "nba_score_db")
@@ -25,4 +26,8 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     PROJETO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+    SECRET_KEY = os.getenv("SECRET_KEY", "suasenha-secreta")
+    ALGORITHM = os.getenv("ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+    
 config = Config()
