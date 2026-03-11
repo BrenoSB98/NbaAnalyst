@@ -1,4 +1,5 @@
 from typing import Optional, List
+
 from pydantic import BaseModel, ConfigDict
 
 class TeamBase(BaseModel):
@@ -26,37 +27,98 @@ class TeamLeagueInfoOut(TeamLeagueInfoBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LeagueInfoResponse(BaseModel):
-    league_code: Optional[str] = None
-    conference: Optional[str] = None
-    division: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-class TeamResponse(BaseModel):
+class TeamListItem(BaseModel):
     id: int
-    name: str
-    nickname: Optional[str] = None
-    code: Optional[str] = None
-    city: Optional[str] = None
+    nome: str
+    apelido: Optional[str] = None
+    codigo: Optional[str] = None
+    cidade: Optional[str] = None
     logo: Optional[str] = None
-    all_star: Optional[bool] = False
-    nba_franchise: Optional[bool] = True
-
-    model_config = ConfigDict(from_attributes=True)
-
-class TeamDetailResponse(TeamResponse):
-    league_info: Optional[LeagueInfoResponse] = None
+    nba_franchise: bool
+    all_star: bool
 
     model_config = ConfigDict(from_attributes=True)
 
 class TeamListResponse(BaseModel):
     total: int
-    page: int
-    page_size: int
-    teams: List[TeamResponse]
+    pagina: int
+    tamanho_pagina: int
+    times: List[TeamListItem]
+
+class InfoLiga(BaseModel):
+    liga: Optional[str] = None
+    conferencia: Optional[str] = None
+    divisao: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class TeamDetalheResponse(BaseModel):
+    id: int
+    nome: str
+    apelido: Optional[str] = None
+    codigo: Optional[str] = None
+    cidade: Optional[str] = None
+    logo: Optional[str] = None
+    all_star: bool
+    nba_franchise: bool
+    info_liga: Optional[InfoLiga] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class EstatisticasTimeResponse(BaseModel):
+    time_id: int
+    nome_time: str
+    temporada: int
+    total_jogos: int
+    jogos_casa: int
+    jogos_fora: int
+    total_jogadores: int
+    vitorias: int
+    derrotas: int
+    aproveitamento: float
+
+class UltimoJogoPerformance(BaseModel):
+    jogo_id: int
+    data: Optional[object] = None
+    adversario_id: int
+    em_casa: bool
+    pontos_feitos: int
+    pontos_sofridos: int
+    resultado: str
+
+class PerformanceTimeResponse(BaseModel):
+    time_id: int
+    nome_time: str
+    temporada: int
+    total_jogos: int
+    vitorias: int
+    derrotas: int
+    aproveitamento: float
+    record_casa: str
+    record_fora: str
+    media_pontos_feitos: float
+    media_pontos_sofridos: float
+    diferencial_pontos: float
+    ultimos_5_jogos: List[UltimoJogoPerformance]
+    mensagem: Optional[str] = None
+
+class TimeComparacao(BaseModel):
+    id: int
+    nome: str
+    vitorias: int
+    derrotas: int
+    aproveitamento: float
+
+class ConfrontoDireto(BaseModel):
+    total_jogos: int
+    vitorias_time1: int
+    vitorias_time2: int
+
+class ComparacaoTimesResponse(BaseModel):
+    temporada: int
+    time1: TimeComparacao
+    time2: TimeComparacao
+    confronto_direto: ConfrontoDireto
 
 class TeamSeasonStatsBase(BaseModel):
     team_id: int

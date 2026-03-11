@@ -1,10 +1,14 @@
+import logging
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
+
 from app.routers.auth import obter_usuario_atual
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-@router.get("/onerb", response_class=HTMLResponse, summary="Acesso ao Onerb NBA")
+@router.get("/", response_class=HTMLResponse)
 def onerb(usuario_atual=Depends(obter_usuario_atual)):
     html = """
     <!DOCTYPE html>

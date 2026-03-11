@@ -1,14 +1,22 @@
+import logging
+
 from app.services import nba_api_client
 from app.db.models import Team, League, TeamLeagueInfo
 from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_inteiro, _normalizar_boolean, _normalizar_string
 
+logger = logging.getLogger(__name__)
+
 def carregar_times():
     dados_times = nba_api_client.get_teams()
     if not dados_times:
+        logger.warning("Nenhum time retornado pela API.")
         return
 
     for db in get_db():
+        total_inseridos = 0
+        total_atualizados = 0
+
         for item in dados_times:
             team_id = _normalizar_inteiro(item.get("id"))
             team_name = _normalizar_string(item.get("name"))
@@ -21,41 +29,57 @@ def carregar_times():
 
             if not team_id or not team_name:
                 continue
-
-            time_existente = db.query(Team).filter(Team.id == team_id).first()
-            if time_existente:
-                continue
-
             if not nba_franchise:
                 continue
 
-            novo_time = Team(
-                id=team_id,
-                name=team_name,
-                nickname=team_nickname,
-                code=team_code,
-                city=team_city,
-                logo=team_logo,
-                all_star=all_star,
-                nba_franchise=nba_franchise,
-            )
-            db.add(novo_time)
+            time_existente = db.query(Team).filter(Team.id == team_id).first()
+            if time_existente:
+                time_existente.name = team_name
+                time_existente.nickname = team_nickname
+                time_existente.code = team_code
+                time_existente.city = team_city
+                time_existente.logo = team_logo
+                time_existente.all_star = all_star if all_star is not None else False
+                time_existente.nba_franchise = nba_franchise if nba_franchise is not None else False
+                total_atualizados = total_atualizados + 1
+            else:
+                novo_time = Team(
+                    id=team_id,
+                    name=team_name,
+                    nickname=team_nickname,
+                    code=team_code,
+                    city=team_city,
+                    logo=team_logo,
+                    all_star=all_star if all_star is not None else False,
+                    nba_franchise=nba_franchise if nba_franchise is not None else False,
+                )
+                db.add(novo_time)
+                total_inseridos = total_inseridos + 1
 
             leagues = item.get("leagues", {})
-            if leagues:
-                standard_league_info = leagues.get("standard", {}) or {}
-                league_code = _normalizar_string(standard_league_info.get("code"))
-                conference = _normalizar_string(standard_league_info.get("conference"))
-                division = _normalizar_string(standard_league_info.get("division"))
+            standard_league_info = leagues.get("standard", {})
+            league_code = _normalizar_string(standard_league_info.get("code"))
+            conference = _normalizar_string(standard_league_info.get("conference"))
+            division = _normalizar_string(standard_league_info.get("division"))
 
-                if league_code:
-                    liga = db.query(League).filter(League.code == league_code).first()
-                    if liga:
-                        info_existente = db.query(TeamLeagueInfo).filter(TeamLeagueInfo.team_id == team_id, TeamLeagueInfo.league_id == liga.id).first()
+            if not league_code:
+                continue
 
-                        if not info_existente:
-                            team_league_info = TeamLeagueInfo(team_id=team_id, league_id=liga.id, conference=conference, division=division)
-                            db.add(team_league_info)
+            liga = db.query(League).filter(League.code == league_code).first()
+            if not liga:
+                logger.warning(f"Liga '{league_code}' não encontrada.")
+                continue
+
+            info_existente = db.query(TeamLeagueInfo).filter(TeamLeagueInfo.team_id == team_id, TeamLeagueInfo.league_id == liga.id).first()
+            if info_existente:
+                info_existente.conference = conference
+                info_existente.division = division
+            else:
+                nova_info = TeamLeagueInfo(team_id=team_id, league_id=liga.id, conference=conference, division=division)
+                db.add(nova_info)
+
+        if total_inseridos == 0 and total_atualizados == 0:
+            logger.warning("Nenhum time inserido ou atualizado.")
 
 if __name__ == "__main__":
     carregar_times()
