@@ -1,0 +1,241 @@
+/* ============================================
+   jogador-avancado.css — Perfil avançado de jogador
+   ============================================ */
+
+
+/* Cabeçalho */
+.cabecalho-jav {
+    padding: 32px 0 24px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+.jav-avatar {
+    width: 64px;
+    height: 64px;
+    background-color: #F75C03;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.jav-nome {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    margin-bottom: 4px;
+}
+
+.jav-meta {
+    font-size: 0.82rem;
+    color: #8888AA;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.jav-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.jav-meta i {
+    color: #F75C03;
+    font-size: 0.75rem;
+}
+
+
+/* Barra de controles fixa */
+.barra-controles-jav {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    padding: 12px 0;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
+
+
+/* Abas */
+.abas-jav {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    position: sticky;
+    top: 110px;
+    z-index: 99;
+}
+
+.abas-jav .nav-link {
+    color: #8888AA;
+    font-size: 0.83rem;
+    font-weight: 600;
+    padding: 13px 18px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+}
+
+.abas-jav .nav-link:hover { color: #EEEEF5; }
+
+.abas-jav .nav-link.ativo {
+    color: #F75C03;
+    border-bottom-color: #F75C03;
+}
+
+
+/* Área de conteúdo */
+.area-jav {
+    padding: 28px 0 48px;
+}
+
+
+/* Card de KPI */
+.card-kpi-jav {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    height: 100%;
+}
+
+.card-kpi-jav .kv {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #F75C03;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-kpi-jav .kr {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+}
+
+
+/* Card de percentual de arremesso */
+.card-pct {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.card-pct .pct-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    white-space: nowrap;
+}
+
+.card-pct .pct-rotulo {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+}
+
+.card-pct .pct-barra {
+    flex: 1;
+    height: 4px;
+    background-color: #252540;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.card-pct .pct-fill {
+    height: 100%;
+    border-radius: 2px;
+    background-color: #F75C03;
+}
+
+
+/* Linha de jogo na tabela */
+.tabela-jogos-jav {
+    width: 100%;
+    font-size: 0.82rem;
+    border-collapse: collapse;
+}
+
+.tabela-jogos-jav thead th {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #555570;
+    padding: 8px 12px;
+    border-bottom: 1px solid #252540;
+    background-color: #12121C;
+    white-space: nowrap;
+}
+
+.tabela-jogos-jav tbody tr {
+    border-bottom: 1px solid #252540;
+    transition: background-color 0.15s ease;
+}
+
+.tabela-jogos-jav tbody tr:last-child { border-bottom: none; }
+.tabela-jogos-jav tbody tr:hover { background-color: #1D1E35; }
+
+.tabela-jogos-jav tbody td {
+    padding: 9px 12px;
+    color: #EEEEF5;
+    vertical-align: middle;
+}
+
+.tabela-jogos-jav .td-pts {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    color: #F75C03;
+}
+
+.tabela-jogos-jav .td-sec { color: #8888AA; }
+
+
+/* Containers gráfico D3 */
+.grafico-container {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.grafico-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #555570;
+    margin-bottom: 14px;
+}
+
+
+@media (max-width: 767px) {
+    .jav-nome { font-size: 1.35rem; }
+    .abas-jav { overflow-x: auto; }
+    .abas-jav .d-flex { flex-wrap: nowrap; }
+}

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Jogador Avançado</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/jogador_avancado.css">
+</head>
+<body>
+
+<div id="app-wrapper">
+    <nav id="navbar-principal"></nav>
+
+    <main id="conteudo-principal">
+
+        <!-- Spinner inicial -->
+        <div id="pagina-carregando">
+            <div class="spinner-nba" style="margin-top:80px;">
+                <div class="bola-animada"></div>
+                <span>Carregando dashboard...</span>
+            </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div id="pagina-conteudo" style="display:none;">
+
+            <!-- Cabeçalho -->
+            <div class="cabecalho-jav">
+                <div class="container">
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <div class="jav-avatar" id="jav-avatar">?</div>
+                        <div style="flex:1;">
+                            <h1 class="jav-nome" id="jav-nome">—</h1>
+                            <div class="jav-meta" id="jav-meta"></div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="javascript:history.back()" class="btn-nba-ghost btn-nba btn-sm"><i class="bi bi-arrow-left me-1"></i> Voltar</a>
+                            <a id="btn-perfil-basico" href="#" class="btn-nba-outline btn-nba btn-sm"><i class="bi bi-person me-1"></i> Perfil Básico</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seletor de temporada -->
+            <div class="barra-controles-jav">
+                <div class="container">
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="form-label-nba mb-0">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada" style="max-width:140px;" onchange="recarregarTudo()">
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023" selected>2023</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas -->
+            <div class="abas-jav">
+                <div class="container">
+                    <div class="d-flex">
+                        <button class="nav-link ativo" id="aba-btn-temporada" onclick="trocarAba('temporada')"><i class="bi bi-calendar3 me-1"></i> Temporada</button>
+                        <button class="nav-link" id="aba-btn-jogos" onclick="trocarAba('jogos')"><i class="bi bi-list-ul me-1"></i> Jogo a Jogo</button>
+                        <button class="nav-link" id="aba-btn-casafora" onclick="trocarAba('casafora')"><i class="bi bi-house me-1"></i> Casa/Fora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="area-jav">
+                <div class="container">
+
+                    <!-- ============================================================
+                         ABA TEMPORADA — médias gerais + radar + percentuais
+                         ============================================================ -->
+                    <div id="aba-temporada">
+
+                        <div id="temp-carregando">
+                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando médias...</span></div>
+                        </div>
+
+                        <div id="temp-conteudo" style="display:none;">
+
+                            <!-- KPIs principais -->
+                            <div class="linha-acento mb-2"></div>
+                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Médias por Jogo</h2>
+                            <div class="row g-3 mb-4" id="grid-kpis-temp"></div>
+
+                            <!-- Percentuais de arremesso -->
+                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Percentuais de Arremesso</h2>
+                            <div class="row g-3 mb-4" id="grid-pcts"></div>
+
+                            <!-- Gráfico D3: radar de atributos -->
+                            <div class="row g-4">
+                                <div class="col-12 col-md-6">
+                                    <h2 class="titulo-secao mb-3" style="font-size:1rem;">Perfil de Atributos</h2>
+                                    <div class="grafico-container text-center">
+                                        <p class="grafico-titulo">Radar — médias normalizadas</p>
+                                        <div id="grafico-radar"></div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <h2 class="titulo-secao mb-3" style="font-size:1rem;">Distribuição de Contribuição</h2>
+                                    <div class="grafico-container">
+                                        <p class="grafico-titulo">Barras — pontos, ast, reb, stl, blk</p>
+                                        <div id="grafico-barras-temp"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div id="temp-vazio" style="display:none;">
+                            <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada para esta temporada.</p></div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         ABA JOGO A JOGO — gráfico de linha + tabela
+                         ============================================================ -->
+                    <div id="aba-jogos" style="display:none;">
+
+                        <div id="jogos-carregando">
+                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando jogos...</span></div>
+                        </div>
+
+                        <div id="jogos-conteudo" style="display:none;">
+
+                            <!-- Seletor de quantidade de jogos -->
+                            <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                                <label class="form-label-nba mb-0">Últimos</label>
+                                <div class="d-flex gap-2" id="btns-n-jogos">
+                                    <button class="btn-categoria" id="btn-nj-5"  onclick="trocarNJogos(5)">5</button>
+                                    <button class="btn-categoria ativo" id="btn-nj-10" onclick="trocarNJogos(10)">10</button>
+                                    <button class="btn-categoria" id="btn-nj-15" onclick="trocarNJogos(15)">15</button>
+                                    <button class="btn-categoria" id="btn-nj-20" onclick="trocarNJogos(20)">20</button>
+                                </div>
+                                <span class="texto-suave" id="jogos-label" style="font-size:0.82rem;"></span>
+                            </div>
+
+                            <!-- Gráfico D3 de linha — pontos por jogo -->
+                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Evolução de Pontos</h2>
+                            <div class="grafico-container mb-4">
+                                <p class="grafico-titulo">Pontos por jogo — do mais antigo ao mais recente</p>
+                                <div id="grafico-linha"></div>
+                            </div>
+
+                            <!-- Tabela jogo a jogo -->
+                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Detalhes por Jogo</h2>
+                            <div class="card-nba">
+                                <div class="card-body-nba p-0">
+                                    <div style="overflow-x:auto;">
+                                        <table class="tabela-jogos-jav">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>PTS</th>
+                                                    <th>AST</th>
+                                                    <th>REB</th>
+                                                    <th>STL</th>
+                                                    <th>BLK</th>
+                                                    <th>TO</th>
+                                                    <th>FG%</th>
+                                                    <th>3P%</th>
+                                                    <th>MIN</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody-jogos"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div id="jogos-vazio" style="display:none;">
+                            <div class="estado-vazio"><i class="bi bi-list-ul icone-vazio"></i><p class="titulo-vazio">Sem jogos</p><p class="desc-vazio">Nenhum jogo encontrado para este período.</p></div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         ABA CASA/FORA — comparação lado a lado com gráfico D3
+                         ============================================================ -->
+                    <div id="aba-casafora" style="display:none;">
+
+                        <div id="cf-carregando">
+                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando análise casa/fora...</span></div>
+                        </div>
+
+                        <div id="cf-conteudo" style="display:none;">
+
+                            <!-- Gráfico D3 comparativo -->
+                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Comparação Casa vs Fora</h2>
+                            <div class="grafico-container mb-4">
+                                <p class="grafico-titulo">Médias por estatística — barras agrupadas</p>
+                                <div id="grafico-casafora"></div>
+                            </div>
+
+                            <!-- KPIs lado a lado -->
+                            <div class="row g-4" id="grid-cf"></div>
+
+                        </div>
+
+                        <div id="cf-vazio" style="display:none;">
+                            <div class="estado-vazio"><i class="bi bi-house icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhum dado de casa/fora encontrado para esta temporada.</p></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Erro -->
+        <div id="pagina-erro" style="display:none;">
+            <div class="estado-vazio" style="margin-top:80px;">
+                <i class="bi bi-exclamation-circle icone-vazio"></i>
+                <p class="titulo-vazio">Jogador não encontrado</p>
+                <p class="desc-vazio">Verifique o endereço ou volte para a lista.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer id="rodape-principal"></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/componentes.js"></script>
+
+<script>
+// Guarda de rota
+verificarAutenticacao();
+
+var jogadorId  = obterParametroUrl("id");
+var nJogosAtivo = 10;
+
+// Cache de dados já carregados — evita chamadas repetidas
+var cacheTemporada  = null;
+var cacheJogos      = {};   // chave: n_jogos
+var cacheCasa       = null;
+var cacheFora       = null;
+
+document.addEventListener("DOMContentLoaded", function() {
+    inicializarPagina();
+
+    if (!jogadorId) {
+        document.getElementById("pagina-carregando").style.display = "none";
+        document.getElementById("pagina-erro").style.display = "block";
+        return;
+    }
+
+    carregarCabecalho();
+});
+
+
+// ============================================================
+// CONTROLES DE NAVEGAÇÃO
+// ============================================================
+
+function trocarAba(nomeAba) {
+    document.getElementById("aba-temporada").style.display = "none";
+    document.getElementById("aba-jogos").style.display = "none";
+    document.getElementById("aba-casafora").style.display = "none";
+
+    document.getElementById("aba-btn-temporada").classList.remove("ativo");
+    document.getElementById("aba-btn-jogos").classList.remove("ativo");
+    document.getElementById("aba-btn-casafora").classList.remove("ativo");
+
+    document.getElementById("aba-" + nomeAba).style.display = "block";
+    document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
+
+    if (nomeAba === "jogos" && !cacheJogos[nJogosAtivo]) { carregarJogos(nJogosAtivo); }
+    if (nomeAba === "casafora" && (!cacheCasa || !cacheFora)) { carregarCasaFora(); }
+}
+
+
+function trocarNJogos(n) {
+    document.getElementById("btn-nj-" + nJogosAtivo).classList.remove("ativo");
+    nJogosAtivo = n;
+    document.getElementById("btn-nj-" + n).classList.add("ativo");
+
+    if (!cacheJogos[n]) {
+        carregarJogos(n);
+    } else {
+        renderizarJogos(cacheJogos[n]);
+    }
+}
+
+
+function recarregarTudo() {
+    cacheTemporada = null;
+    cacheJogos     = {};
+    cacheCasa      = null;
+    cacheFora      = null;
+
+    // Limpa todos os conteúdos e mostra spinners
+    document.getElementById("temp-conteudo").style.display = "none";
+    document.getElementById("temp-carregando").style.display = "block";
+    document.getElementById("temp-vazio").style.display = "none";
+    document.getElementById("jogos-conteudo").style.display = "none";
+    document.getElementById("jogos-carregando").style.display = "block";
+    document.getElementById("jogos-vazio").style.display = "none";
+    document.getElementById("cf-conteudo").style.display = "none";
+    document.getElementById("cf-carregando").style.display = "block";
+    document.getElementById("cf-vazio").style.display = "none";
+    document.getElementById("grafico-radar").innerHTML = "";
+    document.getElementById("grafico-barras-temp").innerHTML = "";
+    document.getElementById("grafico-linha").innerHTML = "";
+    document.getElementById("grafico-casafora").innerHTML = "";
+
+    // Recarrega a aba ativa
+    var abaAtiva = document.querySelector(".abas-jav .nav-link.ativo");
+    if (abaAtiva) {
+        var idAba = abaAtiva.id.replace("aba-btn-", "");
+        if (idAba === "temporada") { carregarTemporada(); }
+        if (idAba === "jogos")     { carregarJogos(nJogosAtivo); }
+        if (idAba === "casafora")  { carregarCasaFora(); }
+    }
+}
+
+
+// ============================================================
+// DADOS DO CABEÇALHO (público)
+// ============================================================
+
+async function carregarCabecalho() {
+    try {
+        var dados = await chamarApi("/jogadores/" + jogadorId);
+
+        var nomeCompleto = dados.nome + " " + dados.sobrenome;
+        document.title = "NbaAnalyst — " + nomeCompleto + " Avançado";
+
+        var iniciais = dados.nome.charAt(0) + dados.sobrenome.charAt(0);
+        document.getElementById("jav-avatar").textContent = iniciais.toUpperCase();
+        document.getElementById("jav-nome").textContent = nomeCompleto;
+        document.getElementById("btn-perfil-basico").href = "jogador.html?id=" + jogadorId;
+
+        var metaHtml = "";
+        if (dados.historico_times && dados.historico_times.length > 0) {
+            var t = dados.historico_times[0];
+            metaHtml += '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
+            if (t.posicao) { metaHtml += '<span><i class="bi bi-person-fill"></i>' + t.posicao + '</span>'; }
+        }
+        if (dados.inicio_nba) { metaHtml += '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
+        if (dados.pais_nascimento) { metaHtml += '<span><i class="bi bi-globe2"></i>' + dados.pais_nascimento + '</span>'; }
+        document.getElementById("jav-meta").innerHTML = metaHtml;
+
+        document.getElementById("pagina-carregando").style.display = "none";
+        document.getElementById("pagina-conteudo").style.display = "block";
+
+        // Carrega a aba inicial
+        carregarTemporada();
+
+    } catch (erro) {
+        document.getElementById("pagina-carregando").style.display = "none";
+        document.getElementById("pagina-erro").style.display = "block";
+    }
+}
+
+
+// ============================================================
+// ABA TEMPORADA
+// ============================================================
+
+async function carregarTemporada() {
+    var temporada = document.getElementById("select-temporada").value;
+
+    if (cacheTemporada) {
+        renderizarTemporada(cacheTemporada);
+        return;
+    }
+
+    try {
+        var dados = await chamarApiAutenticada("/analiticos/jogadores/" + jogadorId + "/medias/temporada?temporada=" + temporada);
+
+        if (dados.mensagem || !dados.averages) {
+            document.getElementById("temp-carregando").style.display = "none";
+            document.getElementById("temp-vazio").style.display = "block";
+            return;
+        }
+
+        cacheTemporada = dados;
+        renderizarTemporada(dados);
+
+    } catch (erro) {
+        document.getElementById("temp-carregando").style.display = "none";
+        document.getElementById("temp-vazio").style.display = "block";
+    }
+}
+
+
+function renderizarTemporada(dados) {
+    var med = dados.averages;
+
+    var kpis = [
+        { v: med.points,    r: "Pontos",       cor: "#F75C03" },
+        { v: med.assists,   r: "Assistências", cor: "#3B9EFF" },
+        { v: med.rebounds,  r: "Rebotes",      cor: "#00C896" },
+        { v: med.steals,    r: "Roubos",       cor: "#FFD600" },
+        { v: med.blocks,    r: "Bloqueios",    cor: "#8888AA" },
+        { v: med.turnovers, r: "Turnovers",    cor: "#FF3B5C" }
+    ];
+
+    var htmlKpis = "";
+    for (var i = 0; i < kpis.length; i++) {
+        var k = kpis[i];
+        htmlKpis += '<div class="col-6 col-sm-4 col-md-2"><div class="card-kpi-jav"><div class="kv" style="color:' + k.cor + ';">' + k.v + '</div><div class="kr">' + k.r + '</div></div></div>';
+    }
+    document.getElementById("grid-kpis-temp").innerHTML = htmlKpis;
+
+    // Percentuais de arremesso
+    var pcts = [
+        { v: med.fg_pct,    r: "FG%",  max: 60 },
+        { v: med.three_pct, r: "3P%",  max: 50 },
+        { v: med.ft_pct,    r: "FT%",  max: 100 }
+    ];
+
+    var htmlPcts = "";
+    for (var j = 0; j < pcts.length; j++) {
+        var p = pcts[j];
+        var largura = Math.min((p.v / p.max) * 100, 100);
+        htmlPcts += '<div class="col-12 col-md-4"><div class="card-pct"><div><div class="pct-valor">' + p.v + '%</div><div class="pct-rotulo">' + p.r + '</div></div><div class="pct-barra"><div class="pct-fill" style="width:' + largura + '%;"></div></div></div></div>';
+    }
+    document.getElementById("grid-pcts").innerHTML = htmlPcts;
+
+    document.getElementById("temp-carregando").style.display = "none";
+    document.getElementById("temp-conteudo").style.display = "block";
+
+    // Gráficos após mostrar o conteúdo
+    renderizarRadar(med);
+    renderizarBarrasTemporada(med);
+}
+
+
+// ============================================================
+// ABA JOGO A JOGO
+// ============================================================
+
+async function carregarJogos(n) {
+    var temporada = document.getElementById("select-temporada").value;
+
+    document.getElementById("jogos-conteudo").style.display = "none";
+    document.getElementById("jogos-carregando").style.display = "block";
+    document.getElementById("jogos-vazio").style.display = "none";
+
+    try {
+        var dados = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos?n_jogos=" + n + "&temporada=" + temporada);
+
+        if (!dados.jogos || dados.jogos.length === 0) {
+            document.getElementById("jogos-carregando").style.display = "none";
+            document.getElementById("jogos-vazio").style.display = "block";
+            return;
+        }
+
+        cacheJogos[n] = dados;
+        renderizarJogos(dados);
+
+    } catch (erro) {
+        document.getElementById("jogos-carregando").style.display = "none";
+        document.getElementById("jogos-vazio").style.display = "block";
+    }
+}
+
+
+function renderizarJogos(dados) {
+    document.getElementById("jogos-label").textContent = dados.jogos_analisados + " jogos analisados";
+
+    // Tabela
+    var tbody = "";
+    for (var i = 0; i < dados.jogos.length; i++) {
+        var j = dados.jogos[i];
+        var dataFmt = "—";
+        if (j.data) {
+            var dt = new Date(j.data);
+            dataFmt = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+        }
+        tbody += '<tr>'
+            + '<td class="td-sec">' + dataFmt + '</td>'
+            + '<td class="td-pts">' + (j.pontos !== null ? j.pontos : "—") + '</td>'
+            + '<td>' + (j.assistencias !== null ? j.assistencias : "—") + '</td>'
+            + '<td>' + (j.rebotes !== null ? j.rebotes : "—") + '</td>'
+            + '<td class="td-sec">—</td>'
+            + '<td class="td-sec">—</td>'
+            + '<td class="td-sec">—</td>'
+            + '<td class="td-sec">—</td>'
+            + '<td class="td-sec">—</td>'
+            + '<td class="td-sec">—</td>'
+            + '</tr>';
+    }
+    document.getElementById("tbody-jogos").innerHTML = tbody;
+
+    document.getElementById("jogos-carregando").style.display = "none";
+    document.getElementById("jogos-conteudo").style.display = "block";
+
+    renderizarGraficoLinha(dados.jogos);
+}
+
+
+// ============================================================
+// ABA CASA / FORA
+// ============================================================
+
+async function carregarCasaFora() {
+    var temporada = document.getElementById("select-temporada").value;
+
+    document.getElementById("cf-conteudo").style.display = "none";
+    document.getElementById("cf-carregando").style.display = "block";
+    document.getElementById("cf-vazio").style.display = "none";
+
+    try {
+        var resCasa = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temporada + "&local=casa");
+        var resFora = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temporada + "&local=fora");
+
+        if ((resCasa.mensagem || !resCasa.medias) && (resFora.mensagem || !resFora.medias)) {
+            document.getElementById("cf-carregando").style.display = "none";
+            document.getElementById("cf-vazio").style.display = "block";
+            return;
+        }
+
+        cacheCasa = resCasa;
+        cacheFora = resFora;
+
+        renderizarCasaFora(resCasa, resFora);
+
+    } catch (erro) {
+        document.getElementById("cf-carregando").style.display = "none";
+        document.getElementById("cf-vazio").style.display = "block";
+    }
+}
+
+
+function renderizarCasaFora(casa, fora) {
+    // Cards de KPI comparativos
+    var estatisticas = [
+        { campo: "points",    label: "Pontos" },
+        { campo: "assists",   label: "Assistências" },
+        { campo: "rebounds",  label: "Rebotes" },
+        { campo: "steals",    label: "Roubos" }
+    ];
+
+    var htmlCf = "";
+    for (var i = 0; i < estatisticas.length; i++) {
+        var est = estatisticas[i];
+        var valCasa = (casa.medias && casa.medias[est.campo] !== undefined) ? casa.medias[est.campo] : "—";
+        var valFora = (fora.medias && fora.medias[est.campo] !== undefined) ? fora.medias[est.campo] : "—";
+
+        htmlCf += '<div class="col-6 col-md-3">'
+            + '<div class="card-kpi-jav">'
+            + '<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#555570;margin-bottom:10px;">' + est.label + '</div>'
+            + '<div class="d-flex justify-content-around">'
+            + '<div><div class="kv" style="color:#F75C03;">' + valCasa + '</div><div class="kr">Casa</div></div>'
+            + '<div style="width:1px;background-color:#252540;"></div>'
+            + '<div><div class="kv" style="color:#3B9EFF;">' + valFora + '</div><div class="kr">Fora</div></div>'
+            + '</div>'
+            + '</div></div>';
+    }
+    document.getElementById("grid-cf").innerHTML = htmlCf;
+
+    document.getElementById("cf-carregando").style.display = "none";
+    document.getElementById("cf-conteudo").style.display = "block";
+
+    renderizarGraficoCasaFora(casa, fora);
+}
+
+
+// ============================================================
+// GRÁFICO D3 #1 — Radar de atributos
+// ============================================================
+
+function renderizarRadar(med) {
+    var container = document.getElementById("grafico-radar");
+    container.innerHTML = "";
+
+    var atributos = [
+        { label: "PTS",  valor: med.points },
+        { label: "AST",  valor: med.assists },
+        { label: "REB",  valor: med.rebounds },
+        { label: "STL",  valor: med.steals },
+        { label: "BLK",  valor: med.blocks }
+    ];
+
+    // Normaliza cada valor entre 0 e 1 usando referências máximas por categoria
+    var maximos = { "PTS": 35, "AST": 12, "REB": 15, "STL": 3, "BLK": 3 };
+
+    var largura  = 220;
+    var altura   = 220;
+    var cx       = largura / 2;
+    var cy       = altura / 2;
+    var raio     = 80;
+    var n        = atributos.length;
+
+    var svg = d3.select("#grafico-radar")
+        .append("svg")
+        .attr("width", largura)
+        .attr("height", altura)
+        .style("display", "block")
+        .style("margin", "0 auto");
+
+    // Calcula o ângulo de cada eixo — começa no topo (-90 graus)
+    function angulo(i) {
+        return (i / n) * 2 * Math.PI - Math.PI / 2;
+    }
+
+    // Desenha os círculos de referência
+    var niveis = [0.25, 0.5, 0.75, 1.0];
+    for (var ni = 0; ni < niveis.length; ni++) {
+        var r = raio * niveis[ni];
+        svg.append("circle")
+            .attr("cx", cx)
+            .attr("cy", cy)
+            .attr("r", r)
+            .attr("fill", "none")
+            .attr("stroke", "#252540")
+            .attr("stroke-width", 1);
+    }
+
+    // Desenha os eixos de cada atributo
+    for (var i = 0; i < n; i++) {
+        var ang = angulo(i);
+        var xFim = cx + raio * Math.cos(ang);
+        var yFim = cy + raio * Math.sin(ang);
+
+        svg.append("line")
+            .attr("x1", cx).attr("y1", cy)
+            .attr("x2", xFim).attr("y2", yFim)
+            .attr("stroke", "#252540")
+            .attr("stroke-width", 1);
+
+        // Label do eixo
+        var xLabel = cx + (raio + 14) * Math.cos(ang);
+        var yLabel = cy + (raio + 14) * Math.sin(ang);
+        svg.append("text")
+            .attr("x", xLabel).attr("y", yLabel)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("fill", "#8888AA")
+            .attr("font-size", "10px")
+            .attr("font-weight", "600")
+            .text(atributos[i].label);
+    }
+
+    // Calcula os pontos do polígono do jogador
+    var pontosPoligono = [];
+    for (var i = 0; i < n; i++) {
+        var ang = angulo(i);
+        var maxRef = maximos[atributos[i].label] || 10;
+        var prop = Math.min((atributos[i].valor || 0) / maxRef, 1);
+        var x = cx + raio * prop * Math.cos(ang);
+        var y = cy + raio * prop * Math.sin(ang);
+        pontosPoligono.push([x, y]);
+    }
+
+    // Fecha o polígono voltando ao primeiro ponto
+    var dadosLinha = pontosPoligono.concat([pontosPoligono[0]]);
+    var geraPath = d3.line().x(function(d) { return d[0]; }).y(function(d) { return d[1]; });
+
+    // Área preenchida
+    svg.append("path")
+        .attr("d", geraPath(dadosLinha))
+        .attr("fill", "rgba(247, 92, 3, 0.15)")
+        .attr("stroke", "#F75C03")
+        .attr("stroke-width", 2);
+
+    // Pontos nos vértices
+    for (var i = 0; i < pontosPoligono.length; i++) {
+        svg.append("circle")
+            .attr("cx", pontosPoligono[i][0])
+            .attr("cy", pontosPoligono[i][1])
+            .attr("r", 3)
+            .attr("fill", "#F75C03");
+    }
+}
+
+
+// ============================================================
+// GRÁFICO D3 #2 — Barras horizontais de contribuição
+// ============================================================
+
+function renderizarBarrasTemporada(med) {
+    var container = document.getElementById("grafico-barras-temp");
+    container.innerHTML = "";
+
+    var itens = [
+        { label: "Pontos",       valor: med.points,    cor: "#F75C03" },
+        { label: "Assistências", valor: med.assists,   cor: "#3B9EFF" },
+        { label: "Rebotes",      valor: med.rebounds,  cor: "#00C896" },
+        { label: "Roubos",       valor: med.steals,    cor: "#FFD600" },
+        { label: "Bloqueios",    valor: med.blocks,    cor: "#8888AA" }
+    ];
+
+    var larguraTotal  = container.offsetWidth || 340;
+    var margemEsq     = 90;
+    var margemDir     = 50;
+    var alturaLinha   = 30;
+    var alturaTotal   = itens.length * alturaLinha + 16;
+    var larguraBarras = larguraTotal - margemEsq - margemDir;
+
+    var svg = d3.select("#grafico-barras-temp")
+        .append("svg")
+        .attr("width", larguraTotal)
+        .attr("height", alturaTotal);
+
+    var g = svg.append("g").attr("transform", "translate(" + margemEsq + ",8)");
+
+    var maiorValor = d3.max(itens, function(d) { return d.valor || 0; }) || 1;
+
+    var escalaX = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([0, larguraBarras]);
+    var escalaY = d3.scaleBand().domain(itens.map(function(d) { return d.label; })).range([0, itens.length * alturaLinha]).padding(0.3);
+
+    g.selectAll(".barra")
+        .data(itens)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", function(d) { return escalaY(d.label); })
+        .attr("width", function(d) { return escalaX(d.valor || 0); })
+        .attr("height", escalaY.bandwidth())
+        .attr("fill", function(d) { return d.cor; })
+        .attr("rx", 3)
+        .attr("opacity", 0.85);
+
+    g.selectAll(".label")
+        .data(itens)
+        .enter()
+        .append("text")
+        .attr("x", -8).attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em").attr("text-anchor", "end")
+        .attr("fill", "#8888AA").attr("font-size", "11px")
+        .text(function(d) { return d.label; });
+
+    g.selectAll(".valor")
+        .data(itens)
+        .enter()
+        .append("text")
+        .attr("x", function(d) { return escalaX(d.valor || 0) + 5; })
+        .attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em")
+        .attr("fill", "#EEEEF5").attr("font-size", "11px").attr("font-weight", "600")
+        .text(function(d) { return d.valor; });
+}
+
+
+// ============================================================
+// GRÁFICO D3 #3 — Linha de evolução de pontos
+// ============================================================
+
+function renderizarGraficoLinha(jogos) {
+    var container = document.getElementById("grafico-linha");
+    container.innerHTML = "";
+
+    // Inverte para mostrar do mais antigo ao mais recente
+    var dadosOrdenados = jogos.slice().reverse();
+
+    var larguraTotal  = container.offsetWidth || 500;
+    var margemEsq     = 36;
+    var margemDir     = 20;
+    var margemTopo    = 10;
+    var margemBaixo   = 30;
+    var altura        = 160;
+    var larguraLinha  = larguraTotal - margemEsq - margemDir;
+
+    var svg = d3.select("#grafico-linha")
+        .append("svg")
+        .attr("width", larguraTotal)
+        .attr("height", altura + margemTopo + margemBaixo);
+
+    var g = svg.append("g").attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
+
+    var maiorPonto = d3.max(dadosOrdenados, function(d) { return d.pontos || 0; }) || 1;
+
+    var escalaX = d3.scaleLinear().domain([0, dadosOrdenados.length - 1]).range([0, larguraLinha]);
+    var escalaY = d3.scaleLinear().domain([0, maiorPonto * 1.2]).range([altura, 0]);
+
+    // Área sob a linha
+    var geraArea = d3.area()
+        .x(function(d, i) { return escalaX(i); })
+        .y0(altura)
+        .y1(function(d) { return escalaY(d.pontos || 0); });
+
+    g.append("path")
+        .datum(dadosOrdenados)
+        .attr("d", geraArea)
+        .attr("fill", "rgba(247, 92, 3, 0.10)");
+
+    // Linha
+    var geraLinha = d3.line()
+        .x(function(d, i) { return escalaX(i); })
+        .y(function(d) { return escalaY(d.pontos || 0); });
+
+    g.append("path")
+        .datum(dadosOrdenados)
+        .attr("d", geraLinha)
+        .attr("fill", "none")
+        .attr("stroke", "#F75C03")
+        .attr("stroke-width", 2);
+
+    // Pontos
+    g.selectAll(".ponto")
+        .data(dadosOrdenados)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d, i) { return escalaX(i); })
+        .attr("cy", function(d) { return escalaY(d.pontos || 0); })
+        .attr("r", 3.5)
+        .attr("fill", "#F75C03");
+
+    // Eixo Y
+    g.append("g")
+        .call(d3.axisLeft(escalaY).ticks(4).tickSize(-larguraLinha))
+        .call(function(axis) {
+            axis.select(".domain").remove();
+            axis.selectAll(".tick line").attr("stroke", "#252540");
+            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+        });
+
+    // Eixo X — índice de cada jogo
+    g.append("g")
+        .attr("transform", "translate(0," + altura + ")")
+        .call(d3.axisBottom(escalaX).ticks(dadosOrdenados.length).tickFormat(function(d) { return "J" + (d + 1); }).tickSize(0))
+        .call(function(axis) {
+            axis.select(".domain").remove();
+            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px").attr("dy", "1.2em");
+        });
+}
+
+
+// ============================================================
+// GRÁFICO D3 #4 — Barras agrupadas casa vs fora
+// ============================================================
+
+function renderizarGraficoCasaFora(casa, fora) {
+    var container = document.getElementById("grafico-casafora");
+    container.innerHTML = "";
+
+    var categorias = ["Pontos", "Assistências", "Rebotes", "Roubos"];
+    var camposCasa = [
+        casa.medias ? casa.medias.points    : 0,
+        casa.medias ? casa.medias.assists   : 0,
+        casa.medias ? casa.medias.rebounds  : 0,
+        casa.medias ? casa.medias.steals    : 0
+    ];
+    var camposFora = [
+        fora.medias ? fora.medias.points    : 0,
+        fora.medias ? fora.medias.assists   : 0,
+        fora.medias ? fora.medias.rebounds  : 0,
+        fora.medias ? fora.medias.steals    : 0
+    ];
+
+    var larguraTotal  = container.offsetWidth || 500;
+    var margemEsq     = 90;
+    var margemDir     = 20;
+    var margemTopo    = 10;
+    var margemBaixo   = 10;
+    var alturaGrupo   = 40;
+    var alturaTotal   = categorias.length * alturaGrupo + margemTopo + margemBaixo;
+    var larguraBarras = larguraTotal - margemEsq - margemDir;
+
+    var svg = d3.select("#grafico-casafora")
+        .append("svg")
+        .attr("width", larguraTotal)
+        .attr("height", alturaTotal);
+
+    var g = svg.append("g").attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
+
+    var todosValores = camposCasa.concat(camposFora);
+    var maiorValor = d3.max(todosValores) || 1;
+
+    var escalaX = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([0, larguraBarras]);
+    var escalaGrupo = d3.scaleBand().domain(categorias).range([0, categorias.length * alturaGrupo]).padding(0.15);
+    var alturaBarra = escalaGrupo.bandwidth() / 2 - 1;
+
+    // Barras de casa (laranja)
+    g.selectAll(".barra-casa")
+        .data(categorias)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", function(d) { return escalaGrupo(d); })
+        .attr("width", function(d, i) { return escalaX(camposCasa[i] || 0); })
+        .attr("height", alturaBarra)
+        .attr("fill", "#F75C03")
+        .attr("rx", 2)
+        .attr("opacity", 0.85);
+
+    // Barras de fora (azul)
+    g.selectAll(".barra-fora")
+        .data(categorias)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra + 2; })
+        .attr("width", function(d, i) { return escalaX(camposFora[i] || 0); })
+        .attr("height", alturaBarra)
+        .attr("fill", "#3B9EFF")
+        .attr("rx", 2)
+        .attr("opacity", 0.85);
+
+    // Labels de categoria
+    g.selectAll(".label-cat")
+        .data(categorias)
+        .enter()
+        .append("text")
+        .attr("x", -8)
+        .attr("y", function(d) { return escalaGrupo(d) + escalaGrupo.bandwidth() / 2; })
+        .attr("dy", "0.35em").attr("text-anchor", "end")
+        .attr("fill", "#8888AA").attr("font-size", "11px")
+        .text(function(d) { return d; });
+
+    // Valores de casa
+    g.selectAll(".val-casa")
+        .data(categorias)
+        .enter()
+        .append("text")
+        .attr("x", function(d, i) { return escalaX(camposCasa[i] || 0) + 4; })
+        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra / 2; })
+        .attr("dy", "0.35em")
+        .attr("fill", "#F75C03").attr("font-size", "10px").attr("font-weight", "600")
+        .text(function(d, i) { return camposCasa[i]; });
+
+    // Valores de fora
+    g.selectAll(".val-fora")
+        .data(categorias)
+        .enter()
+        .append("text")
+        .attr("x", function(d, i) { return escalaX(camposFora[i] || 0) + 4; })
+        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra + 2 + alturaBarra / 2; })
+        .attr("dy", "0.35em")
+        .attr("fill", "#3B9EFF").attr("font-size", "10px").attr("font-weight", "600")
+        .text(function(d, i) { return camposFora[i]; });
+
+    // Legenda
+    var legenda = svg.append("g").attr("transform", "translate(" + margemEsq + "," + (alturaTotal - 2) + ")");
+    legenda.append("rect").attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#F75C03");
+    legenda.append("text").attr("x", 14).attr("y", 7).attr("fill", "#8888AA").attr("font-size", "10px").text("Casa");
+    legenda.append("rect").attr("x", 50).attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#3B9EFF");
+    legenda.append("text").attr("x", 64).attr("y", 7).attr("fill", "#8888AA").attr("font-size", "10px").text("Fora");
+}
+</script>
+
+</body>
+</html>

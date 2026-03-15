@@ -1,0 +1,215 @@
+/* ============================================
+   time-avancado.css — Perfil avançado de time
+   ============================================ */
+
+
+/* Cabeçalho com logo e info do time */
+.cabecalho-avancado {
+    padding: 32px 0 28px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+.time-logo-avancado {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.time-logo-placeholder-av {
+    width: 72px;
+    height: 72px;
+    background-color: #252540;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #F75C03;
+    flex-shrink: 0;
+}
+
+.time-nome-avancado {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    margin-bottom: 4px;
+}
+
+.time-meta {
+    font-size: 0.82rem;
+    color: #8888AA;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.time-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.time-meta i {
+    color: #F75C03;
+    font-size: 0.75rem;
+}
+
+
+/* Seletor de temporada */
+.barra-temporada {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    padding: 12px 0;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
+
+
+/* Área de conteúdo */
+.area-conteudo-avancado {
+    padding: 28px 0 48px;
+}
+
+
+/* Card de KPI compacto */
+.card-kpi-av {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    height: 100%;
+}
+
+.card-kpi-av .kpi-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-kpi-av .kpi-rotulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+}
+
+
+/* Card de tendência */
+.card-tendencia {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.card-tendencia .tend-icone {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.card-tendencia .tend-titulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+    margin-bottom: 2px;
+}
+
+.card-tendencia .tend-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.tend-melhorando  { color: #00C896; }
+.tend-piorando    { color: #FF3B5C; }
+.tend-estavel     { color: #FFD600; }
+
+
+/* Containers dos gráficos D3 */
+.grafico-container {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.grafico-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8888AA;
+    margin-bottom: 16px;
+}
+
+
+/* Linha de último jogo */
+.linha-jogo-av {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.linha-jogo-av:last-child {
+    border-bottom: none;
+}
+
+.linha-jogo-av .res-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.res-badge.v { background-color: rgba(0, 200, 150, 0.15); color: #00C896; }
+.res-badge.d { background-color: rgba(255, 59, 92, 0.15);  color: #FF3B5C; }
+
+.linha-jogo-av .placar {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    white-space: nowrap;
+}
+
+.linha-jogo-av .local-jogo {
+    font-size: 0.72rem;
+    color: #8888AA;
+    flex: 1;
+}
+
+.linha-jogo-av .data-jogo {
+    font-size: 0.72rem;
+    color: #555570;
+    white-space: nowrap;
+}
+
+
+@media (max-width: 767px) {
+    .time-nome-avancado { font-size: 1.4rem; }
+}

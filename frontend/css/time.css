@@ -1,0 +1,227 @@
+/* ============================================
+   time.css — Perfil de um time
+   ============================================ */
+
+
+/* Cabeçalho com logo e info básica do time */
+.cabecalho-time {
+    padding: 40px 0 32px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+.cabecalho-time .time-logo-grande {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.cabecalho-time .time-logo-placeholder {
+    width: 80px;
+    height: 80px;
+    background-color: #252540;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #F75C03;
+}
+
+.cabecalho-time .time-nome-grande {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    margin-bottom: 4px;
+}
+
+.cabecalho-time .time-info-basica {
+    font-size: 0.88rem;
+    color: #8888AA;
+}
+
+.cabecalho-time .time-info-basica span {
+    margin-right: 16px;
+}
+
+
+/* Abas de navegação */
+.abas-time {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
+
+.abas-time .nav-link {
+    color: #8888AA;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.abas-time .nav-link:hover {
+    color: #EEEEF5;
+}
+
+.abas-time .nav-link.ativo {
+    color: #F75C03;
+    border-bottom-color: #F75C03;
+}
+
+
+/* Conteúdo das abas */
+.conteudo-aba {
+    display: none;
+    padding: 32px 0 48px;
+}
+
+.conteudo-aba.ativo {
+    display: block;
+}
+
+
+/* Cards de estatística do time */
+.card-stat-time {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.card-stat-time .stat-numero {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-stat-time .stat-rotulo {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8888AA;
+}
+
+
+/* Linha de último jogo na aba de performance */
+.linha-jogo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.linha-jogo:last-child {
+    border-bottom: none;
+}
+
+.linha-jogo .resultado-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.resultado-badge.vitoria {
+    background-color: rgba(0, 200, 150, 0.15);
+    color: #00C896;
+}
+
+.resultado-badge.derrota {
+    background-color: rgba(255, 59, 92, 0.15);
+    color: #FF3B5C;
+}
+
+.linha-jogo .jogo-placar {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    white-space: nowrap;
+}
+
+.linha-jogo .jogo-local {
+    font-size: 0.75rem;
+    color: #8888AA;
+}
+
+.linha-jogo .jogo-data {
+    font-size: 0.75rem;
+    color: #555570;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+
+/* Tabela do elenco */
+.tabela-elenco {
+    width: 100%;
+    font-size: 0.88rem;
+}
+
+.tabela-elenco thead th {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8888AA;
+    padding: 10px 12px;
+    border-bottom: 1px solid #252540;
+    background-color: #12121C;
+}
+
+.tabela-elenco tbody tr {
+    border-bottom: 1px solid #252540;
+    transition: background-color 0.15s ease;
+}
+
+.tabela-elenco tbody tr:hover {
+    background-color: #1D1E35;
+}
+
+.tabela-elenco tbody td {
+    padding: 12px;
+    color: #EEEEF5;
+    vertical-align: middle;
+}
+
+.tabela-elenco .numero-camisa {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #F75C03;
+    width: 40px;
+}
+
+.tabela-elenco .nome-jogador-link {
+    color: #EEEEF5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.tabela-elenco .nome-jogador-link:hover {
+    color: #F75C03;
+}

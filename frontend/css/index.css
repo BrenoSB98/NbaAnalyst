@@ -1,0 +1,390 @@
+/* ============================================
+   index.css — Estilos da página inicial
+   Importa estilo.css como base global.
+   ============================================ */
+
+
+/* ============================================
+   HERO
+   ============================================ */
+.hero-home {
+    padding-top: 100px;
+    padding-bottom: 60px;
+    background-color: #0D0D14;
+    border-bottom: 1px solid #252540;
+}
+
+.hero-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #F75C03;
+    margin-bottom: 14px;
+}
+
+.hero-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3.4rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    line-height: 1.08;
+    margin-bottom: 16px;
+}
+
+.hero-titulo .destaque {
+    color: #F75C03;
+}
+
+.hero-descricao {
+    font-size: 0.95rem;
+    color: #8888AA;
+    line-height: 1.7;
+    margin-bottom: 28px;
+    max-width: 460px;
+}
+
+/* Botões de navegação pública — sempre visíveis */
+.hero-nav-publico {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+/* Botões de login/cadastro — só para não logados */
+.hero-nav-auth {
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+    .hero-titulo {
+        font-size: 2.4rem;
+    }
+}
+
+
+/* ============================================
+   FAIXA DE KPIs
+   ============================================ */
+.faixa-kpis {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    padding: 24px 0;
+}
+
+.kpi-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 4px 20px;
+    border-right: 1px solid #252540;
+}
+
+.kpi-item:last-child {
+    border-right: none;
+}
+
+.kpi-icone {
+    font-size: 1.6rem;
+    color: #F75C03;
+}
+
+.kpi-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.kpi-rotulo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+}
+
+/* Efeito de carregamento nos KPIs */
+.kpi-carregando {
+    display: inline-block;
+    width: 60px;
+    height: 28px;
+    background-color: #252540;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+    .kpi-item {
+        padding: 8px 12px;
+        border-right: none;
+        border-bottom: 1px solid #252540;
+    }
+
+    .kpi-item:last-child {
+        border-bottom: none;
+    }
+}
+
+
+/* ============================================
+   SEÇÃO WIN-RATE DO MODELO
+   ============================================ */
+.secao-modelo {
+    padding: 60px 0;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+/* Card do win-rate geral — número grande no centro */
+.card-winrate-principal {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.card-winrate-principal .numero-grande {
+    font-family: 'Oswald', sans-serif;
+    font-size: 4.5rem;
+    font-weight: 700;
+    color: #F75C03;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-winrate-principal .rotulo-winrate {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8888AA;
+    margin-bottom: 12px;
+}
+
+.card-winrate-principal .total-predicoes {
+    font-size: 0.82rem;
+    color: #555570;
+}
+
+/* Cards de win-rate por estatística */
+.card-stat-modelo {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    height: 100%;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-stat-modelo:hover {
+    border-color: rgba(247, 92, 3, 0.35);
+    transform: translateY(-2px);
+}
+
+.card-stat-modelo .stat-icone {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.card-stat-modelo .stat-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-stat-modelo .stat-nome {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8888AA;
+    margin-bottom: 2px;
+}
+
+.card-stat-modelo .stat-margem {
+    font-size: 0.68rem;
+    color: #555570;
+    margin-bottom: 10px;
+}
+
+.barra-progresso {
+    height: 5px;
+    background-color: #252540;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.barra-progresso .preenchimento {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+}
+
+
+/* ============================================
+   SEÇÃO PREDIÇÕES DE HOJE
+   ============================================ */
+.secao-predicoes {
+    padding: 60px 0;
+    background-color: #0D0D14;
+    border-bottom: 1px solid #252540;
+}
+
+.card-predicao {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card-predicao:hover {
+    border-color: rgba(247, 92, 3, 0.35);
+    background-color: #1D1E35;
+}
+
+.card-predicao .pred-jogador {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #EEEEF5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-predicao .pred-adversario {
+    font-size: 0.78rem;
+    color: #8888AA;
+}
+
+.card-predicao .pred-pts {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #F75C03;
+    white-space: nowrap;
+}
+
+.card-predicao .pred-rotulo {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+    text-align: right;
+}
+
+
+/* ============================================
+   SEÇÃO FUNCIONALIDADES
+   ============================================ */
+.secao-funcionalidades {
+    padding: 60px 0;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+.card-funcionalidade {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 28px 22px;
+    height: 100%;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-funcionalidade:hover {
+    border-color: rgba(247, 92, 3, 0.35);
+    transform: translateY(-3px);
+}
+
+.card-funcionalidade .func-icone-wrapper {
+    width: 46px;
+    height: 46px;
+    background-color: rgba(247, 92, 3, 0.12);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.card-funcionalidade .func-icone-wrapper i {
+    font-size: 1.3rem;
+    color: #F75C03;
+}
+
+.card-funcionalidade .func-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    margin-bottom: 8px;
+}
+
+.card-funcionalidade .func-desc {
+    font-size: 0.85rem;
+    color: #8888AA;
+    line-height: 1.65;
+    margin-bottom: 18px;
+}
+
+.badge-logado {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #FFD600;
+    background-color: rgba(255, 214, 0, 0.1);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-bottom: 12px;
+}
+
+
+/* ============================================
+   CTA FINAL
+   ============================================ */
+.secao-cta {
+    padding: 72px 0;
+    text-align: center;
+    background-color: #0D0D14;
+    border-bottom: 1px solid #252540;
+}
+
+.secao-cta .cta-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    margin-bottom: 14px;
+}
+
+.secao-cta .cta-desc {
+    font-size: 0.95rem;
+    color: #8888AA;
+    max-width: 440px;
+    margin: 0 auto 30px;
+}
+
+@media (max-width: 767px) {
+    .secao-cta .cta-titulo {
+        font-size: 1.8rem;
+    }
+}

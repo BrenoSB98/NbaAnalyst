@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Onerb AI NBA</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/onerb.css">
+</head>
+<body>
+
+<div id="app-wrapper">
+
+    <!-- Menu de navegação -->
+    <nav id="navbar-principal"></nav>
+
+    <main id="conteudo-principal" style="padding-top: 64px;">
+
+        <div class="onerb-layout">
+
+            <!-- Painel lateral -->
+            <div class="onerb-sidebar">
+
+                <!-- Seletor de modelo -->
+                <p class="modelo-label">Modelo</p>
+                <select class="form-control-nba" id="select-modelo">
+                    <option value="gpt-4o-mini" selected>GPT-4o Mini</option>
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </select>
+
+                <!-- Botão de limpar -->
+                <button class="btn-limpar" onclick="limparConversa()">
+                    <i class="bi bi-trash3"></i> Limpar conversa
+                </button>
+
+                <!-- Exemplos de perguntas -->
+                <p class="sidebar-titulo">Exemplos</p>
+
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Qual a média de pontos do LeBron James na temporada 2023?
+                </div>
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Quais foram os resultados do Lakers em março de 2023?
+                </div>
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Mostre os maiores pontuadores da temporada 2022.
+                </div>
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Quais temporadas estão disponíveis no banco de dados?
+                </div>
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Compare o aproveitamento do Warriors e do Celtics em 2023.
+                </div>
+                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
+                    Quantos jogos o Stephen Curry jogou na temporada 2023?
+                </div>
+
+            </div>
+
+            <!-- Área principal do chat -->
+            <div class="onerb-chat">
+
+                <!-- Cabeçalho do chat -->
+                <div class="chat-header">
+                    <div class="chat-logo">
+                        <i class="bi bi-dribbble"></i>
+                    </div>
+                    <div>
+                        <div class="chat-nome">Onerb AI NBA</div>
+                        <div class="chat-desc">Assistente especializado em dados históricos da NBA</div>
+                    </div>
+                </div>
+
+                <!-- Mensagens -->
+                <div class="chat-mensagens" id="chat-mensagens">
+                    <!-- Mensagem de boas-vindas -->
+                    <div class="msg-assistente" id="msg-boas-vindas">
+                        <div class="msg-avatar"><i class="bi bi-dribbble"></i></div>
+                        <div class="msg-balao">
+                            Olá! Sou o <strong>Onerb AI NBA</strong> 🏀<br><br>
+                            Posso responder perguntas sobre times, jogadores, estatísticas e resultados de jogos com base nos dados do banco.<br><br>
+                            Como posso ajudar?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área de input -->
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <textarea id="campo-pergunta" rows="1" placeholder="Pergunte sobre times, jogadores ou estatísticas..." onkeydown="verificarEnter(event)" oninput="ajustarAltura(this)"></textarea>
+                        <button class="btn-enviar" id="btn-enviar" onclick="enviarMensagem()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <p class="chat-hint">Enter para enviar · Shift+Enter para nova linha</p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/componentes.js"></script>
+
+<script>
+// Guarda de rota
+verificarAutenticacao();
+
+// Histórico da conversa — mantido em memória enquanto a página estiver aberta
+var historico = [];
+
+// Controla se está aguardando resposta
+var aguardando = false;
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Renderiza só o menu — sem rodapé para maximizar a área do chat
+    renderizarMenu();
+
+    // Foca no campo de texto ao carregar
+    document.getElementById("campo-pergunta").focus();
+});
+
+
+// Envia a mensagem ao pressionar Enter (sem Shift)
+function verificarEnter(evento) {
+    if (evento.key === "Enter" && !evento.shiftKey) {
+        evento.preventDefault();
+        enviarMensagem();
+    }
+}
+
+
+// Expande o textarea conforme o usuário digita (até 120px)
+function ajustarAltura(elemento) {
+    elemento.style.height = "auto";
+    elemento.style.height = Math.min(elemento.scrollHeight, 120) + "px";
+}
+
+
+// Insere o texto do exemplo no campo de input
+function usarExemplo(elemento) {
+    var campo = document.getElementById("campo-pergunta");
+    campo.value = elemento.textContent.trim();
+    campo.focus();
+    ajustarAltura(campo);
+}
+
+
+// Envia a mensagem para o backend e exibe a resposta
+async function enviarMensagem() {
+    if (aguardando) {
+        return;
+    }
+
+    var campo = document.getElementById("campo-pergunta");
+    var pergunta = campo.value.trim();
+
+    if (pergunta === "") {
+        return;
+    }
+
+    var modelo = document.getElementById("select-modelo").value;
+
+    // Exibe a mensagem do usuário na tela
+    adicionarMensagemUsuario(pergunta);
+
+    // Adiciona ao histórico local
+    historico.push({ papel: "usuario", conteudo: pergunta });
+
+    // Limpa o campo e reajusta altura
+    campo.value = "";
+    campo.style.height = "auto";
+
+    // Bloqueia o envio e mostra indicador de digitando
+    aguardando = true;
+    document.getElementById("btn-enviar").disabled = true;
+    var idDigitando = mostrarDigitando();
+
+    try {
+        var corpo = {
+            pergunta: pergunta,
+            historico: historico.slice(0, -1),  // envia o histórico sem a pergunta atual (já está no campo)
+            modelo: modelo
+        };
+
+        var resposta = await chamarApiAutenticada("/chat/mensagem", "POST", corpo);
+
+        // Remove o indicador de digitando
+        removerDigitando(idDigitando);
+
+        // Exibe a resposta do assistente
+        adicionarMensagemAssistente(resposta.resposta);
+
+        // Adiciona ao histórico local
+        historico.push({ papel: "oraculo", conteudo: resposta.resposta });
+
+    } catch (erro) {
+        removerDigitando(idDigitando);
+        adicionarMensagemAssistente("Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.");
+    }
+
+    aguardando = false;
+    document.getElementById("btn-enviar").disabled = false;
+    campo.focus();
+}
+
+
+// Adiciona um balão de mensagem do usuário ao chat
+function adicionarMensagemUsuario(texto) {
+    var container = document.getElementById("chat-mensagens");
+
+    var div = document.createElement("div");
+    div.className = "msg-usuario";
+    div.innerHTML = '<div class="msg-balao">' + escaparHtml(texto) + '</div>';
+
+    container.appendChild(div);
+    rolarParaBaixo();
+}
+
+
+// Adiciona um balão de mensagem do assistente ao chat
+function adicionarMensagemAssistente(texto) {
+    var container = document.getElementById("chat-mensagens");
+
+    var div = document.createElement("div");
+    div.className = "msg-assistente";
+    div.innerHTML = ''
+        + '<div class="msg-avatar"><i class="bi bi-dribbble"></i></div>'
+        + '<div class="msg-balao">' + escaparHtml(texto) + '</div>';
+
+    container.appendChild(div);
+    rolarParaBaixo();
+}
+
+
+// Mostra o indicador de "digitando..." e retorna o ID do elemento criado
+function mostrarDigitando() {
+    var container = document.getElementById("chat-mensagens");
+    var id = "digitando-" + Date.now();
+
+    var div = document.createElement("div");
+    div.className = "msg-digitando";
+    div.id = id;
+    div.innerHTML = ''
+        + '<div class="msg-avatar"><i class="bi bi-dribbble"></i></div>'
+        + '<div class="balao-digitando">'
+        +   '<div class="ponto"></div>'
+        +   '<div class="ponto"></div>'
+        +   '<div class="ponto"></div>'
+        + '</div>';
+
+    container.appendChild(div);
+    rolarParaBaixo();
+
+    return id;
+}
+
+
+// Remove o indicador de digitando pelo ID
+function removerDigitando(id) {
+    var elemento = document.getElementById(id);
+    if (elemento) {
+        elemento.remove();
+    }
+}
+
+
+// Rola o chat até a última mensagem
+function rolarParaBaixo() {
+    var container = document.getElementById("chat-mensagens");
+    container.scrollTop = container.scrollHeight;
+}
+
+
+// Limpa toda a conversa e o histórico local
+function limparConversa() {
+    historico = [];
+
+    var container = document.getElementById("chat-mensagens");
+
+    // Remove todas as mensagens exceto a de boas-vindas
+    var mensagens = container.querySelectorAll(".msg-assistente, .msg-usuario, .msg-digitando");
+    for (var i = 0; i < mensagens.length; i++) {
+        if (mensagens[i].id !== "msg-boas-vindas") {
+            mensagens[i].remove();
+        }
+    }
+
+    document.getElementById("campo-pergunta").focus();
+}
+
+
+// Converte caracteres especiais para HTML entities — previne XSS
+function escaparHtml(texto) {
+    var mapa = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    };
+
+    // Preserva quebras de linha como <br>
+    return texto.replace(/[&<>"']/g, function(c) { return mapa[c]; }).replace(/\n/g, "<br>");
+}
+</script>
+
+</body>
+</html>

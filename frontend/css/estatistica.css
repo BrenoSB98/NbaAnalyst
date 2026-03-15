@@ -1,0 +1,164 @@
+/* ============================================
+   estatisticas.css — Rankings gerais
+   ============================================ */
+
+
+/* Cabeçalho */
+.cabecalho-estatisticas {
+    padding: 40px 0 32px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+
+/* Barra de controles — categoria e temporada */
+.barra-controles {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    padding: 14px 0;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
+
+.barra-controles select.form-control-nba {
+    max-width: 220px;
+}
+
+
+/* Botões de seleção de categoria */
+.lista-categorias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.btn-categoria {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 20px;
+    color: #8888AA;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-categoria:hover {
+    border-color: rgba(247, 92, 3, 0.4);
+    color: #EEEEF5;
+}
+
+.btn-categoria.ativo {
+    background-color: rgba(247, 92, 3, 0.12);
+    border-color: #F75C03;
+    color: #F75C03;
+}
+
+
+/* Área de conteúdo */
+.area-ranking {
+    padding: 32px 0 48px;
+}
+
+
+/* Linha de ranking */
+.linha-ranking {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.linha-ranking:last-child {
+    border-bottom: none;
+}
+
+.linha-ranking .posicao {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #555570;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.linha-ranking .posicao.top3 {
+    color: #F75C03;
+}
+
+.linha-ranking .nome-jogador {
+    flex: 1;
+    font-weight: 600;
+    color: #EEEEF5;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.linha-ranking .nome-jogador:hover {
+    color: #F75C03;
+}
+
+.linha-ranking .jogos {
+    font-size: 0.75rem;
+    color: #555570;
+    white-space: nowrap;
+}
+
+.linha-ranking .valor-media {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #F75C03;
+    white-space: nowrap;
+    width: 52px;
+    text-align: right;
+}
+
+
+/* Container do gráfico D3 */
+.grafico-container {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.grafico-container svg text {
+    font-family: 'Karla', sans-serif;
+}
+
+
+/* Banner de login */
+.banner-login-stats {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    margin: 32px 0;
+}
+
+.banner-login-stats .titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    margin-bottom: 8px;
+}
+
+.banner-login-stats .desc {
+    font-size: 0.88rem;
+    color: #8888AA;
+    margin-bottom: 20px;
+}

@@ -1,0 +1,66 @@
+.pagina-login {
+    background-color: #0D0D14;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 40px 16px;
+}
+
+.card-login {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.login-logo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.login-logo i {
+    color: #F75C03;
+    font-size: 1.6rem;
+}
+
+.login-subtitulo {
+    font-size: 0.88rem;
+    color: #8888AA;
+    margin-bottom: 32px;
+}
+
+.login-divisor {
+    border-color: #252540;
+    margin: 24px 0;
+}
+
+.login-rodape {
+    text-align: center;
+    font-size: 0.88rem;
+    color: #8888AA;
+    margin-top: 24px;
+}
+
+.login-rodape a {
+    color: #F75C03;
+    font-weight: 600;
+}
+
+.login-rodape a:hover {
+    color: #D94E00;
+}
+
+@media (max-width: 576px) {
+    .card-login {
+        padding: 28px 20px;
+    }
+}

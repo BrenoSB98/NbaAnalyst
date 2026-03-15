@@ -1,0 +1,215 @@
+/* ============================================
+   predicoes.css — Modelo preditivo do dia
+   ============================================ */
+
+
+/* Cabeçalho */
+.cabecalho-predicoes {
+    padding: 40px 0 32px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+
+/* Abas de visualização */
+.abas-predicoes {
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    padding: 0;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
+
+.abas-predicoes .nav-link {
+    color: #8888AA;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.abas-predicoes .nav-link:hover {
+    color: #EEEEF5;
+}
+
+.abas-predicoes .nav-link.ativo {
+    color: #F75C03;
+    border-bottom-color: #F75C03;
+}
+
+
+/* Área de conteúdo */
+.area-predicoes {
+    padding: 32px 0 48px;
+}
+
+
+/* Card de jogo com predições */
+.card-jogo-predicao {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+/* Cabeçalho do card de jogo */
+.card-jogo-predicao .jogo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+    cursor: pointer;
+    gap: 12px;
+}
+
+.card-jogo-predicao .jogo-times {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+}
+
+.card-jogo-predicao .jogo-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background-color: rgba(247, 92, 3, 0.12);
+    color: #F75C03;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.card-jogo-predicao .jogo-seta {
+    color: #555570;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.card-jogo-predicao .jogo-seta.aberto {
+    transform: rotate(180deg);
+}
+
+/* Tabela de jogadores dentro do card */
+.tabela-predicoes {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.tabela-predicoes thead th {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #555570;
+    padding: 8px 18px;
+    border-bottom: 1px solid #252540;
+    background-color: #16172A;
+    white-space: nowrap;
+}
+
+.tabela-predicoes tbody tr {
+    border-bottom: 1px solid #252540;
+    transition: background-color 0.15s ease;
+}
+
+.tabela-predicoes tbody tr:last-child {
+    border-bottom: none;
+}
+
+.tabela-predicoes tbody tr:hover {
+    background-color: #1D1E35;
+}
+
+.tabela-predicoes tbody td {
+    padding: 10px 18px;
+    color: #EEEEF5;
+    vertical-align: middle;
+}
+
+.tabela-predicoes .td-jogador {
+    font-weight: 600;
+}
+
+.tabela-predicoes .td-jogador a {
+    color: #EEEEF5;
+    text-decoration: none;
+}
+
+.tabela-predicoes .td-jogador a:hover {
+    color: #F75C03;
+}
+
+.tabela-predicoes .td-local {
+    font-size: 0.72rem;
+    color: #8888AA;
+}
+
+.tabela-predicoes .td-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #F75C03;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tabela-predicoes .td-valor-sec {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    color: #8888AA;
+    text-align: right;
+    white-space: nowrap;
+}
+
+
+/* Aba ranking — gráfico D3 */
+.grafico-container {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+
+/* Resumo do dia no cabeçalho */
+.resumo-dia {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.resumo-dia .resumo-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.resumo-dia .resumo-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    line-height: 1;
+}
+
+.resumo-dia .resumo-rotulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555570;
+    margin-top: 2px;
+}

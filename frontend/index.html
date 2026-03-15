@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Dados que vencem a quadra</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Estilos globais -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Estilos desta página -->
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<!-- Wrapper principal para empurrar o rodapé para o fundo -->
+<div id="app-wrapper">
+
+    <!-- Menu de navegação — preenchido pelo componentes.js -->
+    <nav id="navbar-principal"></nav>
+
+    <main id="conteudo-principal">
+
+        <!-- ============================================
+             HERO
+             ============================================ -->
+        <section class="hero-home">
+            <div class="container">
+                <div class="row align-items-center">
+
+                    <!-- Texto do hero -->
+                    <div class="col-lg-7">
+                        <p class="hero-eyebrow">
+                            <i class="bi bi-dribbble me-2"></i>Análise preditiva de basquete
+                        </p>
+
+                        <h1 class="hero-titulo">
+                            Dados que<br>
+                            <span class="destaque">vencem</span><br>
+                            a quadra.
+                        </h1>
+
+                        <p class="hero-descricao">
+                            Estatísticas completas da NBA, modelo preditivo com XGBoost e análise de over/under para todas as franquias e jogadores.
+                        </p>
+
+                        <!-- Links públicos sempre visíveis -->
+                        <div class="hero-nav-publico">
+                            <a href="/times.html" class="btn-nba-ghost btn-nba btn-sm">
+                                <i class="bi bi-shield-fill me-1"></i> Times
+                            </a>
+                            <a href="/estatisticas.html" class="btn-nba-ghost btn-nba btn-sm">
+                                <i class="bi bi-bar-chart-fill me-1"></i> Estatísticas
+                            </a>
+                        </div>
+
+                        <!-- Botões de login e cadastro — escondidos pelo JS quando logado -->
+                        <div class="hero-nav-auth" id="hero-nav-auth">
+                            <a href="/login.html" class="btn-nba-outline btn-nba btn-sm">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+                            </a>
+                            <a href="/cadastro.html" class="btn-nba btn-nba btn-sm">
+                                <i class="bi bi-person-plus me-1"></i> Criar Conta
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             FAIXA DE KPIs
+             ============================================ -->
+        <div class="faixa-kpis">
+            <div class="container">
+                <div class="row g-0">
+
+                    <div class="col-6 col-md-3">
+                        <div class="kpi-item">
+                            <i class="bi bi-graph-up-arrow kpi-icone"></i>
+                            <div>
+                                <div class="kpi-valor" id="kpi-winrate">
+                                    <span class="kpi-carregando"></span>
+                                </div>
+                                <div class="kpi-rotulo">Win-rate do Modelo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="kpi-item">
+                            <i class="bi bi-calendar-event kpi-icone"></i>
+                            <div>
+                                <div class="kpi-valor" id="kpi-jogos-hoje">
+                                    <span class="kpi-carregando"></span>
+                                </div>
+                                <div class="kpi-rotulo">Jogos Hoje</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="kpi-item">
+                            <i class="bi bi-person-fill kpi-icone"></i>
+                            <div>
+                                <div class="kpi-valor" id="kpi-predicoes-hoje">
+                                    <span class="kpi-carregando"></span>
+                                </div>
+                                <div class="kpi-rotulo">Predições Hoje</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="kpi-item">
+                            <i class="bi bi-shield-fill kpi-icone"></i>
+                            <div>
+                                <div class="kpi-valor">30</div>
+                                <div class="kpi-rotulo">Franquias NBA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             DESEMPENHO DO MODELO PREDITIVO
+             ============================================ -->
+        <section class="secao-modelo">
+            <div class="container">
+
+                <div class="linha-acento mb-2"></div>
+                <h2 class="titulo-secao mb-1">Desempenho do Modelo</h2>
+                <p class="subtitulo-secao">Acurácia por estatística nos jogos finalizados da temporada atual.</p>
+
+                <!-- Spinner de carregamento -->
+                <div id="modelo-carregando">
+                    <div class="spinner-nba">
+                        <div class="bola-animada"></div>
+                        <span>Carregando dados do modelo...</span>
+                    </div>
+                </div>
+
+                <!-- Conteúdo real — fica oculto até a API responder -->
+                <div id="modelo-conteudo" style="display: none;">
+                    <div class="row g-4 align-items-center">
+
+                        <!-- Win-rate geral em destaque -->
+                        <div class="col-12 col-md-3">
+                            <div class="card-winrate-principal">
+                                <div class="numero-grande" id="modelo-winrate-geral">—</div>
+                                <div class="rotulo-winrate">Win-Rate Geral</div>
+                                <div class="total-predicoes" id="modelo-total-pred">—</div>
+                            </div>
+                        </div>
+
+                        <!-- Cards de win-rate por estatística -->
+                        <div class="col-12 col-md-9">
+                            <div class="row g-3" id="modelo-cards-stats">
+                                <!-- preenchido por renderizarCardsModelo() -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Mensagem de erro -->
+                <div id="modelo-erro" style="display: none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-exclamation-circle icone-vazio"></i>
+                        <p class="titulo-vazio">Sem dados de desempenho</p>
+                        <p class="desc-vazio">Nenhuma predição foi avaliada ainda nesta temporada.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============================================
+             PREDIÇÕES DE HOJE
+             Só aparece para usuários logados
+             ============================================ -->
+        <section class="secao-predicoes" id="secao-predicoes" style="display: none;">
+            <div class="container">
+
+                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+                    <div>
+                        <div class="linha-acento mb-2"></div>
+                        <h2 class="titulo-secao mb-1">Predições de Hoje</h2>
+                        <p class="subtitulo-secao mb-0">Previsões do modelo para os jogos de hoje.</p>
+                    </div>
+                    <a href="/predicoes.html" class="btn-nba btn-nba btn-sm d-flex align-items-center gap-2">
+                        <i class="bi bi-graph-up-arrow"></i> Ver Todas
+                    </a>
+                </div>
+
+                <!-- Spinner -->
+                <div id="predicoes-carregando">
+                    <div class="spinner-nba">
+                        <div class="bola-animada"></div>
+                        <span>Carregando predições...</span>
+                    </div>
+                </div>
+
+                <!-- Lista de predições -->
+                <div id="predicoes-lista" style="display: none;"></div>
+
+                <!-- Estado vazio -->
+                <div id="predicoes-vazio" style="display: none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-graph-up-arrow icone-vazio"></i>
+                        <p class="titulo-vazio">Sem predições para hoje</p>
+                        <p class="desc-vazio">Nenhuma predição foi gerada para os jogos de hoje ainda.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============================================
+             FUNCIONALIDADES DA PLATAFORMA
+             ============================================ -->
+        <section class="secao-funcionalidades">
+            <div class="container">
+
+                <div class="text-center mb-5">
+                    <div class="linha-acento mx-auto mb-2"></div>
+                    <h2 class="titulo-secao">O que você encontra aqui</h2>
+                    <p class="subtitulo-secao">Tudo que você precisa para analisar a NBA com dados reais.</p>
+                </div>
+
+                <div class="row g-4">
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-shield-fill"></i>
+                            </div>
+                            <h3 class="func-titulo">Perfil de Franquias</h3>
+                            <p class="func-desc">Dados completos de cada time: elenco, conferência, aproveitamento e desempenho nos últimos jogos.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-bar-chart-fill"></i>
+                            </div>
+                            <h3 class="func-titulo">Estatísticas Gerais</h3>
+                            <p class="func-desc">Rankings de líderes em pontos, assistências, rebotes, roubos e bloqueios por temporada.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <h3 class="func-titulo">Modelo Preditivo</h3>
+                            <span class="badge-logado">
+                                <i class="bi bi-lock-fill"></i> Requer login
+                            </span>
+                            <p class="func-desc">Predições de pontos, assistências e rebotes para os jogadores dos jogos do dia.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <h3 class="func-titulo">Painel de Apostas</h3>
+                            <span class="badge-logado">
+                                <i class="bi bi-lock-fill"></i> Requer login
+                            </span>
+                            <p class="func-desc">Análise de over/under, apostas de alta confiança e tendências de desempenho por jogador.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <h3 class="func-titulo">Perfil Avançado</h3>
+                            <span class="badge-logado">
+                                <i class="bi bi-lock-fill"></i> Requer login
+                            </span>
+                            <p class="func-desc">Dashboards por jogador com médias, histórico jogo a jogo e análise casa/fora.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card-funcionalidade">
+                            <div class="func-icone-wrapper">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <h3 class="func-titulo">Oráculo IA</h3>
+                            <span class="badge-logado">
+                                <i class="bi bi-lock-fill"></i> Requer login
+                            </span>
+                            <p class="func-desc">Assistente de IA com dados históricos da NBA para responder suas dúvidas em tempo real.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             CTA FINAL
+             Só aparece para usuários não logados
+             ============================================ -->
+        <section class="secao-cta" id="secao-cta">
+            <div class="container">
+                <h2 class="cta-titulo">Pronto para entrar em quadra?</h2>
+                <p class="cta-desc">Crie sua conta gratuitamente e acesse o modelo preditivo, o painel de apostas e o Oráculo IA.</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/cadastro.html" class="btn-nba btn-nba btn-lg">
+                        <i class="bi bi-person-plus me-2"></i>Criar Conta Grátis
+                    </a>
+                    <a href="/login.html" class="btn-nba-ghost btn-nba btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Já tenho conta
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Rodapé — preenchido pelo componentes.js -->
+    <footer id="rodape-principal"></footer>
+
+</div><!-- fim #app-wrapper -->
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Scripts globais em ordem -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/componentes.js"></script>
+
+<script>
+// Executa quando o HTML terminar de carregar
+document.addEventListener("DOMContentLoaded", function() {
+    inicializarPagina();
+    carregarDesempenhoModelo();
+    carregarKpisHoje();
+
+    // Esconde botões de login/cadastro para usuários já logados
+    if (estaLogado()) {
+        document.getElementById("hero-nav-auth").style.display = "none";
+    }
+
+    // Só mostra predições e esconde o CTA se o usuário estiver logado
+    if (estaLogado()) {
+        document.getElementById("secao-predicoes").style.display = "block";
+        document.getElementById("secao-cta").style.display = "none";
+        carregarPredicoesDia();
+    }
+});
+
+
+// Busca e exibe o desempenho do modelo preditivo
+async function carregarDesempenhoModelo() {
+    try {
+        var dados = await chamarApi("/modelo/desempenho");
+
+        document.getElementById("kpi-winrate").textContent = dados.win_rate_geral + "%";
+        document.getElementById("modelo-winrate-geral").textContent = dados.win_rate_geral + "%";
+        document.getElementById("modelo-total-pred").textContent = dados.total_predicoes_avaliadas + " predições avaliadas";
+
+        renderizarCardsModelo(dados);
+
+        document.getElementById("modelo-carregando").style.display = "none";
+        document.getElementById("modelo-conteudo").style.display = "block";
+
+    } catch (erro) {
+        document.getElementById("modelo-carregando").style.display = "none";
+        document.getElementById("modelo-erro").style.display = "block";
+        document.getElementById("kpi-winrate").textContent = "—";
+    }
+}
+
+
+// Monta os 5 cards de estatística do modelo
+function renderizarCardsModelo(dados) {
+    var container = document.getElementById("modelo-cards-stats");
+    var html = "";
+
+    // Lista das estatísticas a exibir
+    var estatisticas = [
+        { campo: "pontos",       label: "Pontos",       icone: "bi-bullseye",         margem: "± 5.0 pts" },
+        { campo: "assistencias", label: "Assistências", icone: "bi-hand-index-thumb", margem: "± 2.5 ast" },
+        { campo: "rebotes",      label: "Rebotes",      icone: "bi-arrow-repeat",     margem: "± 3.0 reb" },
+        { campo: "roubos",       label: "Roubos",       icone: "bi-lightning-fill",   margem: "± 1.5 stl" },
+        { campo: "bloqueios",    label: "Bloqueios",    icone: "bi-shield-fill",      margem: "± 1.5 blk" }
+    ];
+
+    for (var i = 0; i < estatisticas.length; i++) {
+        var est = estatisticas[i];
+        var info = dados[est.campo];
+
+        if (!info) {
+            continue;
+        }
+
+        var wr = info.win_rate;
+
+        // Cor do valor conforme resultado
+        var cor = "#FF3B5C";
+        if (wr >= 70) {
+            cor = "#00C896";
+        } else if (wr >= 55) {
+            cor = "#FFD600";
+        }
+
+        html = html
+            + '<div class="col-6 col-sm-4 col-xl">'
+            +   '<div class="card-stat-modelo">'
+            +     '<i class="bi ' + est.icone + ' stat-icone" style="color:' + cor + ';"></i>'
+            +     '<div class="stat-valor" style="color:' + cor + ';">' + wr + '%</div>'
+            +     '<div class="stat-nome">' + est.label + '</div>'
+            +     '<div class="stat-margem">' + est.margem + '</div>'
+            +     '<div class="barra-progresso">'
+            +       '<div class="preenchimento" style="width:' + wr + '%; background-color:' + cor + ';"></div>'
+            +     '</div>'
+            +   '</div>'
+            + '</div>';
+    }
+
+    container.innerHTML = html;
+}
+
+
+// Busca os KPIs de jogos de hoje e predições de hoje
+async function carregarKpisHoje() {
+    // KPI: jogos de hoje
+    try {
+        var hoje = new Date();
+        var ano = hoje.getFullYear();
+        var mes = String(hoje.getMonth() + 1).padStart(2, "0");
+        var dia = String(hoje.getDate()).padStart(2, "0");
+        var dataHoje = ano + "-" + mes + "-" + dia;
+
+        var amanha = new Date();
+        amanha.setDate(amanha.getDate() + 1);
+        var anoA = amanha.getFullYear();
+        var mesA = String(amanha.getMonth() + 1).padStart(2, "0");
+        var diaA = String(amanha.getDate()).padStart(2, "0");
+        var dataAmanha = anoA + "-" + mesA + "-" + diaA;
+
+        var query = construirQueryString({ data_inicio: dataHoje, data_fim: dataAmanha, page_size: 1 });
+        var dadosJogos = await chamarApi("/jogos" + query);
+        document.getElementById("kpi-jogos-hoje").textContent = dadosJogos.total || 0;
+
+    } catch (erro) {
+        document.getElementById("kpi-jogos-hoje").textContent = "—";
+    }
+
+    // KPI: predições de hoje — só para usuários logados
+    if (!estaLogado()) {
+        document.getElementById("kpi-predicoes-hoje").textContent = "—";
+        return;
+    }
+
+    try {
+        var dadosPred = await chamarApiAutenticada("/predicoes/hoje");
+        document.getElementById("kpi-predicoes-hoje").textContent = dadosPred.total_predicoes || 0;
+    } catch (erro) {
+        document.getElementById("kpi-predicoes-hoje").textContent = "—";
+    }
+}
+
+
+// Carrega e exibe as predições de hoje (só para logados)
+async function carregarPredicoesDia() {
+    try {
+        var dados = await chamarApiAutenticada("/predicoes/hoje");
+
+        document.getElementById("predicoes-carregando").style.display = "none";
+
+        if (!dados.predicoes || dados.predicoes.length === 0) {
+            document.getElementById("predicoes-vazio").style.display = "block";
+            return;
+        }
+
+        // Ordena por pontos previstos (maior primeiro) e limita a 6
+        var predicoes = dados.predicoes.slice();
+        predicoes.sort(function(a, b) {
+            return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
+        });
+        if (predicoes.length > 6) {
+            predicoes = predicoes.slice(0, 6);
+        }
+
+        var html = '<div class="row g-3">';
+
+        for (var i = 0; i < predicoes.length; i++) {
+            var pred = predicoes[i];
+            var pts = pred.pontos_previstos !== null ? parseFloat(pred.pontos_previstos).toFixed(1) : "—";
+            var adversario = pred.nome_adversario || "—";
+            var time = pred.nome_time || "";
+
+            html = html
+                + '<div class="col-12 col-md-6 col-xl-4">'
+                +   '<div class="card-predicao">'
+                +     '<div style="min-width:0; flex:1;">'
+                +       '<div class="pred-jogador">' + pred.nome_jogador + '</div>'
+                +       '<div class="pred-adversario">' + time + ' vs ' + adversario + '</div>'
+                +     '</div>'
+                +     '<div>'
+                +       '<div class="pred-pts">' + pts + '</div>'
+                +       '<div class="pred-rotulo">pts prev.</div>'
+                +     '</div>'
+                +   '</div>'
+                + '</div>';
+        }
+
+        html = html + '</div>';
+
+        document.getElementById("predicoes-lista").innerHTML = html;
+        document.getElementById("predicoes-lista").style.display = "block";
+
+    } catch (erro) {
+        document.getElementById("predicoes-carregando").style.display = "none";
+        document.getElementById("predicoes-vazio").style.display = "block";
+    }
+}
+</script>
+
+</body>
+</html>

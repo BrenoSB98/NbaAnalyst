@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Criar Conta</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body>
+
+<div class="pagina-cadastro">
+    <div class="card-cadastro">
+        <div class="cadastro-logo">
+            <i class="bi bi-dribbble"></i>
+            NbaAnalyst
+        </div>
+        <p class="cadastro-subtitulo">Crie sua conta grátis e acesse o modelo preditivo da NBA.</p>
+
+        <hr class="cadastro-divisor">
+        <div id="area-alerta"></div>
+        <div>
+            <div class="mb-3">
+                <label class="form-label-nba" for="campo-nome">Nome completo</label>
+                <input type="text" class="form-control-nba" id="campo-nome" placeholder="Seu nome completo">
+                <div class="mensagem-erro-campo" id="erro-nome"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label-nba" for="campo-email">E-mail</label>
+                <input type="email" class="form-control-nba" id="campo-email" placeholder="seu@email.com">
+                <div class="mensagem-erro-campo" id="erro-email"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label-nba" for="campo-nascimento">Data de nascimento</label>
+                <input type="date" class="form-control-nba" id="campo-nascimento">
+                <div class="mensagem-erro-campo" id="erro-nascimento"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label-nba" for="campo-senha">Senha</label>
+                <input type="password" class="form-control-nba" id="campo-senha" placeholder="Mínimo 6 caracteres">
+                <div class="mensagem-erro-campo" id="erro-senha"></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label-nba" for="campo-confirmar-senha">Confirmar senha</label>
+                <input type="password" class="form-control-nba" id="campo-confirmar-senha" placeholder="Repita a senha">
+                <div class="mensagem-erro-campo" id="erro-confirmar-senha"></div>
+            </div>
+
+            <button type="button" class="btn-nba btn-nba w-100" id="btn-cadastrar" onclick="fazerCadastro()">
+                <i class="bi bi-person-plus me-2"></i>Criar Conta
+            </button>
+
+        </div>
+
+        <div class="cadastro-rodape">
+            Já tem conta? <a href="/login.html">Fazer login</a>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (estaLogado()) {
+        window.location.href = "/index.html";
+    }
+});
+
+function validarFormulario() {
+    var tudo_ok = true;
+
+    var nome = document.getElementById("campo-nome").value.trim();
+    var email = document.getElementById("campo-email").value.trim();
+    var nascimento = document.getElementById("campo-nascimento").value;
+    var senha = document.getElementById("campo-senha").value;
+    var confirmarSenha = document.getElementById("campo-confirmar-senha").value;
+
+    document.getElementById("erro-nome").textContent = "";
+    document.getElementById("erro-email").textContent = "";
+    document.getElementById("erro-nascimento").textContent = "";
+    document.getElementById("erro-senha").textContent = "";
+    document.getElementById("erro-confirmar-senha").textContent = "";
+
+    document.getElementById("campo-nome").classList.remove("erro");
+    document.getElementById("campo-email").classList.remove("erro");
+    document.getElementById("campo-nascimento").classList.remove("erro");
+    document.getElementById("campo-senha").classList.remove("erro");
+    document.getElementById("campo-confirmar-senha").classList.remove("erro");
+
+    if (nome === "") {
+        document.getElementById("erro-nome").textContent = "Informe seu nome completo.";
+        document.getElementById("campo-nome").classList.add("erro");
+        tudo_ok = false;
+    }
+
+    if (email === "") {
+        document.getElementById("erro-email").textContent = "Informe seu e-mail.";
+        document.getElementById("campo-email").classList.add("erro");
+        tudo_ok = false;
+    }
+
+    if (nascimento === "") {
+        document.getElementById("erro-nascimento").textContent = "Informe sua data de nascimento.";
+        document.getElementById("campo-nascimento").classList.add("erro");
+        tudo_ok = false;
+    }
+
+    if (senha === "") {
+        document.getElementById("erro-senha").textContent = "Informe uma senha.";
+        document.getElementById("campo-senha").classList.add("erro");
+        tudo_ok = false;
+    } else if (senha.length < 6) {
+        document.getElementById("erro-senha").textContent = "A senha precisa ter no mínimo 6 caracteres.";
+        document.getElementById("campo-senha").classList.add("erro");
+        tudo_ok = false;
+    }
+
+    if (confirmarSenha === "") {
+        document.getElementById("erro-confirmar-senha").textContent = "Confirme sua senha.";
+        document.getElementById("campo-confirmar-senha").classList.add("erro");
+        tudo_ok = false;
+    } else if (senha !== confirmarSenha) {
+        document.getElementById("erro-confirmar-senha").textContent = "As senhas não coincidem.";
+        document.getElementById("campo-confirmar-senha").classList.add("erro");
+        tudo_ok = false;
+    }
+    return tudo_ok;
+}
+
+async function fazerCadastro() {
+    if (!validarFormulario()) {
+        return;
+    }
+
+    var nome           = document.getElementById("campo-nome").value.trim();
+    var email          = document.getElementById("campo-email").value.trim();
+    var nascimento     = document.getElementById("campo-nascimento").value;
+    var senha          = document.getElementById("campo-senha").value;
+    var botao          = document.getElementById("btn-cadastrar");
+
+    botao.disabled = true;
+    botao.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Criando conta...';
+
+    document.getElementById("area-alerta").innerHTML = "";
+    var dadosCadastro = {
+        full_name:    nome,
+        email:        email,
+        birth_date:   nascimento,
+        password:     senha
+    };
+
+    try {
+        await chamarApi("/autenticacao/registrar", "POST", dadosCadastro);
+        await realizarLogin(email, senha, null);
+    } catch (erro) {
+        document.getElementById("area-alerta").innerHTML =
+            '<div class="alerta-nba erro mb-3">'
+            + '<i class="bi bi-exclamation-triangle-fill"></i>'
+            + '<span>' + erro.message + '</span>'
+            + '</div>';
+
+        botao.disabled = false;
+        botao.innerHTML = '<i class="bi bi-person-plus me-2"></i>Criar Conta';
+    }
+}
+</script>
+</body>
+</html>

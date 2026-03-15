@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Apostas</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/apostas.css">
+</head>
+<body>
+
+<div id="app-wrapper">
+    <nav id="navbar-principal"></nav>
+
+    <main id="conteudo-principal">
+
+        <!-- Cabeçalho -->
+        <div class="cabecalho-apostas">
+            <div class="container">
+                <div class="linha-acento mb-2"></div>
+                <h1 class="titulo-secao mb-1">Painel de Apostas</h1>
+                <p class="subtitulo-secao mb-0">Oportunidades Over/Under identificadas pelo modelo preditivo.</p>
+            </div>
+        </div>
+
+        <!-- Controles: temporada e estatística -->
+        <div class="barra-controles-apostas">
+            <div class="container">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada" style="max-width:130px;" onchange="recarregarTudo()">
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023" selected>2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0">Estatística</label>
+                        <select class="form-control-nba" id="select-estatistica" style="max-width:170px;" onchange="recarregarTudo()">
+                            <option value="points">Pontos</option>
+                            <option value="assists">Assistências</option>
+                            <option value="tot_reb">Rebotes</option>
+                            <option value="steals">Roubos</option>
+                            <option value="blocks">Bloqueios</option>
+                            <option value="turnovers">Turnovers</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abas -->
+        <div class="abas-apostas">
+            <div class="container">
+                <div class="d-flex">
+                    <button class="nav-link ativo" id="aba-btn-over-under" onclick="trocarAba('over-under')">
+                        <i class="bi bi-arrow-up-down me-1"></i> Over/Under
+                    </button>
+                    <button class="nav-link" id="aba-btn-alta-confianca" onclick="trocarAba('alta-confianca')">
+                        <i class="bi bi-check-circle me-1"></i> Alta Confiança
+                    </button>
+                    <button class="nav-link" id="aba-btn-grafico" onclick="trocarAba('grafico')">
+                        <i class="bi bi-bar-chart-fill me-1"></i> Gráfico
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="area-apostas">
+            <div class="container">
+
+                <!-- Spinner global -->
+                <div id="pagina-carregando">
+                    <div class="spinner-nba">
+                        <div class="bola-animada"></div>
+                        <span>Carregando oportunidades...</span>
+                    </div>
+                </div>
+
+                <!-- Conteúdo das abas -->
+                <div id="pagina-conteudo" style="display: none;">
+
+                    <!-- ABA: OVER/UNDER -->
+                    <div id="aba-over-under">
+
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <h2 class="titulo-secao mb-0" style="font-size:1rem;" id="titulo-over-under">Oportunidades Identificadas</h2>
+                            <span class="badge-nba badge-laranja" id="total-over-under">—</span>
+                        </div>
+
+                        <div class="row g-3" id="grid-over-under">
+                            <!-- preenchido pelo JS -->
+                        </div>
+                    </div>
+
+                    <!-- ABA: ALTA CONFIANÇA -->
+                    <div id="aba-alta-confianca" style="display: none;">
+
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <h2 class="titulo-secao mb-0" style="font-size:1rem;">Apostas de Alta Confiança</h2>
+                            <span class="badge-nba badge-verde" id="total-alta-confianca">—</span>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2" id="lista-alta-confianca">
+                            <!-- preenchido pelo JS -->
+                        </div>
+                    </div>
+
+                    <!-- ABA: GRÁFICO -->
+                    <div id="aba-grafico" style="display: none;">
+                        <h2 class="titulo-secao mb-3" style="font-size:1rem;">Edge por Jogador</h2>
+                        <p class="subtitulo-secao">Quanto o modelo prevê acima ou abaixo da média da temporada.</p>
+                        <div class="grafico-container">
+                            <div id="grafico-edge">
+                                <!-- SVG D3 inserido aqui -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Estado vazio -->
+                <div id="pagina-vazio" style="display: none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-currency-dollar icone-vazio"></i>
+                        <p class="titulo-vazio">Sem oportunidades identificadas</p>
+                        <p class="desc-vazio">Tente outra temporada ou estatística.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer id="rodape-principal"></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/componentes.js"></script>
+
+<script>
+// Guarda de rota
+verificarAutenticacao();
+
+// Dados carregados — usados por todas as abas
+var dadosOverUnder = [];
+var dadosAltaConfianca = [];
+
+document.addEventListener("DOMContentLoaded", function() {
+    inicializarPagina();
+    carregarDados();
+});
+
+
+// Troca entre as três abas
+function trocarAba(nomeAba) {
+    document.getElementById("aba-over-under").style.display = "none";
+    document.getElementById("aba-alta-confianca").style.display = "none";
+    document.getElementById("aba-grafico").style.display = "none";
+
+    document.getElementById("aba-btn-over-under").classList.remove("ativo");
+    document.getElementById("aba-btn-alta-confianca").classList.remove("ativo");
+    document.getElementById("aba-btn-grafico").classList.remove("ativo");
+
+    document.getElementById("aba-" + nomeAba).style.display = "block";
+    document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
+
+    // Desenha o gráfico apenas quando a aba for aberta e houver dados
+    if (nomeAba === "grafico" && dadosOverUnder.length > 0) {
+        renderizarGraficoEdge(dadosOverUnder);
+    }
+}
+
+
+// Recarrega tudo quando temporada ou estatística mudar
+function recarregarTudo() {
+    document.getElementById("pagina-conteudo").style.display = "none";
+    document.getElementById("pagina-vazio").style.display = "none";
+    document.getElementById("pagina-carregando").style.display = "block";
+
+    // Limpa o gráfico anterior
+    document.getElementById("grafico-edge").innerHTML = "";
+    dadosOverUnder = [];
+    dadosAltaConfianca = [];
+
+    carregarDados();
+}
+
+
+// Busca os dois endpoints em paralelo
+async function carregarDados() {
+    var temporada  = document.getElementById("select-temporada").value;
+    var estatistica = document.getElementById("select-estatistica").value;
+
+    try {
+        // Faz as duas chamadas ao mesmo tempo com Promise.all
+        var resultados = await Promise.all([
+            chamarApiAutenticada("/apostas/over-under" + construirQueryString({ temporada: temporada, estatistica: estatistica, minimo_jogos: 10, threshold: 15, limite: 12 })),
+            chamarApiAutenticada("/apostas/alta-confianca" + construirQueryString({ temporada: temporada, estatistica: estatistica, max_cv: 30, minimo_jogos: 15, limite: 10 }))
+        ]);
+
+        var dadosOU  = resultados[0];
+        var dadosAC  = resultados[1];
+
+        document.getElementById("pagina-carregando").style.display = "none";
+
+        if ((!dadosOU.oportunidades || dadosOU.oportunidades.length === 0) && (!dadosAC.apostas_alta_confianca || dadosAC.apostas_alta_confianca.length === 0)) {
+            document.getElementById("pagina-vazio").style.display = "block";
+            return;
+        }
+
+        dadosOverUnder      = dadosOU.oportunidades || [];
+        dadosAltaConfianca  = dadosAC.apostas_alta_confianca || [];
+
+        renderizarOverUnder(dadosOverUnder);
+        renderizarAltaConfianca(dadosAltaConfianca);
+
+        document.getElementById("pagina-conteudo").style.display = "block";
+
+    } catch (erro) {
+        document.getElementById("pagina-carregando").style.display = "none";
+        document.getElementById("pagina-vazio").style.display = "block";
+    }
+}
+
+
+// Monta os cards de oportunidades over/under
+function renderizarOverUnder(oportunidades) {
+    var grid    = document.getElementById("grid-over-under");
+    var total   = document.getElementById("total-over-under");
+    var titulo  = document.getElementById("titulo-over-under");
+
+    total.textContent = oportunidades.length + " oportunidades";
+    titulo.textContent = "Oportunidades — " + document.getElementById("select-estatistica").options[document.getElementById("select-estatistica").selectedIndex].text;
+
+    if (oportunidades.length === 0) {
+        grid.innerHTML = '<div class="col-12"><p class="texto-suave" style="font-size:0.88rem;">Nenhuma oportunidade encontrada com os filtros atuais.</p></div>';
+        return;
+    }
+
+    var html = "";
+
+    for (var i = 0; i < oportunidades.length; i++) {
+        var op = oportunidades[i];
+
+        var badgeTipo = op.bet_type === "OVER"
+            ? '<span class="badge-over">OVER</span>'
+            : '<span class="badge-under">UNDER</span>';
+
+        var badgeConf = "";
+        if (op.confidence === "Alta") {
+            badgeConf = '<span class="badge-confianca-alta">Alta</span>';
+        } else if (op.confidence === "Média") {
+            badgeConf = '<span class="badge-confianca-media">Média</span>';
+        } else {
+            badgeConf = '<span class="badge-confianca-baixa">Baixa</span>';
+        }
+
+        // Edge máximo para calcular largura da barra (100% = edge 50)
+        var larguraBarra = Math.min((op.edge / 50) * 100, 100);
+
+        var localTexto = op.is_home ? "Casa" : "Fora";
+
+        html = html
+            + '<div class="col-12 col-md-6 col-xl-4">'
+            +   '<div class="card-oportunidade">'
+            +     '<div class="d-flex align-items-start justify-content-between mb-1">'
+            +       '<div class="op-jogador"><a href="jogador.html?id=' + op.player_id + '">' + op.player_name + '</a></div>'
+            +       badgeTipo
+            +     '</div>'
+            +     '<div class="op-times">' + op.team + ' vs ' + op.opponent + ' · ' + localTexto + '</div>'
+            +     '<div class="op-linha">'
+            +       '<span class="op-rotulo">Média Temp.</span>'
+            +       '<span class="op-valor">' + op.season_average + '</span>'
+            +     '</div>'
+            +     '<div class="op-linha">'
+            +       '<span class="op-rotulo">Previsão</span>'
+            +       '<span class="op-valor" style="color:#F75C03;">' + op.prediction + '</span>'
+            +     '</div>'
+            +     '<div class="op-linha">'
+            +       '<span class="op-rotulo">Diferença</span>'
+            +       '<span class="op-valor">' + op.difference_percentage + '%</span>'
+            +     '</div>'
+            +     '<div class="op-linha">'
+            +       '<span class="op-rotulo">Confiança</span>'
+            +       badgeConf
+            +     '</div>'
+            +     '<div class="barra-edge"><div class="preenchimento" style="width:' + larguraBarra + '%;"></div></div>'
+            +   '</div>'
+            + '</div>';
+    }
+
+    grid.innerHTML = html;
+}
+
+
+// Monta a lista de apostas de alta confiança
+function renderizarAltaConfianca(apostas) {
+    var lista   = document.getElementById("lista-alta-confianca");
+    var total   = document.getElementById("total-alta-confianca");
+
+    total.textContent = apostas.length + " jogadores";
+
+    if (apostas.length === 0) {
+        lista.innerHTML = '<p class="texto-suave" style="font-size:0.88rem;">Nenhuma aposta de alta confiança encontrada.</p>';
+        return;
+    }
+
+    var html = "";
+
+    for (var i = 0; i < apostas.length; i++) {
+        var ap = apostas[i];
+
+        // Score de confiança (0-100)
+        var score = ap.confidence_score !== undefined ? Math.round(ap.confidence_score) : "—";
+
+        // Cor do score conforme valor
+        var corScore = "#00C896";
+        if (score < 60) {
+            corScore = "#FFD600";
+        }
+        if (score < 40) {
+            corScore = "#FF3B5C";
+        }
+
+        html = html
+            + '<div class="card-alta-confianca">'
+            +   '<div class="ac-score" style="color:' + corScore + ';">' + score + '</div>'
+            +   '<div style="flex:1; min-width:0;">'
+            +     '<div class="ac-jogador"><a href="jogador.html?id=' + ap.player_id + '">' + ap.player_name + '</a></div>'
+            +     '<div class="ac-info">' + (ap.team || "") + ' · ' + (ap.games_played || "—") + ' jogos · CV: ' + (ap.coefficient_variation || "—") + '%</div>'
+            +   '</div>'
+            +   '<div style="text-align:right;">'
+            +     '<div class="ac-media">' + (ap.season_average || "—") + '</div>'
+            +     '<div class="ac-previsao">Prev: ' + (ap.predicted_next_game || "—") + '</div>'
+            +   '</div>'
+            + '</div>';
+    }
+
+    lista.innerHTML = html;
+}
+
+
+// Gráfico D3 — barras horizontais divergentes mostrando o edge (diferença entre previsão e média)
+function renderizarGraficoEdge(oportunidades) {
+    var container = document.getElementById("grafico-edge");
+    container.innerHTML = "";
+
+    // Limita a 12 oportunidades
+    var dados = oportunidades.slice(0, 12);
+
+    var larguraTotal  = container.offsetWidth || 560;
+    var margemEsq     = 120;
+    var margemDir     = 60;
+    var margemTopo    = 16;
+    var margemBaixo   = 16;
+    var alturaLinha   = 32;
+    var alturaTotal   = dados.length * alturaLinha + margemTopo + margemBaixo;
+    var larguraBarras = larguraTotal - margemEsq - margemDir;
+
+    var svg = d3.select("#grafico-edge")
+        .append("svg")
+        .attr("width", larguraTotal)
+        .attr("height", alturaTotal);
+
+    var g = svg.append("g")
+        .attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
+
+    // Escala X — centrada em 0, domínio pelo maior valor absoluto de diferença
+    var maiorAbs = d3.max(dados, function(d) { return Math.abs(d.difference || 0); });
+    if (maiorAbs === 0) { maiorAbs = 1; }
+
+    var escalaX = d3.scaleLinear()
+        .domain([-maiorAbs * 1.2, maiorAbs * 1.2])
+        .range([0, larguraBarras]);
+
+    var escalaY = d3.scaleBand()
+        .domain(dados.map(function(d, i) { return i + ""; }))
+        .range([0, dados.length * alturaLinha])
+        .padding(0.3);
+
+    // Linha central (zero)
+    g.append("line")
+        .attr("x1", escalaX(0))
+        .attr("x2", escalaX(0))
+        .attr("y1", 0)
+        .attr("y2", dados.length * alturaLinha)
+        .attr("stroke", "#252540")
+        .attr("stroke-width", 1);
+
+    // Barras — verdes para OVER, vermelhas para UNDER
+    g.selectAll(".barra")
+        .data(dados)
+        .enter()
+        .append("rect")
+        .attr("x", function(d) {
+            var dif = d.difference || 0;
+            if (dif >= 0) { return escalaX(0); }
+            return escalaX(dif);
+        })
+        .attr("y", function(d, i) { return escalaY(i + ""); })
+        .attr("width", function(d) {
+            var dif = d.difference || 0;
+            return Math.abs(escalaX(dif) - escalaX(0));
+        })
+        .attr("height", escalaY.bandwidth())
+        .attr("fill", function(d) { return (d.difference || 0) >= 0 ? "#00C896" : "#FF3B5C"; })
+        .attr("rx", 3)
+        .attr("opacity", 0.85);
+
+    // Nome do jogador à esquerda
+    g.selectAll(".nome")
+        .data(dados)
+        .enter()
+        .append("text")
+        .attr("x", -8)
+        .attr("y", function(d, i) { return escalaY(i + "") + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#8888AA")
+        .attr("font-size", "11px")
+        .text(function(d) {
+            var partes = d.player_name.split(" ");
+            if (partes.length >= 2) {
+                return partes[0].charAt(0) + ". " + partes[partes.length - 1];
+            }
+            return d.player_name;
+        });
+
+    // Valor da diferença à direita da barra
+    g.selectAll(".valor")
+        .data(dados)
+        .enter()
+        .append("text")
+        .attr("x", function(d) {
+            var dif = d.difference || 0;
+            if (dif >= 0) { return escalaX(dif) + 5; }
+            return escalaX(dif) - 5;
+        })
+        .attr("y", function(d, i) { return escalaY(i + "") + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em")
+        .attr("text-anchor", function(d) { return (d.difference || 0) >= 0 ? "start" : "end"; })
+        .attr("fill", "#EEEEF5")
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .text(function(d) {
+            var dif = d.difference || 0;
+            var prefixo = dif >= 0 ? "+" : "";
+            return prefixo + parseFloat(dif).toFixed(1);
+        });
+}
+</script>
+
+</body>
+</html>

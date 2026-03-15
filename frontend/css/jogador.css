@@ -1,0 +1,208 @@
+/* ============================================
+   jogador.css — Perfil público de um jogador
+   ============================================ */
+
+
+/* Cabeçalho com nome e info básica */
+.cabecalho-jogador {
+    padding: 40px 0 32px;
+    background-color: #12121C;
+    border-bottom: 1px solid #252540;
+}
+
+.jogador-avatar {
+    width: 72px;
+    height: 72px;
+    background-color: #252540;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #F75C03;
+    flex-shrink: 0;
+}
+
+.jogador-nome {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #EEEEF5;
+    margin-bottom: 6px;
+}
+
+.jogador-info-basica {
+    font-size: 0.85rem;
+    color: #8888AA;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.jogador-info-basica span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.jogador-info-basica i {
+    color: #F75C03;
+    font-size: 0.8rem;
+}
+
+
+/* Seção de dados físicos */
+.secao-dados {
+    padding: 32px 0;
+    border-bottom: 1px solid #252540;
+}
+
+
+/* Card de dado físico (altura, peso, país etc.) */
+.card-dado {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-dado .dado-icone {
+    font-size: 1.2rem;
+    color: #F75C03;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.card-dado .dado-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    line-height: 1.2;
+}
+
+.card-dado .dado-rotulo {
+    font-size: 0.72rem;
+    color: #555570;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+
+/* Seção de histórico de times */
+.secao-historico {
+    padding: 32px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.linha-time {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.linha-time:last-child {
+    border-bottom: none;
+}
+
+.linha-time .time-temporada {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #F75C03;
+    width: 48px;
+    flex-shrink: 0;
+}
+
+.linha-time .time-nome-link {
+    font-weight: 600;
+    color: #EEEEF5;
+    text-decoration: none;
+    flex: 1;
+}
+
+.linha-time .time-nome-link:hover {
+    color: #F75C03;
+}
+
+.linha-time .time-posicao {
+    font-size: 0.78rem;
+    color: #8888AA;
+}
+
+.linha-time .time-camisa {
+    font-size: 0.78rem;
+    color: #555570;
+}
+
+
+/* Seção de médias (requer login) */
+.secao-medias {
+    padding: 32px 0;
+    border-bottom: 1px solid #252540;
+}
+
+.card-media {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+
+.card-media .media-valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #F75C03;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-media .media-rotulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8888AA;
+}
+
+
+/* Banner de convite para login */
+.banner-login {
+    background-color: #16172A;
+    border: 1px solid #252540;
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    margin: 32px 0;
+}
+
+.banner-login .banner-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #EEEEF5;
+    margin-bottom: 6px;
+}
+
+.banner-login .banner-desc {
+    font-size: 0.85rem;
+    color: #8888AA;
+    margin-bottom: 16px;
+}
+
+
+@media (max-width: 767px) {
+    .jogador-nome {
+        font-size: 1.6rem;
+    }
+}

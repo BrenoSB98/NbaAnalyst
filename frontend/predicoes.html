@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NbaAnalyst — Predições</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/predicoes.css">
+</head>
+<body>
+
+<div id="app-wrapper">
+    <nav id="navbar-principal"></nav>
+
+    <main id="conteudo-principal">
+
+        <!-- Cabeçalho -->
+        <div class="cabecalho-predicoes">
+            <div class="container">
+                <div class="linha-acento mb-2"></div>
+                <h1 class="titulo-secao mb-2">Predições do Dia</h1>
+
+                <!-- Resumo com totais -->
+                <div class="resumo-dia" id="resumo-dia" style="display: none;">
+                    <div class="resumo-item">
+                        <span class="resumo-valor" id="resumo-jogos">—</span>
+                        <span class="resumo-rotulo">Jogos Hoje</span>
+                    </div>
+                    <div class="resumo-item">
+                        <span class="resumo-valor" id="resumo-predicoes">—</span>
+                        <span class="resumo-rotulo">Predições Geradas</span>
+                    </div>
+                    <div class="resumo-item">
+                        <span class="resumo-valor" id="resumo-data">—</span>
+                        <span class="resumo-rotulo">Data</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Abas -->
+        <div class="abas-predicoes">
+            <div class="container">
+                <div class="d-flex">
+                    <button class="nav-link ativo" id="aba-btn-jogos" onclick="trocarAba('jogos')">
+                        <i class="bi bi-trophy me-1"></i> Por Jogo
+                    </button>
+                    <button class="nav-link" id="aba-btn-ranking" onclick="trocarAba('ranking')">
+                        <i class="bi bi-bar-chart-fill me-1"></i> Ranking do Dia
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="area-predicoes">
+            <div class="container">
+
+                <!-- Spinner global -->
+                <div id="pagina-carregando">
+                    <div class="spinner-nba">
+                        <div class="bola-animada"></div>
+                        <span>Carregando predições...</span>
+                    </div>
+                </div>
+
+                <!-- Conteúdo — oculto até carregar -->
+                <div id="pagina-conteudo" style="display: none;">
+
+                    <!-- ABA: POR JOGO -->
+                    <div id="aba-jogos">
+                        <div id="lista-jogos">
+                            <!-- cards de jogos preenchidos pelo JS -->
+                        </div>
+                    </div>
+
+                    <!-- ABA: RANKING DO DIA -->
+                    <div id="aba-ranking" style="display: none;">
+                        <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Top Pontuadores Previstos</h2>
+                        <div class="grafico-container">
+                            <div id="grafico-ranking">
+                                <!-- SVG do D3 inserido aqui -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Estado vazio -->
+                <div id="pagina-vazio" style="display: none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-graph-up-arrow icone-vazio"></i>
+                        <p class="titulo-vazio">Sem predições para hoje</p>
+                        <p class="desc-vazio">Nenhuma predição foi gerada para os jogos de hoje ainda.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer id="rodape-principal"></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/componentes.js"></script>
+
+<script>
+// Guarda de rota
+verificarAutenticacao();
+
+// Guarda todas as predições para usar nas duas abas
+var todasPredicoes = [];
+
+document.addEventListener("DOMContentLoaded", function() {
+    inicializarPagina();
+    carregarPredicoes();
+});
+
+
+// Troca entre as abas "jogos" e "ranking"
+function trocarAba(nomeAba) {
+    document.getElementById("aba-jogos").style.display = "none";
+    document.getElementById("aba-ranking").style.display = "none";
+    document.getElementById("aba-btn-jogos").classList.remove("ativo");
+    document.getElementById("aba-btn-ranking").classList.remove("ativo");
+
+    document.getElementById("aba-" + nomeAba).style.display = "block";
+    document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
+
+    // Só desenha o gráfico quando a aba for aberta
+    if (nomeAba === "ranking" && todasPredicoes.length > 0) {
+        renderizarGraficoRanking(todasPredicoes);
+    }
+}
+
+
+// Busca as predições do dia
+async function carregarPredicoes() {
+    try {
+        var dados = await chamarApiAutenticada("/predicoes/hoje");
+
+        document.getElementById("pagina-carregando").style.display = "none";
+
+        // Preenche o resumo no cabeçalho
+        document.getElementById("resumo-jogos").textContent = dados.total_jogos;
+        document.getElementById("resumo-predicoes").textContent = dados.total_predicoes;
+        document.getElementById("resumo-data").textContent = dados.data || "—";
+        document.getElementById("resumo-dia").style.display = "flex";
+
+        if (!dados.predicoes || dados.predicoes.length === 0) {
+            document.getElementById("pagina-vazio").style.display = "block";
+            return;
+        }
+
+        todasPredicoes = dados.predicoes;
+
+        renderizarCardsPorJogo(dados.predicoes);
+        document.getElementById("pagina-conteudo").style.display = "block";
+
+    } catch (erro) {
+        document.getElementById("pagina-carregando").style.display = "none";
+        document.getElementById("pagina-vazio").style.display = "block";
+    }
+}
+
+
+// Agrupa predições por game_id e monta os cards
+function renderizarCardsPorJogo(predicoes) {
+    var container = document.getElementById("lista-jogos");
+
+    // Agrupa por game_id
+    var grupos = {};
+    for (var i = 0; i < predicoes.length; i++) {
+        var pred = predicoes[i];
+        var gid = pred.game_id;
+
+        if (!grupos[gid]) {
+            grupos[gid] = {
+                game_id: gid,
+                nome_casa: "",
+                nome_fora: "",
+                jogadores: []
+            };
+        }
+
+        // Determina casa e fora pelo campo eh_casa
+        if (pred.eh_casa === 1 || pred.eh_casa === true) {
+            grupos[gid].nome_casa = pred.nome_time || "";
+            grupos[gid].nome_fora = pred.nome_adversario || "";
+        } else {
+            grupos[gid].nome_fora = pred.nome_time || "";
+            grupos[gid].nome_casa = pred.nome_adversario || "";
+        }
+
+        grupos[gid].jogadores.push(pred);
+    }
+
+    var html = "";
+    var ids = Object.keys(grupos);
+
+    for (var j = 0; j < ids.length; j++) {
+        var gid = ids[j];
+        var grupo = grupos[gid];
+        var totalJogadores = grupo.jogadores.length;
+
+        // Ordena jogadores por pontos previstos
+        grupo.jogadores.sort(function(a, b) {
+            return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
+        });
+
+        // Monta as linhas da tabela de jogadores
+        var linhasHtml = "";
+        for (var k = 0; k < grupo.jogadores.length; k++) {
+            var jog = grupo.jogadores[k];
+
+            var pts  = jog.pontos_previstos      !== null ? parseFloat(jog.pontos_previstos).toFixed(1)      : "—";
+            var ast  = jog.assistencias_previstas !== null ? parseFloat(jog.assistencias_previstas).toFixed(1) : "—";
+            var reb  = jog.rebotes_previstos      !== null ? parseFloat(jog.rebotes_previstos).toFixed(1)      : "—";
+            var local = (jog.eh_casa === 1 || jog.eh_casa === true) ? "Casa" : "Fora";
+
+            linhasHtml = linhasHtml
+                + '<tr>'
+                +   '<td class="td-jogador">'
+                +     '<a href="jogador.html?id=' + jog.player_id + '">' + jog.nome_jogador + '</a>'
+                +   '</td>'
+                +   '<td class="td-local">' + local + '</td>'
+                +   '<td class="td-valor">' + pts + ' <span style="font-size:0.65rem;color:#555570;">PTS</span></td>'
+                +   '<td class="td-valor-sec">' + ast + ' <span style="font-size:0.65rem;">AST</span></td>'
+                +   '<td class="td-valor-sec">' + reb + ' <span style="font-size:0.65rem;">REB</span></td>'
+                + '</tr>';
+        }
+
+        html = html
+            + '<div class="card-jogo-predicao">'
+            +   '<div class="jogo-header" onclick="toggleJogo(this)">'
+            +     '<div class="jogo-times">' + grupo.nome_casa + ' <span style="color:#555570;">vs</span> ' + grupo.nome_fora + '</div>'
+            +     '<div class="jogo-badge">' + totalJogadores + ' predições</div>'
+            +     '<i class="bi bi-chevron-down jogo-seta aberto"></i>'
+            +   '</div>'
+            +   '<div class="jogo-corpo">'
+            +     '<table class="tabela-predicoes">'
+            +       '<thead>'
+            +         '<tr>'
+            +           '<th>Jogador</th>'
+            +           '<th>Local</th>'
+            +           '<th style="text-align:right;">PTS</th>'
+            +           '<th style="text-align:right;">AST</th>'
+            +           '<th style="text-align:right;">REB</th>'
+            +         '</tr>'
+            +       '</thead>'
+            +       '<tbody>' + linhasHtml + '</tbody>'
+            +     '</table>'
+            +   '</div>'
+            + '</div>';
+    }
+
+    container.innerHTML = html;
+}
+
+
+// Abre/fecha o corpo de um card de jogo
+function toggleJogo(header) {
+    var corpo = header.nextElementSibling;
+    var seta = header.querySelector(".jogo-seta");
+
+    if (corpo.style.display === "none") {
+        corpo.style.display = "block";
+        seta.classList.add("aberto");
+    } else {
+        corpo.style.display = "none";
+        seta.classList.remove("aberto");
+    }
+}
+
+
+// Gráfico D3 — barras horizontais com os maiores pontos previstos do dia
+function renderizarGraficoRanking(predicoes) {
+    var container = document.getElementById("grafico-ranking");
+    container.innerHTML = "";
+
+    // Pega os top 15 por pontos previstos
+    var ordenados = predicoes.slice();
+    ordenados.sort(function(a, b) {
+        return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
+    });
+    if (ordenados.length > 15) {
+        ordenados = ordenados.slice(0, 15);
+    }
+
+    var larguraTotal  = container.offsetWidth || 560;
+    var margemEsq     = 140;
+    var margemDir     = 60;
+    var margemTopo    = 10;
+    var margemBaixo   = 10;
+    var alturaLinha   = 32;
+    var alturaTotal   = ordenados.length * alturaLinha + margemTopo + margemBaixo;
+    var larguraBarras = larguraTotal - margemEsq - margemDir;
+
+    var svg = d3.select("#grafico-ranking")
+        .append("svg")
+        .attr("width", larguraTotal)
+        .attr("height", alturaTotal);
+
+    var g = svg.append("g")
+        .attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
+
+    var maiorValor = d3.max(ordenados, function(d) { return parseFloat(d.pontos_previstos) || 0; });
+
+    var escalaX = d3.scaleLinear()
+        .domain([0, maiorValor * 1.15])
+        .range([0, larguraBarras]);
+
+    var escalaY = d3.scaleBand()
+        .domain(ordenados.map(function(d) { return d.player_id + ""; }))
+        .range([0, ordenados.length * alturaLinha])
+        .padding(0.3);
+
+    // Barras
+    g.selectAll(".barra")
+        .data(ordenados)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", function(d) { return escalaY(d.player_id + ""); })
+        .attr("width", function(d) { return escalaX(parseFloat(d.pontos_previstos) || 0); })
+        .attr("height", escalaY.bandwidth())
+        .attr("fill", "#F75C03")
+        .attr("rx", 3)
+        .attr("opacity", function(d, i) { return 1 - (i * 0.04); });
+
+    // Nome do jogador à esquerda — abreviado
+    g.selectAll(".nome")
+        .data(ordenados)
+        .enter()
+        .append("text")
+        .attr("x", -8)
+        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#8888AA")
+        .attr("font-size", "11px")
+        .text(function(d) {
+            var partes = d.nome_jogador.split(" ");
+            if (partes.length >= 2) {
+                return partes[0].charAt(0) + ". " + partes[partes.length - 1];
+            }
+            return d.nome_jogador;
+        });
+
+    // Time à direita do nome — em laranja suave
+    g.selectAll(".time-label")
+        .data(ordenados)
+        .enter()
+        .append("text")
+        .attr("x", -8)
+        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2 + 11; })
+        .attr("text-anchor", "end")
+        .attr("fill", "#555570")
+        .attr("font-size", "9px")
+        .text(function(d) { return d.nome_time || ""; });
+
+    // Valor à direita da barra
+    g.selectAll(".valor")
+        .data(ordenados)
+        .enter()
+        .append("text")
+        .attr("x", function(d) { return escalaX(parseFloat(d.pontos_previstos) || 0) + 6; })
+        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2; })
+        .attr("dy", "0.35em")
+        .attr("fill", "#EEEEF5")
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .text(function(d) {
+            return parseFloat(d.pontos_previstos).toFixed(1);
+        });
+}
+</script>
+
+</body>
+</html>
