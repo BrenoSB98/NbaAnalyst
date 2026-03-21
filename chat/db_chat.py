@@ -146,12 +146,8 @@ def buscar_jogos_do_time(nome_time, temporada):
             adversario = jogo.away_name if eh_casa else jogo.home_name
             adv_id = jogo.away_team_id if eh_casa else jogo.home_team_id
             with engine.connect() as conn:
-                score_time = conn.execute(text("""
-                    SELECT points, win FROM game_team_scores WHERE game_id = :gid AND team_id = :tid
-                """), {"gid": jogo.id, "tid": time.id}).fetchone()
-                score_adv = conn.execute(text("""
-                    SELECT points FROM game_team_scores WHERE game_id = :gid AND team_id = :tid
-                """), {"gid": jogo.id, "tid": adv_id}).fetchone()
+                score_time = conn.execute(text("""SELECT points, win FROM game_team_scores WHERE game_id = :gid AND team_id = :tid"""), {"gid": jogo.id, "tid": time.id}).fetchone()
+                score_adv = conn.execute(text("""SELECT points FROM game_team_scores WHERE game_id = :gid AND team_id = :tid"""), {"gid": jogo.id, "tid": adv_id}).fetchone()
             if score_time and score_adv:
                 placar = f"{score_time.points} x {score_adv.points}"
                 resultado_jogo = "Vitória" if (score_time.win or 0) > 0 else "Derrota"

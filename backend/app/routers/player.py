@@ -264,13 +264,39 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
         total_ftm = total_ftm + (stat.ftm or 0)
         total_fta = total_fta + (stat.fta or 0)
 
+        # Busca o nome do time adversário para exibir na tabela
+        if stat.team_id == jogo.home_team_id:
+            adversario_id = jogo.away_team_id
+        else:
+            adversario_id = jogo.home_team_id
+
+        time_adversario = db.query(Team).filter(Team.id == adversario_id).first()
+        nome_adversario = time_adversario.name if time_adversario else "—"
+
+        fg_pct_jogo = 0.0
+        if (stat.fga or 0) > 0:
+            fg_pct_jogo = round(((stat.fgm or 0) / stat.fga) * 100, 1)
+
+        three_pct_jogo = 0.0
+        if (stat.tpa or 0) > 0:
+            three_pct_jogo = round(((stat.tpm or 0) / stat.tpa) * 100, 1)
+
         lista_jogos.append({
-            "jogo_id": jogo.id, 
-            "data": jogo.date_start, 
-            "pontos": stat.points, 
-            "assistencias": stat.assists, 
-            "rebotes": stat.tot_reb
-            })
+            "jogo_id": jogo.id,
+            "data": jogo.date_start,
+            "adversario_id": adversario_id,
+            "adversario": nome_adversario,
+            "pontos": stat.points,
+            "assistencias": stat.assists,
+            "rebotes": stat.tot_reb,
+            "roubos": stat.steals,
+            "bloqueios": stat.blocks,
+            "turnovers": stat.turnovers,
+            "minutos": stat.minutes,
+            "fg_pct": fg_pct_jogo,
+            "three_pct": three_pct_jogo,
+            "plus_minus": stat.plus_minus,
+        })
 
     num_jogos = len(stats)
     if total_fga > 0:
@@ -364,12 +390,15 @@ def estatisticas_casa_fora(jogador_id: int, temporada: int = Query(2023), local:
         total_fta = total_fta + (stat.fta or 0)
 
         lista_jogos.append({
-            "jogo_id": jogo.id, 
-            "data": jogo.date_start, 
-            "pontos": stat.points, 
-            "assistencias": stat.assists, 
-            "rebotes": stat.tot_reb
-            })
+            "jogo_id": jogo.id,
+            "data": jogo.date_start,
+            "pontos": stat.points,
+            "assistencias": stat.assists,
+            "rebotes": stat.tot_reb,
+            "roubos": stat.steals,
+            "bloqueios": stat.blocks,
+            "turnovers": stat.turnovers,
+        })
 
     num_jogos = len(stats_query)
     if total_fga > 0:

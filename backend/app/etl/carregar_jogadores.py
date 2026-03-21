@@ -8,7 +8,6 @@ from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _nor
 
 logger = logging.getLogger(__name__)
 
-
 def carregar_jogadores(team_id=None, season=None):
     dados_jogadores = nba_api_client.get_players(team_id=team_id, season=season)
 
@@ -25,21 +24,20 @@ def carregar_jogadores(team_id=None, season=None):
             if not player_id:
                 continue
 
-            dados_nba = item.get("nba", {}) or {}
-            nba_start = _normalizar_inteiro(dados_nba.get("start"))
-            nba_pro = _normalizar_inteiro(dados_nba.get("pro"))
-            if not nba_start or nba_start == 0:
-                continue
-
             firstname = _normalizar_string(item.get("firstname"))
             lastname = _normalizar_string(item.get("lastname"))
             if not firstname and not lastname:
                 continue
-
+            
             if firstname is None:
                 firstname = lastname
             if lastname is None:
                 lastname = firstname
+                
+            dados_nba = item.get("nba", {})
+            nba_start = _normalizar_inteiro(dados_nba.get("start"))
+            nba_pro = _normalizar_inteiro(dados_nba.get("pro"))
+
 
             dados_nascimento = item.get("birth", {})
             data_nascimento_str = dados_nascimento.get("date")
@@ -119,7 +117,10 @@ def carregar_jogadores(team_id=None, season=None):
 
             if vinculo_existente:
                 vinculo_existente.jersey = numero_camisa
-                vinculo_existente.active = ativo if isinstance(ativo, bool) else bool(ativo)
+                if isinstance(ativo, bool):
+                    vinculo_existente.active = ativo 
+                else:
+                    vinculo_existente.active = bool(ativo)
                 vinculo_existente.pos = posicao
             else:
                 novo_vinculo = PlayerTeamSeason(
@@ -132,6 +133,7 @@ def carregar_jogadores(team_id=None, season=None):
                     pos=posicao,
                 )
                 db.add(novo_vinculo)
+        db.commit()
 
         if total_inseridos == 0 and total_atualizados == 0:
             logger.warning(f"Nenhum jogador inserido ou atualizado —> franquia={team_id}, temporada={season}")

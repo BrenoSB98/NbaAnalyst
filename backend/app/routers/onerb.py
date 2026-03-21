@@ -8,7 +8,7 @@ from app.routers.auth import obter_usuario_atual
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 def onerb(usuario_atual=Depends(obter_usuario_atual)):
     html = """
     <!DOCTYPE html>

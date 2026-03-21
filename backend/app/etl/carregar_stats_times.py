@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_
 
 from app.services import nba_api_client
-from app.db.models import Game, GameTeamStats, Team
+from app.db.models import Game, GameTeamStats, Team, TeamSeasonStats
 from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _normalizar_decimal
 
+NBA_LEAGUE_ID = 12
 logger = logging.getLogger(__name__)
 
 def carregar_stats_times_jogo(game_id):
@@ -137,5 +138,138 @@ def carregar_stats_todos_times(season, team_id=None, data=None):
         if total_erros > 0:
             logger.warning(f"Carga concluída com erros —> temporada={season}, total_jogos={total_jogos}, erros={total_erros}")
 
+def carregar_stats_temporada_time(team_id, season):
+    dados = nba_api_client.get_team_statistics(team_id=team_id, season=season, league_id=NBA_LEAGUE_ID)
+ 
+    if not dados:
+        logger.warning(f"Nenhuma estatística retornada —> team_id={team_id}, season={season}")
+        return
+ 
+    if isinstance(dados, list):
+        if len(dados) == 0:
+            return
+        dados = dados[0]
+ 
+    for db in get_db():
+        games_data = dados.get("games", {})
+        points_data = dados.get("points", {})
+ 
+        jogos_total = _normalizar_inteiro(games_data.get("played"))
+        pontos_for = dados.get("points", {}).get("for", {})
+        pontos_against = dados.get("points", {}).get("against", {})
+ 
+        fgm = _normalizar_inteiro(dados.get("fgm"))
+        fga = _normalizar_inteiro(dados.get("fga"))
+        fgp = _normalizar_decimal(dados.get("fgp"))
+        ftm = _normalizar_inteiro(dados.get("ftm"))
+        fta = _normalizar_inteiro(dados.get("fta"))
+        ftp = _normalizar_decimal(dados.get("ftp"))
+        tpm = _normalizar_inteiro(dados.get("tpm"))
+        tpa = _normalizar_inteiro(dados.get("tpa"))
+        tpp = _normalizar_decimal(dados.get("tpp"))
+        off_reb = _normalizar_inteiro(dados.get("offReb"))
+        def_reb = _normalizar_inteiro(dados.get("defReb"))
+        tot_reb = _normalizar_inteiro(dados.get("totReb"))
+        assists = _normalizar_inteiro(dados.get("assists"))
+        p_fouls = _normalizar_inteiro(dados.get("pFouls"))
+        steals = _normalizar_inteiro(dados.get("steals"))
+        turnovers = _normalizar_inteiro(dados.get("turnovers"))
+        blocks = _normalizar_inteiro(dados.get("blocks"))
+        plus_minus = _normalizar_inteiro(dados.get("plusMinus"))
+        fast_break_points = _normalizar_inteiro(dados.get("fastBreakPoints"))
+        points_in_paint = _normalizar_inteiro(dados.get("pointsInPaint"))
+        biggest_lead = _normalizar_inteiro(dados.get("biggestLead"))
+        second_chance_points = _normalizar_inteiro(dados.get("secondChancePoints"))
+        points_off_turnovers = _normalizar_inteiro(dados.get("pointsOffTurnovers"))
+        longest_run = _normalizar_inteiro(dados.get("longestRun"))
+ 
+        if isinstance(pontos_for, dict):
+            total_pts_obj = pontos_for.get("total", {})
+            if isinstance(total_pts_obj, dict):
+                pontos_total = _normalizar_inteiro(total_pts_obj.get("all"))
+            else:
+                pontos_total = _normalizar_inteiro(total_pts_obj)
+        else:
+            pontos_total = _normalizar_inteiro(dados.get("points"))
+ 
+        stats_existente = db.query(TeamSeasonStats).filter(TeamSeasonStats.team_id == team_id, TeamSeasonStats.season  == season).first()
+ 
+        if stats_existente:
+            stats_existente.games = jogos_total
+            stats_existente.points = pontos_total
+            stats_existente.fgm = fgm
+            stats_existente.fga = fga
+            stats_existente.fgp = fgp
+            stats_existente.ftm = ftm
+            stats_existente.fta = fta
+            stats_existente.ftp = ftp
+            stats_existente.tpm = tpm
+            stats_existente.tpa = tpa
+            stats_existente.tpp = tpp
+            stats_existente.off_reb = off_reb
+            stats_existente.def_reb = def_reb
+            stats_existente.tot_reb = tot_reb
+            stats_existente.assists = assists
+            stats_existente.p_fouls = p_fouls
+            stats_existente.steals = steals
+            stats_existente.turnovers = turnovers
+            stats_existente.blocks = blocks
+            stats_existente.plus_minus = plus_minus
+            stats_existente.fast_break_points = fast_break_points
+            stats_existente.points_in_paint = points_in_paint
+            stats_existente.biggest_lead = biggest_lead
+            stats_existente.second_chance_points = second_chance_points
+            stats_existente.points_off_turnovers = points_off_turnovers
+            stats_existente.longest_run = longest_run
+        else:
+            nova_stat = TeamSeasonStats(
+                team_id=team_id,
+                season=season,
+                games=jogos_total,
+                points=pontos_total,
+                fgm=fgm, fga=fga, fgp=fgp,
+                ftm=ftm, fta=fta, ftp=ftp,
+                tpm=tpm, tpa=tpa, tpp=tpp,
+                off_reb=off_reb,
+                def_reb=def_reb,
+                tot_reb=tot_reb,
+                assists=assists,
+                p_fouls=p_fouls,
+                steals=steals,
+                turnovers=turnovers,
+                blocks=blocks,
+                plus_minus=plus_minus,
+                fast_break_points=fast_break_points,
+                points_in_paint=points_in_paint,
+                biggest_lead=biggest_lead,
+                second_chance_points=second_chance_points,
+                points_off_turnovers=points_off_turnovers,
+                longest_run=longest_run,
+            )
+            db.add(nova_stat)
+ 
+        db.commit()
+        logger.warning(f"Stats de temporada carregadas —> team_id={team_id}, season={season}")
+ 
+def carregar_stats_temporada_todos_times(season):
+    for db in get_db():
+        times = db.query(Team).filter(Team.nba_franchise == True).all()
+ 
+        if not times:
+            logger.warning("Nenhum time NBA encontrado no banco.")
+            return
+ 
+        total_ok    = 0 
+        for time in times:
+            try:
+                carregar_stats_temporada_time(team_id=time.id, season=season)
+                total_ok += 1
+            except Exception as erro:
+                logger.error(f"Erro ao carregar stats de temporada —> team_id={time.id}, season={season}: {erro}")
+                continue
+ 
+        logger.warning(f"Stats de temporada concluídas —> ok={total_ok}, season={season}")
+
 if __name__ == "__main__":
     carregar_stats_todos_times(season=2025)
+    carregar_stats_temporada_todos_times(season=2025)

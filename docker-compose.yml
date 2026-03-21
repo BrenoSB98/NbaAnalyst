@@ -50,29 +50,22 @@ services:
       - postgres
     volumes:
       - ./backend:/app
+      - ./chat:/app/chat 
     networks:
       - nba_network
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  onerb:
-    build:
-      context: .
-      dockerfile: Dockerfile.streamlit
-    command: streamlit run /app/chat/app.py --server.port=8502 --server.address=0.0.0.0
-    env_file:
-      - .env
-    depends_on:
-      - postgres
+  frontend:
+    image: nginx:alpine
+    container_name: nba_frontend
     ports:
-      - "8502:8502"
+      - "3000:80"
     volumes:
-      - ./chat:/app/chat
-      - ./backend:/app/backend
-      - ./onerb_db:/app/onerb_db
+      - ./frontend:/usr/share/nginx/html:ro
     networks:
       - nba_network
     restart: unless-stopped
-
+  
   airflow-init:
     build:
       context: ./airflow
@@ -180,7 +173,6 @@ services:
 
 volumes:
   postgres_data:
-  onerb_db:
   airflow_logs:
 
 networks:

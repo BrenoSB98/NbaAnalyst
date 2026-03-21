@@ -17,6 +17,9 @@ def _buscar_jogos_do_dia(db, season):
 def _buscar_jogadores_do_time(db, team_id, season):
     registros = (db.query(PlayerTeamSeason).filter(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.active == True).all())
 
+    if not registros:
+        registros = (db.query(PlayerTeamSeason).filter(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season).all())
+        
     lista_player_ids = []
     for registro in registros:
         lista_player_ids.append(registro.player_id)
@@ -54,45 +57,75 @@ def _gerar_predicao(db, player_id, game_id, team_id, opponent_team_id, is_home, 
     db.add(nova_predicao)
     return nova_predicao
 
+def _processar_jogo(db, jogo, season, total_geradas, total_erros):
+    game_id      = jogo.id
+    home_team_id = jogo.home_team_id
+    away_team_id = jogo.away_team_id
+ 
+    jogadores_home = _buscar_jogadores_do_time(db=db, team_id=home_team_id, season=season)
+    jogadores_away = _buscar_jogadores_do_time(db=db, team_id=away_team_id, season=season)
+ 
+    for player_id in jogadores_home:
+        if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
+            continue
+        try:
+            _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=home_team_id, opponent_team_id=away_team_id, is_home=1, season=season)
+            total_geradas += 1
+        except Exception as erro:
+            logger.error(f"Erro ao gerar predicao —> player_id={player_id}, game_id={game_id}: {erro}")
+ 
+    for player_id in jogadores_away:
+        if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
+            continue
+        try:
+            _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=away_team_id, opponent_team_id=home_team_id, is_home=0, season=season)
+            total_geradas += 1
+        except Exception as erro:
+            logger.error(f"Erro ao gerar predicao —> player_id={player_id}, game_id={game_id}: {erro}")
+ 
+    return total_geradas, total_erros
+
 def salvar_predicoes_dia_atual(db, season):
     jogos_do_dia = _buscar_jogos_do_dia(db=db, season=season)
-
+ 
     if not jogos_do_dia:
+        logger.warning(f"Nenhum jogo encontrado para hoje na temporada {season}.")
         return 0
-
-    total_geradas = 0
-    total_erros = 0
-
+ 
+    total_geradas = 0 
     for jogo in jogos_do_dia:
-        game_id = jogo.id
-        home_team_id = jogo.home_team_id
-        away_team_id = jogo.away_team_id
-
-        jogadores_home = _buscar_jogadores_do_time(db=db, team_id=home_team_id, season=season)
-        jogadores_away = _buscar_jogadores_do_time(db=db, team_id=away_team_id, season=season)
-
-        for player_id in jogadores_home:
-            if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
-                continue
-
-            try:
-                _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=home_team_id, opponent_team_id=away_team_id, is_home=1, season=season)
-                total_geradas += 1
-            except Exception as e:
-                total_erros += 1
-                logger.error(f"Erro ao gerar previsão para jogador {player_id} no jogo {game_id}: {e}")
-                continue
-
-        for player_id in jogadores_away:
-            if _predicao_ja_existe(db=db, player_id=player_id, game_id=game_id):
-                continue
-
-            try:
-                _gerar_predicao(db=db, player_id=player_id, game_id=game_id, team_id=away_team_id, opponent_team_id=home_team_id, is_home=0, season=season)
-                total_geradas += 1
-            except Exception as e:
-                total_erros += 1
-                logger.error(f"Erro ao gerar previsão para jogador {player_id} no jogo {game_id}: {e}")
-                continue
+        total_geradas, total_erros = _processar_jogo(db, jogo, season, total_geradas, total_erros)
+ 
     db.commit()
+    logger.warning(f"Predicoes do dia geradas —> total={total_geradas}, temporada={season}")
+    return total_geradas
+
+def salvar_predicoes_temporada(db, season):
+    jogos = (db.query(Game).filter(Game.season == season, Game.status_short == 3).order_by(Game.date_start.asc()).all())
+ 
+    if not jogos:
+        logger.warning(f"Nenhum jogo finalizado encontrado para a temporada {season}.")
+        return 0
+ 
+    total_geradas = 0
+    contador      = 0 
+    for jogo in jogos:
+        jogadores_home  = _buscar_jogadores_do_time(db=db, team_id=jogo.home_team_id, season=season)
+        jogadores_away  = _buscar_jogadores_do_time(db=db, team_id=jogo.away_team_id, season=season)
+        total_jogadores = len(jogadores_home) + len(jogadores_away)
+ 
+        predicoes_existentes = db.query(Prediction).filter(Prediction.game_id == jogo.id).count()
+ 
+        if total_jogadores > 0 and predicoes_existentes >= total_jogadores:
+            continue
+ 
+        total_geradas, total_erros = _processar_jogo(db, jogo, season, total_geradas, total_erros)
+        contador += 1
+ 
+        if contador % 10 == 0:
+            db.commit()
+            logger.warning(f"Progresso —> jogos={contador}, predicoes={total_geradas}, temporada={season}")
+ 
+    db.commit()
+    logger.warning(f"Predicoes concluidas —> total={total_geradas}, temporada={season}")
     return total_geradas

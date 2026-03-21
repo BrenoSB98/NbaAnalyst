@@ -1,4 +1,3 @@
-streamlit
 python-decouple
 langchain
 langchain-openai

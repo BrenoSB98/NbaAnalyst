@@ -10,7 +10,7 @@ from app.schemas.season import TemporadasResponse
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/", response_model=TemporadasResponse)
+@router.get("", response_model=TemporadasResponse)
 def listar_temporadas(db: Session = Depends(get_db)):
     temporadas = db.query(Season).order_by(Season.season.desc()).all()
 

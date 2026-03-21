@@ -14,10 +14,7 @@
 
 <div id="app-wrapper">
     <nav id="navbar-principal"></nav>
-
     <main id="conteudo-principal">
-
-        <!-- Cabeçalho -->
         <div class="cabecalho-estatisticas">
             <div class="container">
                 <div class="linha-acento mb-2"></div>
@@ -25,16 +22,14 @@
                 <p class="subtitulo-secao mb-0">Rankings de líderes por categoria. Requer login para visualizar.</p>
             </div>
         </div>
-
-        <!-- Barra de controles: temporada -->
         <div class="barra-controles">
             <div class="container">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                     <label class="form-label-nba mb-0">Temporada</label>
                     <select class="form-control-nba" id="select-temporada" onchange="trocarTemporada()" style="max-width:160px;">
-                        <option value="2025">2025</option>
+                        <option value="2025" selected>2025</option>
                         <option value="2024">2024</option>
-                        <option value="2023" selected>2023</option>
+                        <option value="2023">2023</option>
                         <option value="2022">2022</option>
                         <option value="2021">2021</option>
                     </select>
@@ -44,8 +39,6 @@
 
         <div class="area-ranking">
             <div class="container">
-
-                <!-- Para não logados: banner de convite -->
                 <div id="bloco-nao-logado">
                     <div class="banner-login-stats">
                         <div class="titulo">
@@ -62,101 +55,70 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Para logados: categorias + conteúdo -->
                 <div id="bloco-logado" style="display: none;">
-
-                    <!-- Botões de categoria -->
                     <div class="lista-categorias" id="lista-categorias">
-                        <!-- preenchido pelo JS -->
                     </div>
-
-                    <!-- Spinner -->
                     <div id="ranking-carregando">
                         <div class="spinner-nba">
                             <div class="bola-animada"></div>
-                            <span>Carregando ranking...</span>
+                            <span>Carregando ranking.</span>
                         </div>
                     </div>
-
-                    <!-- Conteúdo: tabela + gráfico lado a lado -->
                     <div id="ranking-conteudo" style="display: none;">
                         <div class="row g-4">
-
-                            <!-- Tabela de ranking -->
                             <div class="col-12 col-lg-5">
                                 <h2 class="titulo-secao mb-3" style="font-size:1rem;" id="titulo-ranking">Top 10</h2>
                                 <div class="card-nba">
                                     <div class="card-body-nba p-0">
                                         <div id="tabela-ranking" style="padding: 8px 16px;">
-                                            <!-- preenchido pelo JS -->
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Gráfico D3 -->
                             <div class="col-12 col-lg-7">
                                 <h2 class="titulo-secao mb-3" style="font-size:1rem;">Média por jogo</h2>
                                 <div class="grafico-container">
                                     <div id="grafico-barras">
-                                        <!-- SVG do D3 inserido aqui -->
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
-                    <!-- Estado vazio -->
                     <div id="ranking-vazio" style="display: none;">
                         <div class="estado-vazio">
                             <i class="bi bi-bar-chart icone-vazio"></i>
                             <p class="titulo-vazio">Sem dados para esta temporada</p>
-                            <p class="desc-vazio">Tente selecionar outra temporada.</p>
+                            <p class="desc-vazio">Selecione outra temporada.</p>
                         </div>
                     </div>
-
                 </div>
-
             </div>
         </div>
-
     </main>
-
     <footer id="rodape-principal"></footer>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- D3.js v7 -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<!-- Scripts globais -->
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
 
 <script>
-// Categoria selecionada no momento
 var categoriaAtiva = "pontos";
-
-// Temporada selecionada
-var temporadaAtiva = 2023;
-
-// Definição de todas as categorias disponíveis
+var temporadaAtiva = 2025;
 var categorias = [
-    { id: "pontos",            label: "Pontos",           endpoint: "pontos",            campoTotal: "total_points" },
-    { id: "assistencias",      label: "Assistências",     endpoint: "assistencias",      campoTotal: "total_assists" },
-    { id: "rebotes",           label: "Rebotes",          endpoint: "rebotes",           campoTotal: "total_rebounds" },
-    { id: "roubos",            label: "Roubos",           endpoint: "roubos-bola",       campoTotal: "total_steals" },
-    { id: "bloqueios",         label: "Bloqueios",        endpoint: "bloqueios",         campoTotal: "total_blocks" },
-    { id: "turnovers",         label: "Turnovers",        endpoint: "turnovers",         campoTotal: "total_turnovers" },
-    { id: "arremessos-campo",  label: "Arremessos Campo", endpoint: "arremessos-campo",  campoTotal: "total_field_goals_made" },
-    { id: "arremessos-tres",   label: "Arremessos 3pts",  endpoint: "arremessos-tres",   campoTotal: "total_three_pointers_made" },
-    { id: "lances-livres",     label: "Lances Livres",    endpoint: "lances-livres",     campoTotal: "total_free_throws_made" },
-    { id: "plus-minus",        label: "Plus/Minus",       endpoint: "plus-minus",        campoTotal: "total_plus_minus" }
+    {id: "pontos", label: "Pontos", endpoint: "pontos", campoTotal: "total_points"},
+    {id: "assistencias", label: "Assistências", endpoint: "assistencias", campoTotal: "total_assists"},
+    {id: "rebotes", label: "Rebotes", endpoint: "rebotes", campoTotal: "total_rebounds"},
+    {id: "roubos", label: "Roubos", endpoint: "roubos-bola", campoTotal: "total_steals"},
+    {id: "bloqueios", label: "Bloqueios", endpoint: "bloqueios", campoTotal: "total_blocks"},
+    {id: "turnovers", label: "Turnovers", endpoint: "turnovers", campoTotal: "total_turnovers"},
+    {id: "arremessos-campo", label: "Arremessos Campo", endpoint: "arremessos-campo", campoTotal: "total_field_goals_made"},
+    {id: "arremessos-tres", label: "Arremessos 3pts", endpoint: "arremessos-tres", campoTotal: "total_three_pointers_made"},
+    {id: "lances-livres",  label: "Lances Livres", endpoint: "lances-livres", campoTotal: "total_free_throws_made"},
+    {id: "plus-minus", label: "Plus/Minus", endpoint: "plus-minus", campoTotal: "total_plus_minus"}
 ];
-
 
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
@@ -172,8 +134,6 @@ document.addEventListener("DOMContentLoaded", function() {
     carregarRanking();
 });
 
-
-// Monta os botões de categoria
 function renderizarBotoesCategorias() {
     var container = document.getElementById("lista-categorias");
     var html = "";
@@ -186,46 +146,33 @@ function renderizarBotoesCategorias() {
             + cat.label
             + '</button>';
     }
-
     container.innerHTML = html;
 }
 
-
-// Troca a categoria ativa e recarrega
 function selecionarCategoria(idCategoria) {
-    // Remove ativo do botão anterior
     var btnAnterior = document.getElementById("btn-cat-" + categoriaAtiva);
     if (btnAnterior) {
         btnAnterior.classList.remove("ativo");
     }
 
     categoriaAtiva = idCategoria;
-
-    // Marca o novo botão como ativo
     var btnNovo = document.getElementById("btn-cat-" + categoriaAtiva);
     if (btnNovo) {
         btnNovo.classList.add("ativo");
     }
-
     carregarRanking();
 }
 
-
-// Troca a temporada e recarrega
 function trocarTemporada() {
     temporadaAtiva = parseInt(document.getElementById("select-temporada").value);
     carregarRanking();
 }
 
-
-// Busca o ranking da categoria ativa na API
 async function carregarRanking() {
-    // Oculta conteúdo anterior e mostra spinner
     document.getElementById("ranking-conteudo").style.display = "none";
     document.getElementById("ranking-vazio").style.display = "none";
     document.getElementById("ranking-carregando").style.display = "block";
 
-    // Encontra a definição da categoria ativa
     var catDef = null;
     for (var i = 0; i < categorias.length; i++) {
         if (categorias[i].id === categoriaAtiva) {
@@ -241,7 +188,6 @@ async function carregarRanking() {
     try {
         var endpoint = "/analiticos/lideres/" + temporadaAtiva + "/" + catDef.endpoint + "?limite=10";
         var dados = await chamarApiAutenticada(endpoint);
-
         document.getElementById("ranking-carregando").style.display = "none";
 
         if (!dados.lideres || dados.lideres.length === 0) {
@@ -250,20 +196,15 @@ async function carregarRanking() {
         }
 
         document.getElementById("titulo-ranking").textContent = "Top " + dados.lideres.length + " — " + catDef.label;
-
         renderizarTabela(dados.lideres);
         renderizarGrafico(dados.lideres, catDef.label);
-
         document.getElementById("ranking-conteudo").style.display = "block";
-
     } catch (erro) {
         document.getElementById("ranking-carregando").style.display = "none";
         document.getElementById("ranking-vazio").style.display = "block";
     }
 }
 
-
-// Monta a tabela de líderes
 function renderizarTabela(lideres) {
     var container = document.getElementById("tabela-ranking");
     var html = "";
@@ -272,11 +213,7 @@ function renderizarTabela(lideres) {
         var lider = lideres[i];
         var posicao = i + 1;
         var classeTop = posicao <= 3 ? " top3" : "";
-
-        // A média vem no campo "avg"
         var media = lider.avg !== undefined ? lider.avg : "—";
-
-        // Jogos jogados
         var jogos = lider.games_played !== undefined ? lider.games_played + "j" : "";
 
         html = html
@@ -287,19 +224,13 @@ function renderizarTabela(lideres) {
             +   '<div class="valor-media">' + media + '</div>'
             + '</div>';
     }
-
     container.innerHTML = html;
 }
 
-
-// Desenha o gráfico de barras horizontais com D3
 function renderizarGrafico(lideres, labelCategoria) {
     var container = document.getElementById("grafico-barras");
-
-    // Limpa o gráfico anterior
     container.innerHTML = "";
 
-    // Dimensões
     var larguraTotal = container.offsetWidth || 500;
     var margemEsquerda = 130;
     var margemDireita = 60;
@@ -307,48 +238,21 @@ function renderizarGrafico(lideres, labelCategoria) {
     var margemBaixo = 10;
     var alturaLinha = 34;
     var alturaTotal = lideres.length * alturaLinha + margemTopo + margemBaixo;
-
     var larguraBarras = larguraTotal - margemEsquerda - margemDireita;
 
-    // Cria o SVG
-    var svg = d3.select("#grafico-barras")
-        .append("svg")
-        .attr("width", larguraTotal)
-        .attr("height", alturaTotal);
-
-    // Grupo principal com margem
-    var g = svg.append("g")
-        .attr("transform", "translate(" + margemEsquerda + "," + margemTopo + ")");
-
-    // Escala X — domínio de 0 ao maior valor de média
+    var svg = d3.select("#grafico-barras").append("svg").attr("width", larguraTotal).attr("height", alturaTotal);
+    var g = svg.append("g").attr("transform", "translate(" + margemEsquerda + "," + margemTopo + ")");
     var maiorMedia = d3.max(lideres, function(d) { return d.avg || 0; });
-
-    var escalaX = d3.scaleLinear()
-        .domain([0, maiorMedia * 1.1])
-        .range([0, larguraBarras]);
-
-    // Escala Y — uma posição por jogador
-    var escalaY = d3.scaleBand()
-        .domain(lideres.map(function(d) { return d.player_name; }))
-        .range([0, lideres.length * alturaLinha])
-        .padding(0.3);
-
-    // Barras
-    g.selectAll(".barra")
-        .data(lideres)
-        .enter()
-        .append("rect")
-        .attr("class", "barra")
-        .attr("x", 0)
-        .attr("y", function(d) { return escalaY(d.player_name); })
-        .attr("width", function(d) { return escalaX(d.avg || 0); })
-        .attr("height", escalaY.bandwidth())
-        .attr("fill", "#F75C03")
-        .attr("rx", 4)
-        .attr("opacity", function(d, i) {
-            // Barra do 1º lugar mais opaca, diminui levemente
-            return 1 - (i * 0.06);
-        });
+    var escalaX = d3.scaleLinear().domain([0, maiorMedia * 1.1]).range([0, larguraBarras]);
+    var escalaY = d3.scaleBand().domain(lideres.map(function(d) { return d.player_name; })).range([0, lideres.length * alturaLinha]).padding(0.3);
+    
+    g.selectAll(".barra").data(lideres).enter().append("rect").attr("class", "barra").attr("x", 0).attr("y", function(d) { return escalaY(d.player_name); })
+    .attr("width", function(d) { 
+        return escalaX(d.avg || 0); 
+    }).attr("height", escalaY.bandwidth()).attr("fill", "#F75C03").attr("rx", 4)
+    .attr("opacity", function(d, i) {
+        return 1 - (i * 0.06);
+    });
 
     // Nomes dos jogadores (lado esquerdo)
     g.selectAll(".nome")

@@ -12,7 +12,7 @@ from app.schemas.game import EstatisticasJogadoresJogoResponse, EstatisticasTime
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/", response_model=GameListResponse)
+@router.get("", response_model=GameListResponse)
 def listar_jogos(temporada: int = Query(None), time_id: int = Query(None), data_inicio: str = Query(None), data_fim: str = Query(None),
                  status: int = Query(None), page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200), db: Session = Depends(get_db)):
     query = db.query(Game)

@@ -8,7 +8,7 @@ from app.core.dependencies import obter_temporada
 from app.db.db_utils import get_db
 from app.db.models import Game, Player, Prediction, Team
 from app.routers.auth import obter_usuario_atual
-from app.services.manager_service import salvar_predicoes_dia_atual
+from app.services.manager_service import salvar_predicoes_dia_atual, salvar_predicoes_temporada
 from app.services.prediction_service import prever_performance_jogador, prever_multiplas_stats_jogador
 
 router = APIRouter()
@@ -204,5 +204,19 @@ def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
     return {
         "mensagem": "Predições geradas com sucesso.",
         "temporada": temporada_alvo,
+        "total_predicoes_geradas": total,
+    }
+
+@router.post("/gerar/temporada")
+def gerar_predicoes_temporada(temporada: int = Query(..., description="Temporada para gerar predicoes retroativas (ex: 2025)"), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+    try:
+        total = salvar_predicoes_temporada(db=db, season=temporada)
+    except Exception as erro:
+        logger.error(f"Falha ao gerar predicoes da temporada {temporada}: {erro}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar predicoes: {str(erro)}")
+ 
+    return {
+        "mensagem": f"Predicoes da temporada {temporada} geradas com sucesso.",
+        "temporada": temporada,
         "total_predicoes_geradas": total,
     }

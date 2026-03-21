@@ -32,8 +32,8 @@ function renderizarMenu() {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link ${classeLinkAtivo(["oraculo"])} d-flex align-items-center gap-2" href="/oraculo.html">
-                    <i class="bi bi-robot"></i> Oráculo
+                <a class="nav-link ${classeLinkAtivo(["onerb"])} d-flex align-items-center gap-2" href="/onerb.html">
+                    <i class="bi bi-robot"></i> Onerb IA NBA
                 </a>
             </li>
         `;
@@ -159,7 +159,7 @@ function renderizarRodape() {
                     <a class="rodape-link" href="/login.html">Entrar</a>
                     <a class="rodape-link" href="/cadastro.html">Cadastrar</a>
                     <a class="rodape-link" href="/perfil.html">Meu Perfil</a>
-                    <a class="rodape-link" href="/oraculo.html">Oráculo IA</a>
+                    <a class="rodape-link" href="/onerb.html">Onerb IA NBA</a>
                 </div>
 
                 <!-- Coluna 4: Tecnologia -->
@@ -178,12 +178,10 @@ function renderizarRodape() {
             <div class="rodape-direitos">
                 <span class="texto-fraco">
                     &copy; ${anoAtual} NbaAnalyst &mdash; Desenvolvido para análise de dados da NBA.
-                    Não constitui recomendação financeira ou de apostas.
                 </span>
             </div>
         </div>
     `;
-
     elementoRodape.innerHTML = htmlRodape;
 }
 

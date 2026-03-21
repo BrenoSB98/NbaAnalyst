@@ -174,13 +174,32 @@ def get_medias_temporada_completa(jogador_id: int, temporada: int = Query(...), 
     resultado = calcular_medias_temporada_completa(db, jogador_id, temporada)
 
     if not resultado:
-        logger.warning(f"Nenhum dado encontrado para médias da temporada — jogador_id={jogador_id}, temporada={temporada}")
-        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "mensagem": "Nenhum dado encontrado."}
+        logger.warning(f"Nenhum dado encontrado para medias da temporada — jogador_id={jogador_id}, temporada={temporada}")
+        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "temporada": temporada, "mensagem": "Nenhum dado encontrado."}
 
-    resultado["jogador_id"] = jogador_id
-    resultado["nome_jogador"] = f"{jogador.firstname} {jogador.lastname}"
-    resultado["temporada"] = temporada
-    return resultado
+    # calcular_medias_temporada_completa retorna averages com chaves em ingles.
+    # O schema MediasTemporadaResponse espera o campo "medias" com chaves em portugues.
+    # Fazemos o mapeamento aqui para nao quebrar o prediction_service que usa averages internamente.
+    avgs = resultado.get("averages", {})
+    return {
+        "jogador_id": jogador_id,
+        "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+        "temporada": temporada,
+        "jogos_disputados": resultado.get("games_played", 0),
+        "medias": {
+            "pontos":       avgs.get("points"),
+            "assistencias": avgs.get("assists"),
+            "rebotes":      avgs.get("rebounds"),
+            "roubos":       avgs.get("steals"),
+            "bloqueios":    avgs.get("blocks"),
+            "turnovers":    avgs.get("turnovers"),
+            "fg_pct":       avgs.get("fg_pct"),
+            "three_pct":    avgs.get("three_pct"),
+            "ft_pct":       avgs.get("ft_pct"),
+            "minutos":      avgs.get("minutes"),
+            "plus_minus":   avgs.get("plus_minus"),
+        },
+    }
 
 @router.get("/jogadores/{jogador_id}/medias/contra-time/{time_adversario_id}", response_model=MediasContraTimeResponse)
 def get_medias_contra_time(jogador_id: int, time_adversario_id: int, temporada: int = Query(default=None), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):

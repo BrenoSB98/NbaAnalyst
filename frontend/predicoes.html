@@ -14,16 +14,11 @@
 
 <div id="app-wrapper">
     <nav id="navbar-principal"></nav>
-
     <main id="conteudo-principal">
-
-        <!-- Cabeçalho -->
         <div class="cabecalho-predicoes">
             <div class="container">
                 <div class="linha-acento mb-2"></div>
                 <h1 class="titulo-secao mb-2">Predições do Dia</h1>
-
-                <!-- Resumo com totais -->
                 <div class="resumo-dia" id="resumo-dia" style="display: none;">
                     <div class="resumo-item">
                         <span class="resumo-valor" id="resumo-jogos">—</span>
@@ -38,11 +33,9 @@
                         <span class="resumo-rotulo">Data</span>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- Abas -->
         <div class="abas-predicoes">
             <div class="container">
                 <div class="d-flex">
@@ -58,38 +51,25 @@
 
         <div class="area-predicoes">
             <div class="container">
-
-                <!-- Spinner global -->
                 <div id="pagina-carregando">
                     <div class="spinner-nba">
                         <div class="bola-animada"></div>
-                        <span>Carregando predições...</span>
+                        <span>Carregando predições.</span>
                     </div>
                 </div>
-
-                <!-- Conteúdo — oculto até carregar -->
                 <div id="pagina-conteudo" style="display: none;">
-
-                    <!-- ABA: POR JOGO -->
                     <div id="aba-jogos">
                         <div id="lista-jogos">
-                            <!-- cards de jogos preenchidos pelo JS -->
                         </div>
                     </div>
-
-                    <!-- ABA: RANKING DO DIA -->
                     <div id="aba-ranking" style="display: none;">
                         <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Top Pontuadores Previstos</h2>
                         <div class="grafico-container">
                             <div id="grafico-ranking">
-                                <!-- SVG do D3 inserido aqui -->
                             </div>
                         </div>
                     </div>
-
                 </div>
-
-                <!-- Estado vazio -->
                 <div id="pagina-vazio" style="display: none;">
                     <div class="estado-vazio">
                         <i class="bi bi-graph-up-arrow icone-vazio"></i>
@@ -97,12 +77,9 @@
                         <p class="desc-vazio">Nenhuma predição foi gerada para os jogos de hoje ainda.</p>
                     </div>
                 </div>
-
             </div>
         </div>
-
     </main>
-
     <footer id="rodape-principal"></footer>
 </div>
 
@@ -113,10 +90,8 @@
 <script src="js/componentes.js"></script>
 
 <script>
-// Guarda de rota
 verificarAutenticacao();
 
-// Guarda todas as predições para usar nas duas abas
 var todasPredicoes = [];
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -124,8 +99,6 @@ document.addEventListener("DOMContentLoaded", function() {
     carregarPredicoes();
 });
 
-
-// Troca entre as abas "jogos" e "ranking"
 function trocarAba(nomeAba) {
     document.getElementById("aba-jogos").style.display = "none";
     document.getElementById("aba-ranking").style.display = "none";
@@ -135,21 +108,16 @@ function trocarAba(nomeAba) {
     document.getElementById("aba-" + nomeAba).style.display = "block";
     document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
 
-    // Só desenha o gráfico quando a aba for aberta
     if (nomeAba === "ranking" && todasPredicoes.length > 0) {
         renderizarGraficoRanking(todasPredicoes);
     }
 }
 
-
-// Busca as predições do dia
 async function carregarPredicoes() {
     try {
         var dados = await chamarApiAutenticada("/predicoes/hoje");
 
         document.getElementById("pagina-carregando").style.display = "none";
-
-        // Preenche o resumo no cabeçalho
         document.getElementById("resumo-jogos").textContent = dados.total_jogos;
         document.getElementById("resumo-predicoes").textContent = dados.total_predicoes;
         document.getElementById("resumo-data").textContent = dados.data || "—";
@@ -161,37 +129,25 @@ async function carregarPredicoes() {
         }
 
         todasPredicoes = dados.predicoes;
-
         renderizarCardsPorJogo(dados.predicoes);
         document.getElementById("pagina-conteudo").style.display = "block";
-
     } catch (erro) {
         document.getElementById("pagina-carregando").style.display = "none";
         document.getElementById("pagina-vazio").style.display = "block";
     }
 }
 
-
-// Agrupa predições por game_id e monta os cards
 function renderizarCardsPorJogo(predicoes) {
     var container = document.getElementById("lista-jogos");
-
-    // Agrupa por game_id
     var grupos = {};
     for (var i = 0; i < predicoes.length; i++) {
         var pred = predicoes[i];
         var gid = pred.game_id;
 
         if (!grupos[gid]) {
-            grupos[gid] = {
-                game_id: gid,
-                nome_casa: "",
-                nome_fora: "",
-                jogadores: []
-            };
+            grupos[gid] = {game_id: gid, nome_casa: "", nome_fora: "", jogadores: []};
         }
 
-        // Determina casa e fora pelo campo eh_casa
         if (pred.eh_casa === 1 || pred.eh_casa === true) {
             grupos[gid].nome_casa = pred.nome_time || "";
             grupos[gid].nome_fora = pred.nome_adversario || "";
@@ -211,12 +167,10 @@ function renderizarCardsPorJogo(predicoes) {
         var grupo = grupos[gid];
         var totalJogadores = grupo.jogadores.length;
 
-        // Ordena jogadores por pontos previstos
         grupo.jogadores.sort(function(a, b) {
             return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
         });
 
-        // Monta as linhas da tabela de jogadores
         var linhasHtml = "";
         for (var k = 0; k < grupo.jogadores.length; k++) {
             var jog = grupo.jogadores[k];
@@ -265,8 +219,6 @@ function renderizarCardsPorJogo(predicoes) {
     container.innerHTML = html;
 }
 
-
-// Abre/fecha o corpo de um card de jogo
 function toggleJogo(header) {
     var corpo = header.nextElementSibling;
     var seta = header.querySelector(".jogo-seta");
@@ -280,13 +232,10 @@ function toggleJogo(header) {
     }
 }
 
-
-// Gráfico D3 — barras horizontais com os maiores pontos previstos do dia
 function renderizarGraficoRanking(predicoes) {
     var container = document.getElementById("grafico-ranking");
     container.innerHTML = "";
 
-    // Pega os top 15 por pontos previstos
     var ordenados = predicoes.slice();
     ordenados.sort(function(a, b) {
         return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
@@ -323,7 +272,6 @@ function renderizarGraficoRanking(predicoes) {
         .range([0, ordenados.length * alturaLinha])
         .padding(0.3);
 
-    // Barras
     g.selectAll(".barra")
         .data(ordenados)
         .enter()
@@ -336,7 +284,6 @@ function renderizarGraficoRanking(predicoes) {
         .attr("rx", 3)
         .attr("opacity", function(d, i) { return 1 - (i * 0.04); });
 
-    // Nome do jogador à esquerda — abreviado
     g.selectAll(".nome")
         .data(ordenados)
         .enter()
@@ -355,7 +302,6 @@ function renderizarGraficoRanking(predicoes) {
             return d.nome_jogador;
         });
 
-    // Time à direita do nome — em laranja suave
     g.selectAll(".time-label")
         .data(ordenados)
         .enter()
@@ -367,7 +313,6 @@ function renderizarGraficoRanking(predicoes) {
         .attr("font-size", "9px")
         .text(function(d) { return d.nome_time || ""; });
 
-    // Valor à direita da barra
     g.selectAll(".valor")
         .data(ordenados)
         .enter()
@@ -383,6 +328,5 @@ function renderizarGraficoRanking(predicoes) {
         });
 }
 </script>
-
 </body>
 </html>

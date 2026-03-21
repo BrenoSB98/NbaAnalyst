@@ -4,29 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NbaAnalyst — Jogador Avançado</title>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/jogador_avancado.css">
 </head>
 <body>
-
 <div id="app-wrapper">
     <nav id="navbar-principal"></nav>
-
     <main id="conteudo-principal">
 
-        <!-- Spinner inicial -->
-        <div id="pagina-carregando">
-            <div class="spinner-nba" style="margin-top:80px;">
-                <div class="bola-animada"></div>
-                <span>Carregando dashboard...</span>
-            </div>
-        </div>
+        <div id="pg-loading"><div class="spinner-nba" style="margin-top:80px;"><div class="bola-animada"></div><span>Carregando...</span></div></div>
 
-        <!-- Conteúdo principal -->
-        <div id="pagina-conteudo" style="display:none;">
+        <div id="pg-content" style="display:none;">
 
             <!-- Cabeçalho -->
             <div class="cabecalho-jav">
@@ -38,36 +28,56 @@
                             <div class="jav-meta" id="jav-meta"></div>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="javascript:history.back()" class="btn-nba-ghost btn-nba btn-sm"><i class="bi bi-arrow-left me-1"></i> Voltar</a>
-                            <a id="btn-perfil-basico" href="#" class="btn-nba-outline btn-nba btn-sm"><i class="bi bi-person me-1"></i> Perfil Básico</a>
+                            <a href="javascript:history.back()" class="btn-nba-ghost btn-nba btn-sm"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+                            <a id="btn-basico" href="#" class="btn-nba-outline btn-nba btn-sm"><i class="bi bi-person me-1"></i>Perfil</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Seletor de temporada -->
+            <!-- Barra de filtros -->
             <div class="barra-controles-jav">
                 <div class="container">
-                    <div class="d-flex align-items-center gap-3">
-                        <label class="form-label-nba mb-0">Temporada</label>
-                        <select class="form-control-nba" id="select-temporada" style="max-width:140px;" onchange="recarregarTudo()">
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023" selected>2023</option>
-                            <option value="2022">2022</option>
-                            <option value="2021">2021</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Abas -->
-            <div class="abas-jav">
-                <div class="container">
-                    <div class="d-flex">
-                        <button class="nav-link ativo" id="aba-btn-temporada" onclick="trocarAba('temporada')"><i class="bi bi-calendar3 me-1"></i> Temporada</button>
-                        <button class="nav-link" id="aba-btn-jogos" onclick="trocarAba('jogos')"><i class="bi bi-list-ul me-1"></i> Jogo a Jogo</button>
-                        <button class="nav-link" id="aba-btn-casafora" onclick="trocarAba('casafora')"><i class="bi bi-house me-1"></i> Casa/Fora</button>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Temporada</label>
+                            <select class="form-control-nba" id="sel-temp" style="max-width:115px;" onchange="recarregar()">
+                                <option value="2025" selected>2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Últimos</label>
+                            <div class="d-flex gap-1" id="btns-nj">
+                                <button class="btn-nj" id="bn-5"  onclick="trocarN(5)">5</button>
+                                <button class="btn-nj ativo" id="bn-10" onclick="trocarN(10)">10</button>
+                                <button class="btn-nj" id="bn-15" onclick="trocarN(15)">15</button>
+                                <button class="btn-nj" id="bn-20" onclick="trocarN(20)">20</button>
+                                <button class="btn-nj" id="bn-50" onclick="trocarN(50)">Todos</button>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Local</label>
+                            <select class="form-control-nba" id="sel-local" style="max-width:110px;" onchange="filtrarLocal()">
+                                <option value="todos">Todos</option>
+                                <option value="casa">Casa</option>
+                                <option value="fora">Fora</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 ms-auto">
+                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Ordenar por</label>
+                            <select class="form-control-nba" id="sel-ord-stat" style="max-width:130px;" onchange="atualizarGraficos()">
+                                <option value="pontos" selected>Pontos</option>
+                                <option value="assistencias">Assistências</option>
+                                <option value="rebotes">Rebotes</option>
+                                <option value="roubos">Roubos</option>
+                                <option value="bloqueios">Bloqueios</option>
+                                <option value="plus_minus">+/-</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,875 +85,815 @@
             <div class="area-jav">
                 <div class="container">
 
-                    <!-- ============================================================
-                         ABA TEMPORADA — médias gerais + radar + percentuais
-                         ============================================================ -->
-                    <div id="aba-temporada">
+                    <!-- Spinner de dados -->
+                    <div id="data-loading" style="padding:40px 0;"><div class="spinner-nba"><div class="bola-animada"></div><span>Carregando estatísticas...</span></div></div>
 
-                        <div id="temp-carregando">
-                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando médias...</span></div>
+                    <div id="data-content" style="display:none;">
+
+                        <!-- ── CARDS ─────────────────────────────────── -->
+                        <div class="acento"></div>
+                        <div class="sec-titulo">Médias da Temporada <span id="lbl-jogos" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
+                        <div class="row g-3 mb-4" id="grid-cards"></div>
+
+                        <!-- ── LINHA INTERATIVA ──────────────────────── -->
+                        <div class="acento"></div>
+                        <div class="sec-titulo">Evolução por Jogo</div>
+                        <div class="gc mb-4">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <span class="gt mb-0">Estatística exibida</span>
+                                <div class="d-flex gap-1 flex-wrap" id="btns-stat-linha">
+                                    <button class="btn-stat ativo" id="bsl-pontos"       onclick="trocarLinha('pontos')">PTS</button>
+                                    <button class="btn-stat"       id="bsl-assistencias" onclick="trocarLinha('assistencias')">AST</button>
+                                    <button class="btn-stat"       id="bsl-rebotes"      onclick="trocarLinha('rebotes')">REB</button>
+                                    <button class="btn-stat"       id="bsl-roubos"       onclick="trocarLinha('roubos')">STL</button>
+                                    <button class="btn-stat"       id="bsl-bloqueios"    onclick="trocarLinha('bloqueios')">BLK</button>
+                                    <button class="btn-stat"       id="bsl-turnovers"    onclick="trocarLinha('turnovers')">TO</button>
+                                    <button class="btn-stat"       id="bsl-plus_minus"   onclick="trocarLinha('plus_minus')">+/-</button>
+                                    <button class="btn-stat"       id="bsl-minutos"      onclick="trocarLinha('minutos')">MIN</button>
+                                </div>
+                            </div>
+                            <div id="g-linha"></div>
                         </div>
 
-                        <div id="temp-conteudo" style="display:none;">
-
-                            <!-- KPIs principais -->
-                            <div class="linha-acento mb-2"></div>
-                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Médias por Jogo</h2>
-                            <div class="row g-3 mb-4" id="grid-kpis-temp"></div>
-
-                            <!-- Percentuais de arremesso -->
-                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Percentuais de Arremesso</h2>
-                            <div class="row g-3 mb-4" id="grid-pcts"></div>
-
-                            <!-- Gráfico D3: radar de atributos -->
-                            <div class="row g-4">
-                                <div class="col-12 col-md-6">
-                                    <h2 class="titulo-secao mb-3" style="font-size:1rem;">Perfil de Atributos</h2>
-                                    <div class="grafico-container text-center">
-                                        <p class="grafico-titulo">Radar — médias normalizadas</p>
-                                        <div id="grafico-radar"></div>
+                        <!-- ── DISPERSÃO + CASA/FORA ──────────────────── -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-12 col-lg-7">
+                                <div class="gc h-100">
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <p class="gt mb-0">Dispersão — Minutos × Desempenho</p>
+                                        <select class="form-control-nba ms-auto" id="sel-disp" style="max-width:115px;font-size:.72rem;" onchange="renderDispersao()">
+                                            <option value="pontos" selected>Pontos</option>
+                                            <option value="assistencias">Assist.</option>
+                                            <option value="rebotes">Rebotes</option>
+                                            <option value="roubos">Roubos</option>
+                                            <option value="bloqueios">Bloqueios</option>
+                                        </select>
                                     </div>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <h2 class="titulo-secao mb-3" style="font-size:1rem;">Distribuição de Contribuição</h2>
-                                    <div class="grafico-container">
-                                        <p class="grafico-titulo">Barras — pontos, ast, reb, stl, blk</p>
-                                        <div id="grafico-barras-temp"></div>
+                                    <div class="d-flex gap-3 mb-1" style="font-size:.7rem;color:#8888AA;">
+                                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F75C03;margin-right:4px;"></span>Casa</span>
+                                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B9EFF;margin-right:4px;"></span>Fora</span>
+                                        <span style="color:#FFD600;">— Tendência</span>
                                     </div>
+                                    <div id="g-disp"></div>
                                 </div>
                             </div>
-
-                        </div>
-
-                        <div id="temp-vazio" style="display:none;">
-                            <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada para esta temporada.</p></div>
-                        </div>
-                    </div>
-
-                    <!-- ============================================================
-                         ABA JOGO A JOGO — gráfico de linha + tabela
-                         ============================================================ -->
-                    <div id="aba-jogos" style="display:none;">
-
-                        <div id="jogos-carregando">
-                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando jogos...</span></div>
-                        </div>
-
-                        <div id="jogos-conteudo" style="display:none;">
-
-                            <!-- Seletor de quantidade de jogos -->
-                            <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-                                <label class="form-label-nba mb-0">Últimos</label>
-                                <div class="d-flex gap-2" id="btns-n-jogos">
-                                    <button class="btn-categoria" id="btn-nj-5"  onclick="trocarNJogos(5)">5</button>
-                                    <button class="btn-categoria ativo" id="btn-nj-10" onclick="trocarNJogos(10)">10</button>
-                                    <button class="btn-categoria" id="btn-nj-15" onclick="trocarNJogos(15)">15</button>
-                                    <button class="btn-categoria" id="btn-nj-20" onclick="trocarNJogos(20)">20</button>
+                            <div class="col-12 col-lg-5">
+                                <div class="gc h-100">
+                                    <p class="gt">Casa vs Fora — Comparação de médias</p>
+                                    <div id="g-casafora"></div>
+                                    <div id="lbl-jogos-cf" style="font-size:.7rem;color:#555570;margin-top:8px;text-align:center;"></div>
                                 </div>
-                                <span class="texto-suave" id="jogos-label" style="font-size:0.82rem;"></span>
                             </div>
+                        </div>
 
-                            <!-- Gráfico D3 de linha — pontos por jogo -->
-                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Evolução de Pontos</h2>
-                            <div class="grafico-container mb-4">
-                                <p class="grafico-titulo">Pontos por jogo — do mais antigo ao mais recente</p>
-                                <div id="grafico-linha"></div>
+                        <!-- ── EFICIÊNCIA + HISTOGRAMA ────────────────── -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-12 col-lg-5">
+                                <div class="gc h-100">
+                                    <p class="gt">Eficiência de Arremesso</p>
+                                    <div id="g-efic"></div>
+                                </div>
                             </div>
-
-                            <!-- Tabela jogo a jogo -->
-                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Detalhes por Jogo</h2>
-                            <div class="card-nba">
-                                <div class="card-body-nba p-0">
-                                    <div style="overflow-x:auto;">
-                                        <table class="tabela-jogos-jav">
-                                            <thead>
-                                                <tr>
-                                                    <th>Data</th>
-                                                    <th>PTS</th>
-                                                    <th>AST</th>
-                                                    <th>REB</th>
-                                                    <th>STL</th>
-                                                    <th>BLK</th>
-                                                    <th>TO</th>
-                                                    <th>FG%</th>
-                                                    <th>3P%</th>
-                                                    <th>MIN</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="tbody-jogos"></tbody>
-                                        </table>
+                            <div class="col-12 col-lg-7">
+                                <div class="gc h-100">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <p class="gt mb-0">Distribuição de valores por jogo</p>
+                                        <select class="form-control-nba ms-auto" id="sel-hist" style="max-width:115px;font-size:.72rem;" onchange="renderHistograma()">
+                                            <option value="pontos" selected>Pontos</option>
+                                            <option value="assistencias">Assist.</option>
+                                            <option value="rebotes">Rebotes</option>
+                                            <option value="plus_minus">+/-</option>
+                                        </select>
                                     </div>
+                                    <div id="g-hist"></div>
                                 </div>
                             </div>
-
                         </div>
 
-                        <div id="jogos-vazio" style="display:none;">
-                            <div class="estado-vazio"><i class="bi bi-list-ul icone-vazio"></i><p class="titulo-vazio">Sem jogos</p><p class="desc-vazio">Nenhum jogo encontrado para este período.</p></div>
+                        <!-- ── TABELA ─────────────────────────────────── -->
+                        <div class="acento"></div>
+                        <div class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span>Histórico de Jogos</span>
+                            <span id="lbl-tabela" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span>
                         </div>
-                    </div>
+                        <div class="card-nba mb-4"><div style="overflow-x:auto;">
+                            <table class="tabela-jogos-jav" id="tab-jogos">
+                                <thead><tr>
+                                    <th class="th-ord" data-c="adversario">Adversário</th>
+                                    <th class="th-ord" data-c="data">Data</th>
+                                    <th class="th-ord td-pts" data-c="pontos">PTS</th>
+                                    <th class="th-ord" data-c="assistencias">AST</th>
+                                    <th class="th-ord" data-c="rebotes">REB</th>
+                                    <th class="th-ord td-sec" data-c="roubos">STL</th>
+                                    <th class="th-ord td-sec" data-c="bloqueios">BLK</th>
+                                    <th class="th-ord td-sec" data-c="turnovers">TO</th>
+                                    <th class="th-ord td-sec" data-c="fg_pct">FG%</th>
+                                    <th class="th-ord td-sec" data-c="three_pct">3P%</th>
+                                    <th class="th-ord td-sec" data-c="plus_minus">+/-</th>
+                                    <th class="th-ord td-sec" data-c="minutos">MIN</th>
+                                </tr></thead>
+                                <tbody id="tbody-jogos"></tbody>
+                            </table>
+                        </div></div>
 
-                    <!-- ============================================================
-                         ABA CASA/FORA — comparação lado a lado com gráfico D3
-                         ============================================================ -->
-                    <div id="aba-casafora" style="display:none;">
+                    </div><!-- fim data-content -->
 
-                        <div id="cf-carregando">
-                            <div class="spinner-nba" style="padding:24px;"><div class="bola-animada"></div><span>Carregando análise casa/fora...</span></div>
-                        </div>
-
-                        <div id="cf-conteudo" style="display:none;">
-
-                            <!-- Gráfico D3 comparativo -->
-                            <h2 class="titulo-secao mb-3" style="font-size:1rem;">Comparação Casa vs Fora</h2>
-                            <div class="grafico-container mb-4">
-                                <p class="grafico-titulo">Médias por estatística — barras agrupadas</p>
-                                <div id="grafico-casafora"></div>
-                            </div>
-
-                            <!-- KPIs lado a lado -->
-                            <div class="row g-4" id="grid-cf"></div>
-
-                        </div>
-
-                        <div id="cf-vazio" style="display:none;">
-                            <div class="estado-vazio"><i class="bi bi-house icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhum dado de casa/fora encontrado para esta temporada.</p></div>
-                        </div>
+                    <div id="data-vazio" style="display:none;">
+                        <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada para esta temporada.</p></div>
                     </div>
 
                 </div>
             </div>
-        </div>
+        </div><!-- fim pg-content -->
 
-        <!-- Erro -->
-        <div id="pagina-erro" style="display:none;">
-            <div class="estado-vazio" style="margin-top:80px;">
-                <i class="bi bi-exclamation-circle icone-vazio"></i>
-                <p class="titulo-vazio">Jogador não encontrado</p>
-                <p class="desc-vazio">Verifique o endereço ou volte para a lista.</p>
-            </div>
+        <div id="pg-erro" style="display:none;">
+            <div class="estado-vazio" style="margin-top:80px;"><i class="bi bi-exclamation-circle icone-vazio"></i><p class="titulo-vazio">Jogador não encontrado</p></div>
         </div>
 
     </main>
-
     <footer id="rodape-principal"></footer>
 </div>
+
+<div class="d3-tt" id="tt"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
-
 <script>
-// Guarda de rota
 verificarAutenticacao();
 
-var jogadorId  = obterParametroUrl("id");
-var nJogosAtivo = 10;
+var jogadorId    = obterParametroUrl("id");
+var nAtivo       = 10;
+var statLinha    = "pontos";
+var ordTabela    = { campo: "data", dir: "desc" };
+var svgLinha     = null;
+var gLinha       = null;
+var escXL        = null;
+var escYL        = null;
+var largL        = 0;
+var altL         = 0;
 
-// Cache de dados já carregados — evita chamadas repetidas
-var cacheTemporada  = null;
-var cacheJogos      = {};   // chave: n_jogos
-var cacheCasa       = null;
-var cacheFora       = null;
+var dTemporada   = null;   // resposta de /medias/temporada
+var dJogos       = null;   // resposta de /ultimos-jogos
+var dCasa        = null;   // resposta de /casa-fora?local=casa
+var dFora        = null;   // resposta de /casa-fora?local=fora
 
+var NOMES = {
+    pontos: "Pontos", assistencias: "Assistências", rebotes: "Rebotes",
+    roubos: "Roubos", bloqueios: "Bloqueios", turnovers: "Turnovers",
+    plus_minus: "+/-", fg_pct: "FG%", three_pct: "3P%", ft_pct: "FT%", minutos: "MIN"
+};
+
+var tt = document.getElementById("tt");
+
+function showTT(event, html) {
+    tt.innerHTML = html;
+    tt.style.opacity = 1;
+    moveTT(event);
+}
+function moveTT(event) {
+    var x = event.clientX + 14;
+    var y = event.clientY - 36;
+    if (x + 210 > window.innerWidth) { x = event.clientX - 210; }
+    tt.style.left = x + "px";
+    tt.style.top  = y + "px";
+}
+function hideTT() { tt.style.opacity = 0; }
+
+// ── INIT ──────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
-
     if (!jogadorId) {
-        document.getElementById("pagina-carregando").style.display = "none";
-        document.getElementById("pagina-erro").style.display = "block";
+        document.getElementById("pg-loading").style.display = "none";
+        document.getElementById("pg-erro").style.display = "block";
         return;
     }
-
     carregarCabecalho();
 });
 
-
-// ============================================================
-// CONTROLES DE NAVEGAÇÃO
-// ============================================================
-
-function trocarAba(nomeAba) {
-    document.getElementById("aba-temporada").style.display = "none";
-    document.getElementById("aba-jogos").style.display = "none";
-    document.getElementById("aba-casafora").style.display = "none";
-
-    document.getElementById("aba-btn-temporada").classList.remove("ativo");
-    document.getElementById("aba-btn-jogos").classList.remove("ativo");
-    document.getElementById("aba-btn-casafora").classList.remove("ativo");
-
-    document.getElementById("aba-" + nomeAba).style.display = "block";
-    document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
-
-    if (nomeAba === "jogos" && !cacheJogos[nJogosAtivo]) { carregarJogos(nJogosAtivo); }
-    if (nomeAba === "casafora" && (!cacheCasa || !cacheFora)) { carregarCasaFora(); }
-}
-
-
-function trocarNJogos(n) {
-    document.getElementById("btn-nj-" + nJogosAtivo).classList.remove("ativo");
-    nJogosAtivo = n;
-    document.getElementById("btn-nj-" + n).classList.add("ativo");
-
-    if (!cacheJogos[n]) {
-        carregarJogos(n);
-    } else {
-        renderizarJogos(cacheJogos[n]);
-    }
-}
-
-
-function recarregarTudo() {
-    cacheTemporada = null;
-    cacheJogos     = {};
-    cacheCasa      = null;
-    cacheFora      = null;
-
-    // Limpa todos os conteúdos e mostra spinners
-    document.getElementById("temp-conteudo").style.display = "none";
-    document.getElementById("temp-carregando").style.display = "block";
-    document.getElementById("temp-vazio").style.display = "none";
-    document.getElementById("jogos-conteudo").style.display = "none";
-    document.getElementById("jogos-carregando").style.display = "block";
-    document.getElementById("jogos-vazio").style.display = "none";
-    document.getElementById("cf-conteudo").style.display = "none";
-    document.getElementById("cf-carregando").style.display = "block";
-    document.getElementById("cf-vazio").style.display = "none";
-    document.getElementById("grafico-radar").innerHTML = "";
-    document.getElementById("grafico-barras-temp").innerHTML = "";
-    document.getElementById("grafico-linha").innerHTML = "";
-    document.getElementById("grafico-casafora").innerHTML = "";
-
-    // Recarrega a aba ativa
-    var abaAtiva = document.querySelector(".abas-jav .nav-link.ativo");
-    if (abaAtiva) {
-        var idAba = abaAtiva.id.replace("aba-btn-", "");
-        if (idAba === "temporada") { carregarTemporada(); }
-        if (idAba === "jogos")     { carregarJogos(nJogosAtivo); }
-        if (idAba === "casafora")  { carregarCasaFora(); }
-    }
-}
-
-
-// ============================================================
-// DADOS DO CABEÇALHO (público)
-// ============================================================
-
+// ── CABEÇALHO ────────────────────────────────────────────────
 async function carregarCabecalho() {
     try {
         var dados = await chamarApi("/jogadores/" + jogadorId);
+        var nome = dados.nome + " " + dados.sobrenome;
+        document.title = "NbaAnalyst — " + nome;
+        document.getElementById("jav-avatar").textContent = (dados.nome.charAt(0) + dados.sobrenome.charAt(0)).toUpperCase();
+        document.getElementById("jav-nome").textContent = nome;
+        document.getElementById("btn-basico").href = "jogador.html?id=" + jogadorId;
 
-        var nomeCompleto = dados.nome + " " + dados.sobrenome;
-        document.title = "NbaAnalyst — " + nomeCompleto + " Avançado";
-
-        var iniciais = dados.nome.charAt(0) + dados.sobrenome.charAt(0);
-        document.getElementById("jav-avatar").textContent = iniciais.toUpperCase();
-        document.getElementById("jav-nome").textContent = nomeCompleto;
-        document.getElementById("btn-perfil-basico").href = "jogador.html?id=" + jogadorId;
-
-        var metaHtml = "";
+        var meta = "";
         if (dados.historico_times && dados.historico_times.length > 0) {
             var t = dados.historico_times[0];
-            metaHtml += '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
-            if (t.posicao) { metaHtml += '<span><i class="bi bi-person-fill"></i>' + t.posicao + '</span>'; }
+            meta += '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
+            if (t.posicao) { meta += '<span><i class="bi bi-person-fill"></i>' + t.posicao + '</span>'; }
         }
-        if (dados.inicio_nba) { metaHtml += '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
-        if (dados.pais_nascimento) { metaHtml += '<span><i class="bi bi-globe2"></i>' + dados.pais_nascimento + '</span>'; }
-        document.getElementById("jav-meta").innerHTML = metaHtml;
+        if (dados.inicio_nba) { meta += '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
+        if (dados.pais_nascimento) { meta += '<span><i class="bi bi-globe2"></i>' + dados.pais_nascimento + '</span>'; }
+        document.getElementById("jav-meta").innerHTML = meta;
 
-        document.getElementById("pagina-carregando").style.display = "none";
-        document.getElementById("pagina-conteudo").style.display = "block";
-
-        // Carrega a aba inicial
-        carregarTemporada();
-
-    } catch (erro) {
-        document.getElementById("pagina-carregando").style.display = "none";
-        document.getElementById("pagina-erro").style.display = "block";
+        document.getElementById("pg-loading").style.display = "none";
+        document.getElementById("pg-content").style.display = "block";
+        carregarDados();
+    } catch (e) {
+        document.getElementById("pg-loading").style.display = "none";
+        document.getElementById("pg-erro").style.display = "block";
     }
 }
 
+// ── CARGA DE DADOS ──────────────────────────────────────────
+async function carregarDados() {
+    var temp = document.getElementById("sel-temp").value;
+    document.getElementById("data-loading").style.display = "block";
+    document.getElementById("data-content").style.display = "none";
+    document.getElementById("data-vazio").style.display   = "none";
 
-// ============================================================
-// ABA TEMPORADA
-// ============================================================
+    try {
+        var res = await Promise.all([
+            chamarApiAutenticada("/analiticos/jogadores/" + jogadorId + "/medias/temporada?temporada=" + temp),
+            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos?n_jogos=" + nAtivo + "&temporada=" + temp),
+            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temp + "&local=casa"),
+            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temp + "&local=fora")
+        ]);
+        dTemporada = res[0];
+        dJogos     = res[1];
+        dCasa      = res[2];
+        dFora      = res[3];
 
-async function carregarTemporada() {
-    var temporada = document.getElementById("select-temporada").value;
+        var temJogos = dJogos && dJogos.jogos && dJogos.jogos.length > 0;
+        document.getElementById("data-loading").style.display = "none";
 
-    if (cacheTemporada) {
-        renderizarTemporada(cacheTemporada);
+        if (!temJogos) {
+            document.getElementById("data-vazio").style.display = "block";
+            return;
+        }
+
+        document.getElementById("data-content").style.display = "block";
+        iniciarOrdenacaoTabela();
+        renderTudo();
+
+    } catch (e) {
+        document.getElementById("data-loading").style.display = "none";
+        document.getElementById("data-vazio").style.display   = "block";
+    }
+}
+
+function recarregar() {
+    dTemporada = null; dJogos = null; dCasa = null; dFora = null;
+    svgLinha = null;
+    carregarDados();
+}
+
+function trocarN(n) {
+    document.getElementById("bn-" + nAtivo).classList.remove("ativo");
+    nAtivo = n;
+    document.getElementById("bn-" + n).classList.add("ativo");
+    dJogos = null;
+    carregarDados();
+}
+
+function filtrarLocal() { atualizarGraficos(); }
+
+function atualizarGraficos() {
+    svgLinha = null;
+    renderTudo();
+}
+
+function renderTudo() {
+    renderCards();
+    renderLinha(statLinha);
+    renderDispersao();
+    renderCasaFora();
+    renderEfic();
+    renderHistograma();
+    renderTabela();
+}
+
+// ── FILTRO DE JOGOS ─────────────────────────────────────────
+function jogosVisiveis() {
+    if (!dJogos || !dJogos.jogos) { return []; }
+    var local = document.getElementById("sel-local").value;
+    if (local === "todos") { return dJogos.jogos; }
+    var out = [];
+    for (var i = 0; i < dJogos.jogos.length; i++) {
+        var j = dJogos.jogos[i];
+        if (local === "casa" && j.em_casa) { out.push(j); }
+        if (local === "fora" && !j.em_casa) { out.push(j); }
+    }
+    return out;
+}
+
+// ── CARDS ────────────────────────────────────────────────────
+function renderCards() {
+    var med = (dTemporada && dTemporada.medias) ? dTemporada.medias : null;
+    var njd = (dTemporada && dTemporada.jogos_disputados) ? dTemporada.jogos_disputados : 0;
+    document.getElementById("lbl-jogos").textContent = njd > 0 ? "(" + njd + " jogos)" : "";
+
+    var defs = [
+        { c: "pontos",       l: "PTS", cor: "#F75C03" },
+        { c: "assistencias", l: "AST", cor: "#3B9EFF" },
+        { c: "rebotes",      l: "REB", cor: "#00C896" },
+        { c: "roubos",       l: "STL", cor: "#FFD600" },
+        { c: "bloqueios",    l: "BLK", cor: "#8888AA" },
+        { c: "turnovers",    l: "TO",  cor: "#FF3B5C" },
+        { c: "fg_pct",       l: "FG%", cor: "#EEEEF5", suf: "%" },
+        { c: "three_pct",    l: "3P%", cor: "#EEEEF5", suf: "%" },
+        { c: "ft_pct",       l: "FT%", cor: "#EEEEF5", suf: "%" },
+        { c: "plus_minus",   l: "+/-", cor: "#EEEEF5" }
+    ];
+
+    var html = "";
+    for (var i = 0; i < defs.length; i++) {
+        var d = defs[i];
+        var v = (med && med[d.c] !== null && med[d.c] !== undefined) ? med[d.c] + (d.suf || "") : "—";
+        html += '<div class="col-6 col-sm-4 col-md-2" style="min-width:95px;">'
+            + '<div class="card-kpi-jav"><div class="kv" style="color:' + d.cor + ';">' + v + '</div>'
+            + '<div class="kr">' + d.l + '</div></div></div>';
+    }
+    document.getElementById("grid-cards").innerHTML = html;
+}
+
+// ── GRÁFICO 1: LINHA COM TRANSIÇÃO ──────────────────────────
+function trocarLinha(nova) {
+    document.getElementById("bsl-" + statLinha).classList.remove("ativo");
+    statLinha = nova;
+    document.getElementById("bsl-" + nova).classList.add("ativo");
+
+    if (!svgLinha) { renderLinha(nova); return; }
+
+    var jogos = jogosVisiveis().slice().reverse();
+    escYL.domain([d3.min(jogos, function(d) { return d[nova] || 0; }) * 0.9, d3.max(jogos, function(d) { return d[nova] || 0; }) * 1.2 || 1]);
+
+    // Transição eixo Y
+    gLinha.select(".ey").transition().duration(450)
+        .call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
+        .call(function(g) { g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+
+    var geraL = d3.line().x(function(d,i){return escXL(i);}).y(function(d){return escYL(d[nova]||0);});
+    var geraA = d3.area().x(function(d,i){return escXL(i);}).y0(altL).y1(function(d){return escYL(d[nova]||0);});
+
+    gLinha.select(".area-l").datum(jogos).transition().duration(450).attr("d",geraA);
+    gLinha.select(".path-l").datum(jogos).transition().duration(450).attr("d",geraL);
+    gLinha.selectAll(".pt-l").data(jogos).transition().duration(450)
+        .attr("cx",function(d,i){return escXL(i);})
+        .attr("cy",function(d){return escYL(d[nova]||0);});
+
+    // Média
+    var soma = 0;
+    for (var i = 0; i < jogos.length; i++) { soma += (jogos[i][nova] || 0); }
+    var med = soma / jogos.length;
+    gLinha.select(".l-med").transition().duration(450).attr("y1",escYL(med)).attr("y2",escYL(med));
+    gLinha.select(".t-med").transition().duration(450).attr("y",escYL(med)).text("Méd " + med.toFixed(1));
+
+    gLinha.selectAll(".pt-l")
+        .on("mouseover", function(event,d){ d3.select(this).attr("r",7); ttLinha(event,d,nova); })
+        .on("mousemove", moveTT)
+        .on("mouseout",  function(){ d3.select(this).attr("r",4); hideTT(); });
+}
+
+function ttLinha(event, d, stat) {
+    var dt = d.data ? new Date(d.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "";
+    showTT(event, "<strong>" + NOMES[stat] + ": " + (d[stat]||0) + "</strong><br>"
+        + (d.adversario||"") + " · " + (d.em_casa?"Casa":"Fora") + "<br>" + dt);
+}
+
+function renderLinha(stat) {
+    var el = document.getElementById("g-linha");
+    el.innerHTML = "";
+    svgLinha = null;
+
+    var jogos = jogosVisiveis().slice().reverse();
+    if (jogos.length === 0) { return; }
+
+    var mg = {t:12,r:24,b:30,l:36};
+    var W  = el.offsetWidth || 640;
+    largL  = W - mg.l - mg.r;
+    altL   = 170;
+
+    svgLinha = d3.select("#g-linha").append("svg").attr("width",W).attr("height",altL+mg.t+mg.b);
+    gLinha   = svgLinha.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+
+    var vals = jogos.map(function(d){return d[stat]||0;});
+    var minV = d3.min(vals);
+    var maxV = d3.max(vals) || 1;
+
+    escXL = d3.scaleLinear().domain([0, jogos.length-1]).range([0, largL]);
+    escYL = d3.scaleLinear().domain([minV * 0.9, maxV * 1.2]).range([altL, 0]);
+
+    // Grid Y
+    gLinha.append("g").attr("class","ey")
+        .call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
+        .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+
+    // Eixo X com labels "J1, J2..."
+    gLinha.append("g").attr("transform","translate(0,"+altL+")")
+        .call(d3.axisBottom(escXL).ticks(Math.min(jogos.length,12)).tickFormat(function(d){return "J"+(d+1);}).tickSize(0))
+        .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px").attr("dy","1.2em"); });
+
+    // Área
+    var geraA = d3.area().x(function(d,i){return escXL(i);}).y0(altL).y1(function(d){return escYL(d[stat]||0);});
+    gLinha.append("path").datum(jogos).attr("class","area-l").attr("d",geraA).attr("fill","rgba(247,92,3,0.08)");
+
+    // Linha
+    var geraL = d3.line().x(function(d,i){return escXL(i);}).y(function(d){return escYL(d[stat]||0);});
+    gLinha.append("path").datum(jogos).attr("class","path-l").attr("d",geraL).attr("fill","none").attr("stroke","#F75C03").attr("stroke-width",2);
+
+    // Média
+    var soma = 0;
+    for (var i = 0; i < jogos.length; i++) { soma += (vals[i]); }
+    var med = soma / jogos.length;
+    gLinha.append("line").attr("class","l-med").attr("x1",0).attr("y1",escYL(med)).attr("x2",largL).attr("y2",escYL(med)).attr("stroke","#555570").attr("stroke-width",1).attr("stroke-dasharray","4,4");
+    gLinha.append("text").attr("class","t-med").attr("x",largL+2).attr("y",escYL(med)).attr("dy","0.35em").attr("fill","#555570").attr("font-size","9px").text("Méd "+med.toFixed(1));
+
+    // Pontos interativos
+    gLinha.selectAll(".pt-l").data(jogos).enter().append("circle").attr("class","pt-l")
+        .attr("cx",function(d,i){return escXL(i);})
+        .attr("cy",function(d){return escYL(d[stat]||0);})
+        .attr("r",4).attr("fill","#F75C03").style("cursor","pointer")
+        .on("mouseover",function(event,d){ d3.select(this).attr("r",7); ttLinha(event,d,stat); })
+        .on("mousemove",moveTT)
+        .on("mouseout", function(){ d3.select(this).attr("r",4); hideTT(); })
+        .on("click", function(event,d){ destacarLinha(d.jogo_id); });
+
+    // Brush para zoom
+    var brush = d3.brushX()
+        .extent([[0,0],[largL,altL]])
+        .on("end", function(event) {
+            if (!event.selection) { return; }
+            var x0 = escXL.invert(event.selection[0]);
+            var x1 = escXL.invert(event.selection[1]);
+            escYL.domain([
+                d3.min(jogos.slice(Math.round(x0), Math.round(x1)+1), function(d){ return d[stat]||0; }) * 0.9,
+                d3.max(jogos.slice(Math.round(x0), Math.round(x1)+1), function(d){ return d[stat]||0; }) * 1.2 || 1
+            ]);
+            escXL.domain([x0, x1]);
+            gLinha.select(".area-l").datum(jogos).transition().duration(300).attr("d",geraA);
+            gLinha.select(".path-l").datum(jogos).transition().duration(300).attr("d",geraL);
+            gLinha.selectAll(".pt-l").transition().duration(300)
+                .attr("cx",function(d,i){return escXL(i);})
+                .attr("cy",function(d){return escYL(d[stat]||0);});
+            gLinha.select(".ey").transition().duration(300).call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
+                .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+            gLinha.select(".brush-layer").call(brush.move, null);
+        });
+
+    var dblclickTimer = null;
+    svgLinha.on("dblclick", function() {
+        // Reset zoom
+        escXL.domain([0, jogos.length-1]);
+        escYL.domain([minV*0.9, maxV*1.2]);
+        gLinha.select(".area-l").datum(jogos).transition().duration(300).attr("d",geraA);
+        gLinha.select(".path-l").datum(jogos).transition().duration(300).attr("d",geraL);
+        gLinha.selectAll(".pt-l").transition().duration(300)
+            .attr("cx",function(d,i){return escXL(i);})
+            .attr("cy",function(d){return escYL(d[stat]||0);});
+        gLinha.select(".ey").transition().duration(300).call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
+            .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+    });
+
+    gLinha.append("g").attr("class","brush-layer").call(brush)
+        .selectAll("rect").attr("fill","rgba(247,92,3,0.08)").attr("rx",3);
+}
+
+// ── GRÁFICO 2: DISPERSÃO ────────────────────────────────────
+function minFloat(s) {
+    if (!s) { return 0; }
+    var p = String(s).split(":");
+    return parseFloat(p[0]||0) + (p[1] ? parseFloat(p[1])/60 : 0);
+}
+
+function renderDispersao() {
+    var el = document.getElementById("g-disp");
+    el.innerHTML = "";
+    var stat = document.getElementById("sel-disp").value;
+    var jogos = jogosVisiveis();
+    if (jogos.length === 0) { return; }
+
+    var mg = {t:8,r:20,b:32,l:36};
+    var W  = el.offsetWidth || 480;
+    var LW = W - mg.l - mg.r;
+    var H  = 190;
+
+    var svg = d3.select("#g-disp").append("svg").attr("width",W).attr("height",H+mg.t+mg.b);
+    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+
+    var maxM = d3.max(jogos, function(d){ return minFloat(d.minutos); }) || 1;
+    var maxS = d3.max(jogos, function(d){ return Math.abs(d[stat]||0); }) || 1;
+
+    var escX = d3.scaleLinear().domain([0, maxM*1.1]).range([0, LW]);
+    var escY = d3.scaleLinear().domain([0, maxS*1.2]).range([H, 0]);
+
+    g.append("g").attr("transform","translate(0,"+H+")").call(d3.axisBottom(escX).ticks(5))
+        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); gr.selectAll(".tick line").attr("stroke","#252540"); });
+
+    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-LW))
+        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+
+    g.append("text").attr("x",LW/2).attr("y",H+28).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","10px").text("Minutos jogados");
+
+    // Linha de tendência linear
+    var n=jogos.length, sX=0, sY=0, sXY=0, sX2=0;
+    for (var i=0;i<n;i++){ var mx=minFloat(jogos[i].minutos),sy=jogos[i][stat]||0; sX+=mx;sY+=sy;sXY+=mx*sy;sX2+=mx*mx; }
+    var den = n*sX2 - sX*sX;
+    if (den !== 0) {
+        var slope = (n*sXY - sX*sY)/den;
+        var inter = (sY - slope*sX)/n;
+        g.append("line").attr("x1",escX(0)).attr("y1",escY(inter)).attr("x2",escX(maxM*1.1)).attr("y2",escY(slope*maxM*1.1+inter)).attr("stroke","#FFD600").attr("stroke-width",1.5).attr("stroke-dasharray","4,3").attr("opacity",0.7);
+    }
+
+    g.selectAll(".pd").data(jogos).enter().append("circle").attr("class","pd")
+        .attr("cx",function(d){ return escX(minFloat(d.minutos)); })
+        .attr("cy",function(d){ return escY(d[stat]||0); })
+        .attr("r",5).attr("fill",function(d){ return d.em_casa?"#F75C03":"#3B9EFF"; })
+        .attr("opacity",0.75).style("cursor","pointer")
+        .on("mouseover",function(event,d){
+            d3.select(this).attr("r",8).attr("opacity",1);
+            var dt = d.data ? new Date(d.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "";
+            showTT(event,"<strong>"+(d.adversario||"—")+" · "+dt+"</strong><br>"
+                +NOMES[stat]+": <strong>"+(d[stat]||0)+"</strong><br>"
+                +"Min: "+minFloat(d.minutos).toFixed(1)+"<br>"+(d.em_casa?"Casa":"Fora"));
+        })
+        .on("mousemove",moveTT)
+        .on("mouseout",function(){ d3.select(this).attr("r",5).attr("opacity",0.75); hideTT(); })
+        .on("click",function(event,d){ destacarLinha(d.jogo_id); });
+}
+
+// ── GRÁFICO 3: CASA VS FORA ─────────────────────────────────
+function renderCasaFora() {
+    var el = document.getElementById("g-casafora");
+    el.innerHTML = "";
+    document.getElementById("lbl-jogos-cf").textContent = "";
+
+    var temC = dCasa && dCasa.medias;
+    var temF = dFora && dFora.medias;
+
+    if (!temC && !temF) {
+        el.innerHTML = '<p style="font-size:.8rem;color:#555570;text-align:center;padding:20px;">Sem dados de casa/fora.</p>';
         return;
     }
 
-    try {
-        var dados = await chamarApiAutenticada("/analiticos/jogadores/" + jogadorId + "/medias/temporada?temporada=" + temporada);
+    // Número de jogos casa/fora
+    var njC = (dCasa && dCasa.jogos_disputados) ? dCasa.jogos_disputados : 0;
+    var njF = (dFora && dFora.jogos_disputados) ? dFora.jogos_disputados : 0;
+    document.getElementById("lbl-jogos-cf").textContent = njC + " jogos casa · " + njF + " jogos fora";
 
-        if (dados.mensagem || !dados.averages) {
-            document.getElementById("temp-carregando").style.display = "none";
-            document.getElementById("temp-vazio").style.display = "block";
-            return;
-        }
-
-        cacheTemporada = dados;
-        renderizarTemporada(dados);
-
-    } catch (erro) {
-        document.getElementById("temp-carregando").style.display = "none";
-        document.getElementById("temp-vazio").style.display = "block";
-    }
-}
-
-
-function renderizarTemporada(dados) {
-    var med = dados.averages;
-
-    var kpis = [
-        { v: med.points,    r: "Pontos",       cor: "#F75C03" },
-        { v: med.assists,   r: "Assistências", cor: "#3B9EFF" },
-        { v: med.rebounds,  r: "Rebotes",      cor: "#00C896" },
-        { v: med.steals,    r: "Roubos",       cor: "#FFD600" },
-        { v: med.blocks,    r: "Bloqueios",    cor: "#8888AA" },
-        { v: med.turnovers, r: "Turnovers",    cor: "#FF3B5C" }
+    var cats = [
+        { c: "pontos",       l: "PTS" },
+        { c: "assistencias", l: "AST" },
+        { c: "rebotes",      l: "REB" },
+        { c: "roubos",       l: "STL" },
+        { c: "bloqueios",    l: "BLK" },
+        { c: "plus_minus",   l: "+/-" }
     ];
 
-    var htmlKpis = "";
-    for (var i = 0; i < kpis.length; i++) {
-        var k = kpis[i];
-        htmlKpis += '<div class="col-6 col-sm-4 col-md-2"><div class="card-kpi-jav"><div class="kv" style="color:' + k.cor + ';">' + k.v + '</div><div class="kr">' + k.r + '</div></div></div>';
-    }
-    document.getElementById("grid-kpis-temp").innerHTML = htmlKpis;
-
-    // Percentuais de arremesso
-    var pcts = [
-        { v: med.fg_pct,    r: "FG%",  max: 60 },
-        { v: med.three_pct, r: "3P%",  max: 50 },
-        { v: med.ft_pct,    r: "FT%",  max: 100 }
-    ];
-
-    var htmlPcts = "";
-    for (var j = 0; j < pcts.length; j++) {
-        var p = pcts[j];
-        var largura = Math.min((p.v / p.max) * 100, 100);
-        htmlPcts += '<div class="col-12 col-md-4"><div class="card-pct"><div><div class="pct-valor">' + p.v + '%</div><div class="pct-rotulo">' + p.r + '</div></div><div class="pct-barra"><div class="pct-fill" style="width:' + largura + '%;"></div></div></div></div>';
-    }
-    document.getElementById("grid-pcts").innerHTML = htmlPcts;
-
-    document.getElementById("temp-carregando").style.display = "none";
-    document.getElementById("temp-conteudo").style.display = "block";
-
-    // Gráficos após mostrar o conteúdo
-    renderizarRadar(med);
-    renderizarBarrasTemporada(med);
-}
-
-
-// ============================================================
-// ABA JOGO A JOGO
-// ============================================================
-
-async function carregarJogos(n) {
-    var temporada = document.getElementById("select-temporada").value;
-
-    document.getElementById("jogos-conteudo").style.display = "none";
-    document.getElementById("jogos-carregando").style.display = "block";
-    document.getElementById("jogos-vazio").style.display = "none";
-
-    try {
-        var dados = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos?n_jogos=" + n + "&temporada=" + temporada);
-
-        if (!dados.jogos || dados.jogos.length === 0) {
-            document.getElementById("jogos-carregando").style.display = "none";
-            document.getElementById("jogos-vazio").style.display = "block";
-            return;
-        }
-
-        cacheJogos[n] = dados;
-        renderizarJogos(dados);
-
-    } catch (erro) {
-        document.getElementById("jogos-carregando").style.display = "none";
-        document.getElementById("jogos-vazio").style.display = "block";
-    }
-}
-
-
-function renderizarJogos(dados) {
-    document.getElementById("jogos-label").textContent = dados.jogos_analisados + " jogos analisados";
-
-    // Tabela
-    var tbody = "";
-    for (var i = 0; i < dados.jogos.length; i++) {
-        var j = dados.jogos[i];
-        var dataFmt = "—";
-        if (j.data) {
-            var dt = new Date(j.data);
-            dataFmt = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-        }
-        tbody += '<tr>'
-            + '<td class="td-sec">' + dataFmt + '</td>'
-            + '<td class="td-pts">' + (j.pontos !== null ? j.pontos : "—") + '</td>'
-            + '<td>' + (j.assistencias !== null ? j.assistencias : "—") + '</td>'
-            + '<td>' + (j.rebotes !== null ? j.rebotes : "—") + '</td>'
-            + '<td class="td-sec">—</td>'
-            + '<td class="td-sec">—</td>'
-            + '<td class="td-sec">—</td>'
-            + '<td class="td-sec">—</td>'
-            + '<td class="td-sec">—</td>'
-            + '<td class="td-sec">—</td>'
-            + '</tr>';
-    }
-    document.getElementById("tbody-jogos").innerHTML = tbody;
-
-    document.getElementById("jogos-carregando").style.display = "none";
-    document.getElementById("jogos-conteudo").style.display = "block";
-
-    renderizarGraficoLinha(dados.jogos);
-}
-
-
-// ============================================================
-// ABA CASA / FORA
-// ============================================================
-
-async function carregarCasaFora() {
-    var temporada = document.getElementById("select-temporada").value;
-
-    document.getElementById("cf-conteudo").style.display = "none";
-    document.getElementById("cf-carregando").style.display = "block";
-    document.getElementById("cf-vazio").style.display = "none";
-
-    try {
-        var resCasa = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temporada + "&local=casa");
-        var resFora = await chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temporada + "&local=fora");
-
-        if ((resCasa.mensagem || !resCasa.medias) && (resFora.mensagem || !resFora.medias)) {
-            document.getElementById("cf-carregando").style.display = "none";
-            document.getElementById("cf-vazio").style.display = "block";
-            return;
-        }
-
-        cacheCasa = resCasa;
-        cacheFora = resFora;
-
-        renderizarCasaFora(resCasa, resFora);
-
-    } catch (erro) {
-        document.getElementById("cf-carregando").style.display = "none";
-        document.getElementById("cf-vazio").style.display = "block";
-    }
-}
-
-
-function renderizarCasaFora(casa, fora) {
-    // Cards de KPI comparativos
-    var estatisticas = [
-        { campo: "points",    label: "Pontos" },
-        { campo: "assists",   label: "Assistências" },
-        { campo: "rebounds",  label: "Rebotes" },
-        { campo: "steals",    label: "Roubos" }
-    ];
-
-    var htmlCf = "";
-    for (var i = 0; i < estatisticas.length; i++) {
-        var est = estatisticas[i];
-        var valCasa = (casa.medias && casa.medias[est.campo] !== undefined) ? casa.medias[est.campo] : "—";
-        var valFora = (fora.medias && fora.medias[est.campo] !== undefined) ? fora.medias[est.campo] : "—";
-
-        htmlCf += '<div class="col-6 col-md-3">'
-            + '<div class="card-kpi-jav">'
-            + '<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#555570;margin-bottom:10px;">' + est.label + '</div>'
-            + '<div class="d-flex justify-content-around">'
-            + '<div><div class="kv" style="color:#F75C03;">' + valCasa + '</div><div class="kr">Casa</div></div>'
-            + '<div style="width:1px;background-color:#252540;"></div>'
-            + '<div><div class="kv" style="color:#3B9EFF;">' + valFora + '</div><div class="kr">Fora</div></div>'
-            + '</div>'
-            + '</div></div>';
-    }
-    document.getElementById("grid-cf").innerHTML = htmlCf;
-
-    document.getElementById("cf-carregando").style.display = "none";
-    document.getElementById("cf-conteudo").style.display = "block";
-
-    renderizarGraficoCasaFora(casa, fora);
-}
-
-
-// ============================================================
-// GRÁFICO D3 #1 — Radar de atributos
-// ============================================================
-
-function renderizarRadar(med) {
-    var container = document.getElementById("grafico-radar");
-    container.innerHTML = "";
-
-    var atributos = [
-        { label: "PTS",  valor: med.points },
-        { label: "AST",  valor: med.assists },
-        { label: "REB",  valor: med.rebounds },
-        { label: "STL",  valor: med.steals },
-        { label: "BLK",  valor: med.blocks }
-    ];
-
-    // Normaliza cada valor entre 0 e 1 usando referências máximas por categoria
-    var maximos = { "PTS": 35, "AST": 12, "REB": 15, "STL": 3, "BLK": 3 };
-
-    var largura  = 220;
-    var altura   = 220;
-    var cx       = largura / 2;
-    var cy       = altura / 2;
-    var raio     = 80;
-    var n        = atributos.length;
-
-    var svg = d3.select("#grafico-radar")
-        .append("svg")
-        .attr("width", largura)
-        .attr("height", altura)
-        .style("display", "block")
-        .style("margin", "0 auto");
-
-    // Calcula o ângulo de cada eixo — começa no topo (-90 graus)
-    function angulo(i) {
-        return (i / n) * 2 * Math.PI - Math.PI / 2;
+    var vC = []; var vF = [];
+    for (var i=0;i<cats.length;i++){
+        var c = cats[i].c;
+        vC.push(temC && dCasa.medias[c] !== null && dCasa.medias[c] !== undefined ? dCasa.medias[c] : 0);
+        vF.push(temF && dFora.medias[c] !== null && dFora.medias[c] !== undefined ? dFora.medias[c] : 0);
     }
 
-    // Desenha os círculos de referência
-    var niveis = [0.25, 0.5, 0.75, 1.0];
-    for (var ni = 0; ni < niveis.length; ni++) {
-        var r = raio * niveis[ni];
-        svg.append("circle")
-            .attr("cx", cx)
-            .attr("cy", cy)
-            .attr("r", r)
-            .attr("fill", "none")
-            .attr("stroke", "#252540")
-            .attr("stroke-width", 1);
+    var mg = {t:8,r:50,b:22,l:36};
+    var W  = el.offsetWidth || 340;
+    var LW = W - mg.l - mg.r;
+    var altG = 28;
+    var H  = cats.length * altG + mg.t + mg.b;
+    var altB = altG * 0.38;
+
+    var svg = d3.select("#g-casafora").append("svg").attr("width",W).attr("height",H);
+    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+
+    var todos = vC.concat(vF);
+    var maxV  = d3.max(todos.map(function(v){ return Math.abs(v); })) || 1;
+
+    var escX  = d3.scaleLinear().domain([0, maxV * 1.3]).range([0, LW]);
+    var escGr = d3.scaleBand().domain(cats.map(function(d){ return d.l; })).range([0, cats.length*altG]).padding(0.1);
+
+    // Labels Y
+    g.selectAll(".lc").data(cats).enter().append("text").attr("class","lc")
+        .attr("x",-6).attr("y",function(d){ return escGr(d.l)+escGr.bandwidth()/2; })
+        .attr("dy","0.35em").attr("text-anchor","end").attr("fill","#8888AA").attr("font-size","11px").attr("font-weight","700")
+        .text(function(d){ return d.l; });
+
+    // Barras Casa
+    g.selectAll(".bc").data(cats).enter().append("rect").attr("class","bc")
+        .attr("x",0).attr("y",function(d){ return escGr(d.l); })
+        .attr("width",function(d,i){ return escX(Math.abs(vC[i])||0); })
+        .attr("height",altB).attr("fill","#F75C03").attr("rx",2).attr("opacity",0.85)
+        .style("cursor","pointer")
+        .on("mouseover",function(event,d){ var i=cats.indexOf(d); showTT(event,"<strong>Casa — "+d.l+"</strong><br>"+vC[i]); })
+        .on("mousemove",moveTT).on("mouseout",hideTT);
+
+    // Barras Fora
+    g.selectAll(".bf").data(cats).enter().append("rect").attr("class","bf")
+        .attr("x",0).attr("y",function(d){ return escGr(d.l)+altB+2; })
+        .attr("width",function(d,i){ return escX(Math.abs(vF[i])||0); })
+        .attr("height",altB).attr("fill","#3B9EFF").attr("rx",2).attr("opacity",0.85)
+        .style("cursor","pointer")
+        .on("mouseover",function(event,d){ var i=cats.indexOf(d); showTT(event,"<strong>Fora — "+d.l+"</strong><br>"+vF[i]); })
+        .on("mousemove",moveTT).on("mouseout",hideTT);
+
+    // Valores
+    for (var j=0;j<cats.length;j++){
+        var yc = escGr(cats[j].l)+altB/2;
+        var yf = escGr(cats[j].l)+altB+2+altB/2;
+        g.append("text").attr("x",escX(Math.abs(vC[j])||0)+4).attr("y",yc).attr("dy","0.35em").attr("fill","#F75C03").attr("font-size","10px").attr("font-weight","700").text(vC[j]||0);
+        g.append("text").attr("x",escX(Math.abs(vF[j])||0)+4).attr("y",yf).attr("dy","0.35em").attr("fill","#3B9EFF").attr("font-size","10px").attr("font-weight","700").text(vF[j]||0);
     }
-
-    // Desenha os eixos de cada atributo
-    for (var i = 0; i < n; i++) {
-        var ang = angulo(i);
-        var xFim = cx + raio * Math.cos(ang);
-        var yFim = cy + raio * Math.sin(ang);
-
-        svg.append("line")
-            .attr("x1", cx).attr("y1", cy)
-            .attr("x2", xFim).attr("y2", yFim)
-            .attr("stroke", "#252540")
-            .attr("stroke-width", 1);
-
-        // Label do eixo
-        var xLabel = cx + (raio + 14) * Math.cos(ang);
-        var yLabel = cy + (raio + 14) * Math.sin(ang);
-        svg.append("text")
-            .attr("x", xLabel).attr("y", yLabel)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .attr("fill", "#8888AA")
-            .attr("font-size", "10px")
-            .attr("font-weight", "600")
-            .text(atributos[i].label);
-    }
-
-    // Calcula os pontos do polígono do jogador
-    var pontosPoligono = [];
-    for (var i = 0; i < n; i++) {
-        var ang = angulo(i);
-        var maxRef = maximos[atributos[i].label] || 10;
-        var prop = Math.min((atributos[i].valor || 0) / maxRef, 1);
-        var x = cx + raio * prop * Math.cos(ang);
-        var y = cy + raio * prop * Math.sin(ang);
-        pontosPoligono.push([x, y]);
-    }
-
-    // Fecha o polígono voltando ao primeiro ponto
-    var dadosLinha = pontosPoligono.concat([pontosPoligono[0]]);
-    var geraPath = d3.line().x(function(d) { return d[0]; }).y(function(d) { return d[1]; });
-
-    // Área preenchida
-    svg.append("path")
-        .attr("d", geraPath(dadosLinha))
-        .attr("fill", "rgba(247, 92, 3, 0.15)")
-        .attr("stroke", "#F75C03")
-        .attr("stroke-width", 2);
-
-    // Pontos nos vértices
-    for (var i = 0; i < pontosPoligono.length; i++) {
-        svg.append("circle")
-            .attr("cx", pontosPoligono[i][0])
-            .attr("cy", pontosPoligono[i][1])
-            .attr("r", 3)
-            .attr("fill", "#F75C03");
-    }
-}
-
-
-// ============================================================
-// GRÁFICO D3 #2 — Barras horizontais de contribuição
-// ============================================================
-
-function renderizarBarrasTemporada(med) {
-    var container = document.getElementById("grafico-barras-temp");
-    container.innerHTML = "";
-
-    var itens = [
-        { label: "Pontos",       valor: med.points,    cor: "#F75C03" },
-        { label: "Assistências", valor: med.assists,   cor: "#3B9EFF" },
-        { label: "Rebotes",      valor: med.rebounds,  cor: "#00C896" },
-        { label: "Roubos",       valor: med.steals,    cor: "#FFD600" },
-        { label: "Bloqueios",    valor: med.blocks,    cor: "#8888AA" }
-    ];
-
-    var larguraTotal  = container.offsetWidth || 340;
-    var margemEsq     = 90;
-    var margemDir     = 50;
-    var alturaLinha   = 30;
-    var alturaTotal   = itens.length * alturaLinha + 16;
-    var larguraBarras = larguraTotal - margemEsq - margemDir;
-
-    var svg = d3.select("#grafico-barras-temp")
-        .append("svg")
-        .attr("width", larguraTotal)
-        .attr("height", alturaTotal);
-
-    var g = svg.append("g").attr("transform", "translate(" + margemEsq + ",8)");
-
-    var maiorValor = d3.max(itens, function(d) { return d.valor || 0; }) || 1;
-
-    var escalaX = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([0, larguraBarras]);
-    var escalaY = d3.scaleBand().domain(itens.map(function(d) { return d.label; })).range([0, itens.length * alturaLinha]).padding(0.3);
-
-    g.selectAll(".barra")
-        .data(itens)
-        .enter()
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", function(d) { return escalaY(d.label); })
-        .attr("width", function(d) { return escalaX(d.valor || 0); })
-        .attr("height", escalaY.bandwidth())
-        .attr("fill", function(d) { return d.cor; })
-        .attr("rx", 3)
-        .attr("opacity", 0.85);
-
-    g.selectAll(".label")
-        .data(itens)
-        .enter()
-        .append("text")
-        .attr("x", -8).attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
-        .attr("dy", "0.35em").attr("text-anchor", "end")
-        .attr("fill", "#8888AA").attr("font-size", "11px")
-        .text(function(d) { return d.label; });
-
-    g.selectAll(".valor")
-        .data(itens)
-        .enter()
-        .append("text")
-        .attr("x", function(d) { return escalaX(d.valor || 0) + 5; })
-        .attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
-        .attr("dy", "0.35em")
-        .attr("fill", "#EEEEF5").attr("font-size", "11px").attr("font-weight", "600")
-        .text(function(d) { return d.valor; });
-}
-
-
-// ============================================================
-// GRÁFICO D3 #3 — Linha de evolução de pontos
-// ============================================================
-
-function renderizarGraficoLinha(jogos) {
-    var container = document.getElementById("grafico-linha");
-    container.innerHTML = "";
-
-    // Inverte para mostrar do mais antigo ao mais recente
-    var dadosOrdenados = jogos.slice().reverse();
-
-    var larguraTotal  = container.offsetWidth || 500;
-    var margemEsq     = 36;
-    var margemDir     = 20;
-    var margemTopo    = 10;
-    var margemBaixo   = 30;
-    var altura        = 160;
-    var larguraLinha  = larguraTotal - margemEsq - margemDir;
-
-    var svg = d3.select("#grafico-linha")
-        .append("svg")
-        .attr("width", larguraTotal)
-        .attr("height", altura + margemTopo + margemBaixo);
-
-    var g = svg.append("g").attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
-
-    var maiorPonto = d3.max(dadosOrdenados, function(d) { return d.pontos || 0; }) || 1;
-
-    var escalaX = d3.scaleLinear().domain([0, dadosOrdenados.length - 1]).range([0, larguraLinha]);
-    var escalaY = d3.scaleLinear().domain([0, maiorPonto * 1.2]).range([altura, 0]);
-
-    // Área sob a linha
-    var geraArea = d3.area()
-        .x(function(d, i) { return escalaX(i); })
-        .y0(altura)
-        .y1(function(d) { return escalaY(d.pontos || 0); });
-
-    g.append("path")
-        .datum(dadosOrdenados)
-        .attr("d", geraArea)
-        .attr("fill", "rgba(247, 92, 3, 0.10)");
-
-    // Linha
-    var geraLinha = d3.line()
-        .x(function(d, i) { return escalaX(i); })
-        .y(function(d) { return escalaY(d.pontos || 0); });
-
-    g.append("path")
-        .datum(dadosOrdenados)
-        .attr("d", geraLinha)
-        .attr("fill", "none")
-        .attr("stroke", "#F75C03")
-        .attr("stroke-width", 2);
-
-    // Pontos
-    g.selectAll(".ponto")
-        .data(dadosOrdenados)
-        .enter()
-        .append("circle")
-        .attr("cx", function(d, i) { return escalaX(i); })
-        .attr("cy", function(d) { return escalaY(d.pontos || 0); })
-        .attr("r", 3.5)
-        .attr("fill", "#F75C03");
-
-    // Eixo Y
-    g.append("g")
-        .call(d3.axisLeft(escalaY).ticks(4).tickSize(-larguraLinha))
-        .call(function(axis) {
-            axis.select(".domain").remove();
-            axis.selectAll(".tick line").attr("stroke", "#252540");
-            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
-        });
-
-    // Eixo X — índice de cada jogo
-    g.append("g")
-        .attr("transform", "translate(0," + altura + ")")
-        .call(d3.axisBottom(escalaX).ticks(dadosOrdenados.length).tickFormat(function(d) { return "J" + (d + 1); }).tickSize(0))
-        .call(function(axis) {
-            axis.select(".domain").remove();
-            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px").attr("dy", "1.2em");
-        });
-}
-
-
-// ============================================================
-// GRÁFICO D3 #4 — Barras agrupadas casa vs fora
-// ============================================================
-
-function renderizarGraficoCasaFora(casa, fora) {
-    var container = document.getElementById("grafico-casafora");
-    container.innerHTML = "";
-
-    var categorias = ["Pontos", "Assistências", "Rebotes", "Roubos"];
-    var camposCasa = [
-        casa.medias ? casa.medias.points    : 0,
-        casa.medias ? casa.medias.assists   : 0,
-        casa.medias ? casa.medias.rebounds  : 0,
-        casa.medias ? casa.medias.steals    : 0
-    ];
-    var camposFora = [
-        fora.medias ? fora.medias.points    : 0,
-        fora.medias ? fora.medias.assists   : 0,
-        fora.medias ? fora.medias.rebounds  : 0,
-        fora.medias ? fora.medias.steals    : 0
-    ];
-
-    var larguraTotal  = container.offsetWidth || 500;
-    var margemEsq     = 90;
-    var margemDir     = 20;
-    var margemTopo    = 10;
-    var margemBaixo   = 10;
-    var alturaGrupo   = 40;
-    var alturaTotal   = categorias.length * alturaGrupo + margemTopo + margemBaixo;
-    var larguraBarras = larguraTotal - margemEsq - margemDir;
-
-    var svg = d3.select("#grafico-casafora")
-        .append("svg")
-        .attr("width", larguraTotal)
-        .attr("height", alturaTotal);
-
-    var g = svg.append("g").attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
-
-    var todosValores = camposCasa.concat(camposFora);
-    var maiorValor = d3.max(todosValores) || 1;
-
-    var escalaX = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([0, larguraBarras]);
-    var escalaGrupo = d3.scaleBand().domain(categorias).range([0, categorias.length * alturaGrupo]).padding(0.15);
-    var alturaBarra = escalaGrupo.bandwidth() / 2 - 1;
-
-    // Barras de casa (laranja)
-    g.selectAll(".barra-casa")
-        .data(categorias)
-        .enter()
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", function(d) { return escalaGrupo(d); })
-        .attr("width", function(d, i) { return escalaX(camposCasa[i] || 0); })
-        .attr("height", alturaBarra)
-        .attr("fill", "#F75C03")
-        .attr("rx", 2)
-        .attr("opacity", 0.85);
-
-    // Barras de fora (azul)
-    g.selectAll(".barra-fora")
-        .data(categorias)
-        .enter()
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra + 2; })
-        .attr("width", function(d, i) { return escalaX(camposFora[i] || 0); })
-        .attr("height", alturaBarra)
-        .attr("fill", "#3B9EFF")
-        .attr("rx", 2)
-        .attr("opacity", 0.85);
-
-    // Labels de categoria
-    g.selectAll(".label-cat")
-        .data(categorias)
-        .enter()
-        .append("text")
-        .attr("x", -8)
-        .attr("y", function(d) { return escalaGrupo(d) + escalaGrupo.bandwidth() / 2; })
-        .attr("dy", "0.35em").attr("text-anchor", "end")
-        .attr("fill", "#8888AA").attr("font-size", "11px")
-        .text(function(d) { return d; });
-
-    // Valores de casa
-    g.selectAll(".val-casa")
-        .data(categorias)
-        .enter()
-        .append("text")
-        .attr("x", function(d, i) { return escalaX(camposCasa[i] || 0) + 4; })
-        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra / 2; })
-        .attr("dy", "0.35em")
-        .attr("fill", "#F75C03").attr("font-size", "10px").attr("font-weight", "600")
-        .text(function(d, i) { return camposCasa[i]; });
-
-    // Valores de fora
-    g.selectAll(".val-fora")
-        .data(categorias)
-        .enter()
-        .append("text")
-        .attr("x", function(d, i) { return escalaX(camposFora[i] || 0) + 4; })
-        .attr("y", function(d) { return escalaGrupo(d) + alturaBarra + 2 + alturaBarra / 2; })
-        .attr("dy", "0.35em")
-        .attr("fill", "#3B9EFF").attr("font-size", "10px").attr("font-weight", "600")
-        .text(function(d, i) { return camposFora[i]; });
 
     // Legenda
-    var legenda = svg.append("g").attr("transform", "translate(" + margemEsq + "," + (alturaTotal - 2) + ")");
-    legenda.append("rect").attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#F75C03");
-    legenda.append("text").attr("x", 14).attr("y", 7).attr("fill", "#8888AA").attr("font-size", "10px").text("Casa");
-    legenda.append("rect").attr("x", 50).attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#3B9EFF");
-    legenda.append("text").attr("x", 64).attr("y", 7).attr("fill", "#8888AA").attr("font-size", "10px").text("Fora");
+    var legY = H - mg.b + 6;
+    svg.append("rect").attr("x",mg.l).attr("y",legY-6).attr("width",10).attr("height",8).attr("rx",2).attr("fill","#F75C03");
+    svg.append("text").attr("x",mg.l+14).attr("y",legY).attr("fill","#8888AA").attr("font-size","10px").text("Casa");
+    svg.append("rect").attr("x",mg.l+48).attr("y",legY-6).attr("width",10).attr("height",8).attr("rx",2).attr("fill","#3B9EFF");
+    svg.append("text").attr("x",mg.l+62).attr("y",legY).attr("fill","#8888AA").attr("font-size","10px").text("Fora");
+}
+
+// ── GRÁFICO 4: EFICIÊNCIA (ARCOS) ───────────────────────────
+function renderEfic() {
+    var el = document.getElementById("g-efic");
+    el.innerHTML = "";
+
+    var fg = 0; var tp = 0; var ft = 0;
+    if (dTemporada && dTemporada.medias) {
+        fg = dTemporada.medias.fg_pct    || 0;
+        tp = dTemporada.medias.three_pct || 0;
+        ft = dTemporada.medias.ft_pct    || 0;
+    }
+
+    var W   = el.offsetWidth || 340;
+    var H   = 160;
+    var cx  = W / 2;
+    var cy  = H * 0.88;
+    var rP  = Math.min(W * 0.34, H * 0.75);
+    var esp = 13;
+
+    var svg = d3.select("#g-efic").append("svg").attr("width",W).attr("height",H);
+
+    var arcos = [
+        { l: "FG%", v: fg, max: 60,  cor: "#F75C03", r: rP },
+        { l: "3P%", v: tp, max: 50,  cor: "#3B9EFF", r: rP - esp - 4 },
+        { l: "FT%", v: ft, max: 100, cor: "#00C896", r: rP - 2*(esp+4) }
+    ];
+
+    var arc  = d3.arc().innerRadius(function(d){ return d.r - esp; }).outerRadius(function(d){ return d.r; });
+    var angI = -Math.PI * 0.9;
+    var angF =  Math.PI * 0.1;
+    var amp  = angF - angI;
+
+    for (var i=0; i<arcos.length; i++) {
+        var a = arcos[i];
+        var prop = Math.min(a.v / a.max, 1);
+
+        // Trilha (fundo)
+        svg.append("path").datum({ r: a.r, startAngle: angI, endAngle: angF }).attr("d", arc)
+            .attr("transform","translate("+cx+","+cy+")").attr("fill","#252540");
+
+        // Valor
+        if (prop > 0) {
+            var dadoArc = { r: a.r, startAngle: angI, endAngle: angI + amp * prop };
+            svg.append("path").datum(dadoArc).attr("d", arc)
+                .attr("transform","translate("+cx+","+cy+")").attr("fill", a.cor).attr("opacity", 0.9)
+                .style("cursor","pointer")
+                .on("mouseover", (function(aa){ return function(event){ showTT(event,"<strong>"+aa.l+"</strong><br>"+aa.v+"% (máx ref: "+aa.max+"%)"); }; })(a))
+                .on("mousemove",moveTT).on("mouseout",hideTT);
+        }
+    }
+
+    // Valores centrais
+    var yBase = cy - rP * 0.32;
+    var offX  = rP * 0.52;
+
+    svg.append("text").attr("x",cx-offX).attr("y",yBase).attr("text-anchor","middle").attr("fill","#F75C03").attr("font-size","1rem").attr("font-weight","700").text(fg+"%");
+    svg.append("text").attr("x",cx-offX).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("FG%");
+
+    svg.append("text").attr("x",cx).attr("y",yBase).attr("text-anchor","middle").attr("fill","#3B9EFF").attr("font-size","1rem").attr("font-weight","700").text(tp+"%");
+    svg.append("text").attr("x",cx).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("3P%");
+
+    svg.append("text").attr("x",cx+offX).attr("y",yBase).attr("text-anchor","middle").attr("fill","#00C896").attr("font-size","1rem").attr("font-weight","700").text(ft+"%");
+    svg.append("text").attr("x",cx+offX).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("FT%");
+}
+
+// ── GRÁFICO 5: HISTOGRAMA ────────────────────────────────────
+function renderHistograma() {
+    var el = document.getElementById("g-hist");
+    el.innerHTML = "";
+
+    var stat  = document.getElementById("sel-hist").value;
+    var jogos = jogosVisiveis();
+    if (jogos.length === 0) { return; }
+
+    var vals = [];
+    for (var i=0; i<jogos.length; i++) {
+        if (jogos[i][stat] !== null && jogos[i][stat] !== undefined) { vals.push(+jogos[i][stat]); }
+    }
+    if (vals.length === 0) { return; }
+
+    var mg = {t:8,r:20,b:28,l:30};
+    var W  = el.offsetWidth || 480;
+    var LW = W - mg.l - mg.r;
+    var H  = 150;
+
+    var svg = d3.select("#g-hist").append("svg").attr("width",W).attr("height",H+mg.t+mg.b);
+    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+
+    var minV = d3.min(vals);
+    var maxV = d3.max(vals);
+    var bins = d3.bin().domain([minV-1, maxV+1]).thresholds(9)(vals);
+
+    var escX = d3.scaleLinear().domain([minV-1, maxV+1]).range([0, LW]);
+    var escY = d3.scaleLinear().domain([0, d3.max(bins,function(d){ return d.length; })+1]).range([H, 0]);
+
+    g.append("g").attr("transform","translate(0,"+H+")").call(d3.axisBottom(escX).ticks(7))
+        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); gr.selectAll(".tick line").attr("stroke","#252540"); });
+
+    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-LW))
+        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
+
+    g.selectAll(".bin").data(bins).enter().append("rect").attr("class","bin")
+        .attr("x",function(d){ return escX(d.x0)+1; })
+        .attr("y",function(d){ return escY(d.length); })
+        .attr("width",function(d){ return Math.max(0, escX(d.x1)-escX(d.x0)-2); })
+        .attr("height",function(d){ return H-escY(d.length); })
+        .attr("fill","#F75C03").attr("rx",2).attr("opacity",0.75)
+        .style("cursor","pointer")
+        .on("mouseover",function(event,d){ d3.select(this).attr("opacity",1); showTT(event,"<strong>"+d.x0+" – "+d.x1+" "+NOMES[stat]+"</strong><br>"+d.length+" jogo(s)"); })
+        .on("mousemove",moveTT)
+        .on("mouseout", function(){ d3.select(this).attr("opacity",0.75); hideTT(); });
+
+    // Linha da média
+    var soma=0; for(var i=0;i<vals.length;i++){soma+=vals[i];} var med=soma/vals.length;
+    g.append("line").attr("x1",escX(med)).attr("y1",0).attr("x2",escX(med)).attr("y2",H).attr("stroke","#FFD600").attr("stroke-width",1.5).attr("stroke-dasharray","4,3");
+    g.append("text").attr("x",escX(med)+3).attr("y",10).attr("fill","#FFD600").attr("font-size","9px").text("Méd "+med.toFixed(1));
+}
+
+// ── TABELA ORDENÁVEL ─────────────────────────────────────────
+function iniciarOrdenacaoTabela() {
+    var ths = document.querySelectorAll("#tab-jogos thead .th-ord");
+    for (var i=0;i<ths.length;i++){
+        ths[i].addEventListener("click", function(){
+            var c = this.getAttribute("data-c");
+            if (ordTabela.campo === c) {
+                ordTabela.dir = ordTabela.dir === "asc" ? "desc" : "asc";
+            } else {
+                ordTabela.campo = c;
+                ordTabela.dir = "desc";
+            }
+            document.querySelectorAll("#tab-jogos thead .th-ord").forEach(function(th){ th.classList.remove("asc","desc"); });
+            this.classList.add(ordTabela.dir);
+            renderTabela();
+        });
+    }
+}
+
+function renderTabela() {
+    var jogos = jogosVisiveis().slice();
+    document.getElementById("lbl-tabela").textContent = jogos.length + " jogos";
+
+    // Ordena
+    jogos.sort(function(a, b) {
+        var va = a[ordTabela.campo]; if (va === null || va === undefined) { va = ""; }
+        var vb = b[ordTabela.campo]; if (vb === null || vb === undefined) { vb = ""; }
+        if (ordTabela.campo === "data") {
+            va = a.data ? new Date(a.data).getTime() : 0;
+            vb = b.data ? new Date(b.data).getTime() : 0;
+        }
+        if (ordTabela.dir === "asc") { return va > vb ? 1 : va < vb ? -1 : 0; }
+        return va < vb ? 1 : va > vb ? -1 : 0;
+    });
+
+    var html = "";
+    for (var i=0;i<jogos.length;i++){
+        var j = jogos[i];
+        var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "—";
+        var mn = j.minutos ? String(j.minutos).split(":")[0]+"m" : "—";
+        var pm = j.plus_minus !== null && j.plus_minus !== undefined ? j.plus_minus : null;
+        var pmHtml = pm !== null ? '<span style="color:'+(pm>0?"#00C896":pm<0?"#FF3B5C":"#8888AA")+'">'+(pm>0?"+":"")+pm+'</span>' : "—";
+
+        html += '<tr id="lj-'+j.jogo_id+'">'
+            + '<td class="td-sec">'+(j.adversario||"—")+'</td>'
+            + '<td class="td-sec">'+dt+'</td>'
+            + '<td class="td-pts">'+(j.pontos!==null&&j.pontos!==undefined?j.pontos:"—")+'</td>'
+            + '<td>'+(j.assistencias!==null&&j.assistencias!==undefined?j.assistencias:"—")+'</td>'
+            + '<td>'+(j.rebotes!==null&&j.rebotes!==undefined?j.rebotes:"—")+'</td>'
+            + '<td class="td-sec">'+(j.roubos!==null&&j.roubos!==undefined?j.roubos:"—")+'</td>'
+            + '<td class="td-sec">'+(j.bloqueios!==null&&j.bloqueios!==undefined?j.bloqueios:"—")+'</td>'
+            + '<td class="td-sec">'+(j.turnovers!==null&&j.turnovers!==undefined?j.turnovers:"—")+'</td>'
+            + '<td class="td-sec">'+(j.fg_pct!==null&&j.fg_pct!==undefined?j.fg_pct+"%":"—")+'</td>'
+            + '<td class="td-sec">'+(j.three_pct!==null&&j.three_pct!==undefined?j.three_pct+"%":"—")+'</td>'
+            + '<td class="td-sec">'+pmHtml+'</td>'
+            + '<td class="td-sec">'+mn+'</td>'
+            + '</tr>';
+    }
+    document.getElementById("tbody-jogos").innerHTML = html;
+}
+
+function destacarLinha(id) {
+    document.querySelectorAll(".linha-dest").forEach(function(el){ el.classList.remove("linha-dest"); });
+    var el = document.getElementById("lj-"+id);
+    if (el) { el.classList.add("linha-dest"); el.scrollIntoView({behavior:"smooth",block:"nearest"}); }
 }
 </script>
-
 </body>
 </html>

@@ -10,7 +10,7 @@ from app.schemas.league import LigasResponse
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/", response_model=LigasResponse)
+@router.get("", response_model=LigasResponse)
 def listar_ligas(db: Session = Depends(get_db)):
     ligas = db.query(League).all()
 
