@@ -1,11 +1,11 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
-from app.db.models import Game, GameTeamScore, League, Player, PlayerTeamSeason, Team, TeamLeagueInfo, TeamSeasonStats
+from app.db.models import Game, GameTeamScore, League, Player, PlayerTeamSeason, Team, TeamLeagueInfo, TeamSeasonStats, PlayerGameStats, GameTeamStats
 from app.routers.auth import obter_usuario_atual
 from app.schemas.player import ElencoTimeResponse
 from app.schemas.team import ComparacaoTimesResponse, EstatisticasTimeResponse, PerformanceTimeResponse, TeamDetalheResponse, TeamListResponse
@@ -13,16 +13,15 @@ from app.schemas.team import ComparacaoTimesResponse, EstatisticasTimeResponse, 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Mapeamento de stage (integer da API-Sports) para nome legível
 STAGE_NOMES = {
     1: "Pré-Temporada",
     2: "Temporada Regular",
     3: "Playoffs",
-    4: "Copa NBA",
+    4: "Copa NBA"
 }
 
 @router.get("", response_model=TeamListResponse)
-def listar_times(page: int = Query(1, ge=1), page_size: int = Query(30, ge=1, le=100), nba_franchise: bool = Query(None), cidade: str = Query(None), nome: str = Query(None), db: Session = Depends(get_db)):
+def listar_times(page: int = Query(1, ge=1), page_size: int = Query(30, ge=1, le=100),  nba_franchise: bool = Query(None), cidade: str = Query(None), nome: str = Query(None), db: Session = Depends(get_db)):
     query = db.query(Team)
 
     if nba_franchise is not None:
@@ -48,7 +47,7 @@ def listar_times(page: int = Query(1, ge=1), page_size: int = Query(30, ge=1, le
             "nba_franchise": time.nba_franchise,
             "all_star": time.all_star,
         })
-
+ 
     return {"total": total, "pagina": page, "tamanho_pagina": page_size, "times": lista_times}
 
 @router.get("/comparar", response_model=ComparacaoTimesResponse)
@@ -57,12 +56,10 @@ def comparar_times(time1_id: int = Query(...), time2_id: int = Query(...), tempo
     time2 = db.query(Team).filter(Team.id == time2_id).first()
 
     if not time1 or not time2:
-        logger.warning(f"Comparação de times falhou — time1_id={time1_id}, time2_id={time2_id} não encontrados.")
+        logger.warning(f"Comparação de times falhou —> time1_id={time1_id}, time2_id={time2_id} não encontrados.")
         raise HTTPException(status_code=404, detail="Um ou ambos os times não foram encontrados.")
 
-    jogos_time1 = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id)
-                   .filter(Game.season == temporada, GameTeamScore.team_id == time1_id, Game.status_short == 3).all())
-
+    jogos_time1 = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id).filter(Game.season == temporada, GameTeamScore.team_id == time1_id, Game.status_short == 3).all())
     vitorias_time1 = 0
     derrotas_time1 = 0
     for jogo_data in jogos_time1:
@@ -75,9 +72,7 @@ def comparar_times(time1_id: int = Query(...), time2_id: int = Query(...), tempo
             else:
                 derrotas_time1 = derrotas_time1 + 1
 
-    jogos_time2 = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id)
-                   .filter(Game.season == temporada, GameTeamScore.team_id == time2_id, Game.status_short == 3).all())
-
+    jogos_time2 = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id).filter(Game.season == temporada, GameTeamScore.team_id == time2_id, Game.status_short == 3).all())
     vitorias_time2 = 0
     derrotas_time2 = 0
     for jogo_data in jogos_time2:
@@ -100,9 +95,7 @@ def comparar_times(time1_id: int = Query(...), time2_id: int = Query(...), tempo
     if total_time2 > 0:
         win_rate_time2 = round(vitorias_time2 / total_time2 * 100, 2)
 
-    confrontos = (db.query(Game).filter(Game.season == temporada, or_(and_(Game.home_team_id == time1_id, Game.away_team_id == time2_id),
-                                        and_(Game.home_team_id == time2_id, Game.away_team_id == time1_id)), Game.status_short == 3).all())
-
+    confrontos = (db.query(Game).filter(Game.season == temporada, or_(and_(Game.home_team_id == time1_id, Game.away_team_id == time2_id), and_(Game.home_team_id == time2_id, Game.away_team_id == time1_id)), Game.status_short == 3).all())
     vitorias_h2h_time1 = 0
     vitorias_h2h_time2 = 0
     for jogo in confrontos:
@@ -169,32 +162,20 @@ def obter_elenco(time_id: int, db: Session = Depends(get_db)):
         logger.warning(f"Time não encontrado ao buscar elenco: id={time_id}")
         raise HTTPException(status_code=404, detail="Time não encontrado.")
 
-    # Descobre a temporada mais recente disponível no banco para este time
-    # Isso garante que o elenco sempre reflete o estado atual da franquia,
-    # independente de qual temporada o usuário está filtrando no retrospecto
-    temporada_mais_recente = (db.query(PlayerTeamSeason.season)
-                               .filter(PlayerTeamSeason.team_id == time_id)
-                               .order_by(PlayerTeamSeason.season.desc())
-                               .first())
-
+    temporada_mais_recente = (db.query(PlayerTeamSeason.season).filter(PlayerTeamSeason.team_id == time_id).order_by(PlayerTeamSeason.season.desc()).first())
     if not temporada_mais_recente:
         return {"time_id": time_id, "nome_time": time.name, "temporada": 0, "total": 0, "jogadores": []}
 
     temporada = temporada_mais_recente[0]
 
-    # Busca todos os jogadores da temporada mais recente — ativos E inativos
-    jogadores_query = (db.query(Player, PlayerTeamSeason)
-                       .join(PlayerTeamSeason, PlayerTeamSeason.player_id == Player.id)
-                       .filter(PlayerTeamSeason.team_id == time_id, PlayerTeamSeason.season == temporada)
-                       .order_by(PlayerTeamSeason.player_id)
-                       .all())
+    jogadores_query = (db.query(Player, PlayerTeamSeason).join(PlayerTeamSeason, PlayerTeamSeason.player_id == Player.id).filter(PlayerTeamSeason.team_id == time_id, PlayerTeamSeason.season == temporada)
+                       .order_by(PlayerTeamSeason.player_id).all())
 
-    # Deduplica por player_id, priorizando league_code "standard"
     jogadores_vistos = {}
     for jogador_data in jogadores_query:
         jogador = jogador_data[0]
-        pts     = jogador_data[1]
-        pid     = jogador.id
+        pts = jogador_data[1]
+        pid = jogador.id
 
         if pid not in jogadores_vistos:
             jogadores_vistos[pid] = (jogador, pts)
@@ -202,39 +183,29 @@ def obter_elenco(time_id: int, db: Session = Depends(get_db)):
             if pts.league_code == "standard":
                 jogadores_vistos[pid] = (jogador, pts)
 
-    # Remove jogadores que foram trocados de time durante a temporada:
-    # Se o jogador tem active=False neste time E active=True em outro time
-    # na mesma temporada, ele pertence ao outro time — nao deve aparecer aqui
-    ids_para_remover = []
-    for pid, (jogador, pts) in jogadores_vistos.items():
-        if pts.active:
-            continue
-
-        outro_time_ativo = (db.query(PlayerTeamSeason)
-                             .filter(PlayerTeamSeason.player_id == pid,
-                                     PlayerTeamSeason.season    == temporada,
-                                     PlayerTeamSeason.team_id   != time_id,
-                                     PlayerTeamSeason.active    == True)
-                             .first())
-
-        if outro_time_ativo:
-            ids_para_remover.append(pid)
-
-    for pid in ids_para_remover:
-        del jogadores_vistos[pid]
-
     lista_jogadores = []
     for pid in sorted(jogadores_vistos.keys()):
         jogador, pts = jogadores_vistos[pid]
-
+ 
+        ultimo_jogo_time = (db.query(func.max(Game.date_start)).join(PlayerGameStats, PlayerGameStats.game_id == Game.id)
+                            .filter(PlayerGameStats.player_id == pid, PlayerGameStats.team_id == time_id, Game.season == temporada).scalar()) 
+        ultimo_jogo_geral = (db.query(func.max(Game.date_start)).join(PlayerGameStats, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == pid, Game.season == temporada).scalar())
+ 
+        if ultimo_jogo_geral is not None and ultimo_jogo_time is not None:
+            if ultimo_jogo_geral > ultimo_jogo_time:
+                continue
+ 
+        if ultimo_jogo_time is None and not pts.active:
+            continue
+ 
         altura_metros = None
         if jogador.height_meters is not None:
             altura_metros = float(jogador.height_meters)
-
+ 
         peso_kg = None
         if jogador.weight_kilograms is not None:
             peso_kg = float(jogador.weight_kilograms)
-
+ 
         lista_jogadores.append({
             "id": jogador.id,
             "nome": f"{jogador.firstname} {jogador.lastname}",
@@ -244,11 +215,11 @@ def obter_elenco(time_id: int, db: Session = Depends(get_db)):
             "altura_metros": altura_metros,
             "peso_kg": peso_kg,
         })
-
+ 
     return {"time_id": time_id, "nome_time": time.name, "temporada": temporada, "total": len(lista_jogadores), "jogadores": lista_jogadores}
 
 @router.get("/{time_id}/estatisticas", response_model=EstatisticasTimeResponse)
-def estatisticas_time(time_id: int, temporada: int = Query(2025), stage: int = Query(None, description="Competição: 1=Pré-Temporada, 2=Temporada Regular, 3=Playoffs, 4=Copa NBA"), db: Session = Depends(get_db)):
+def estatisticas_time(time_id: int, temporada: int = Query(2025), stage: int = Query(None), db: Session = Depends(get_db)):
     time = db.query(Team).filter(Team.id == time_id).first()
     if not time:
         logger.warning(f"Time não encontrado ao buscar estatísticas: id={time_id}")
@@ -265,15 +236,11 @@ def estatisticas_time(time_id: int, temporada: int = Query(2025), stage: int = Q
         filtro_fora.append(Game.stage == stage)
         filtro_finalizados.append(Game.stage == stage)
 
-    total_jogos   = db.query(Game).filter(*filtro_base).count()
-    jogos_casa    = db.query(Game).filter(*filtro_casa).count()
-    jogos_fora    = db.query(Game).filter(*filtro_fora).count()
+    total_jogos = db.query(Game).filter(*filtro_base).count()
+    jogos_casa = db.query(Game).filter(*filtro_casa).count()
+    jogos_fora = db.query(Game).filter(*filtro_fora).count()
     total_jogadores = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.team_id == time_id, PlayerTeamSeason.season == temporada).count()
-
-    jogos_finalizados = (db.query(Game, GameTeamScore)
-                         .join(GameTeamScore, GameTeamScore.game_id == Game.id)
-                         .filter(*filtro_finalizados)
-                         .all())
+    jogos_finalizados = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id).filter(*filtro_finalizados).all())
 
     vitorias = 0
     derrotas = 0
@@ -306,57 +273,59 @@ def estatisticas_time(time_id: int, temporada: int = Query(2025), stage: int = Q
     }
 
 @router.get("/{time_id}/performance", response_model=PerformanceTimeResponse)
-def performance_time(time_id: int, temporada: int = Query(2025), stage: int = Query(None, description="Competição: 1=Pré-Temporada, 2=Temporada Regular, 3=Playoffs, 4=Copa NBA"), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def performance_time(time_id: int, temporada: int = Query(2025), stage: int = Query(None), n_jogos: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
     time = db.query(Team).filter(Team.id == time_id).first()
     if not time:
         logger.warning(f"Time não encontrado ao buscar performance: id={time_id}")
         raise HTTPException(status_code=404, detail="Time não encontrado.")
-
+ 
     filtro = [Game.season == temporada, GameTeamScore.team_id == time_id, Game.status_short == 3]
     if stage is not None:
         filtro.append(Game.stage == stage)
-
-    jogos = (db.query(Game, GameTeamScore)
-             .join(GameTeamScore, GameTeamScore.game_id == Game.id)
-             .filter(*filtro)
-             .order_by(Game.date_start.desc())
-             .all())
-
+ 
+    jogos = (db.query(Game, GameTeamScore).join(GameTeamScore, GameTeamScore.game_id == Game.id).filter(*filtro).order_by(Game.date_start.desc()).all())
+ 
     if len(jogos) == 0:
         return {
             "time_id": time_id, "nome_time": time.name, "temporada": temporada,
             "total_jogos": 0, "vitorias": 0, "derrotas": 0, "aproveitamento": 0.0,
             "record_casa": "0-0", "record_fora": "0-0",
             "media_pontos_feitos": 0.0, "media_pontos_sofridos": 0.0, "diferencial_pontos": 0.0,
-            "ultimos_5_jogos": [], "mensagem": "Sem jogos finalizados nesta temporada."
+            "ultimos_jogos": [], "mensagem": "Sem jogos finalizados nesta temporada."
         }
-
-    total_pontos_feitos   = 0
+ 
+    total_pontos_feitos = 0
     total_pontos_sofridos = 0
     vitorias_casa = 0
     derrotas_casa = 0
     vitorias_fora = 0
     derrotas_fora = 0
-    ultimos_5 = []
-    contador  = 0
-
+    ultimos_jogos = []
+    contador = 0
+ 
     for jogo_data in jogos:
         jogo  = jogo_data[0]
         score = jogo_data[1]
-
-        adversario = db.query(GameTeamScore).filter(GameTeamScore.game_id == jogo.id, GameTeamScore.team_id != time_id).first()
-        if not adversario:
+ 
+        adversario_score = db.query(GameTeamScore).filter(GameTeamScore.game_id == jogo.id, GameTeamScore.team_id != time_id).first()
+        if not adversario_score:
             continue
-
-        pontos_feitos   = score.points   if score.points is not None else 0
-        pontos_sofridos = adversario.points if adversario.points is not None else 0
-
-        total_pontos_feitos   = total_pontos_feitos   + pontos_feitos
+ 
+        if score.points is not None:
+            pontos_feitos = score.points
+        else:
+            pontos_feitos = 0
+        if adversario_score.points is not None:
+            pontos_sofridos = adversario_score.points
+        else:
+            pontos_sofridos = 0
+ 
+        total_pontos_feitos = total_pontos_feitos + pontos_feitos
         total_pontos_sofridos = total_pontos_sofridos + pontos_sofridos
-
-        vitoria  = pontos_feitos > pontos_sofridos
-        em_casa  = score.is_home
-
+ 
+        vitoria = pontos_feitos > pontos_sofridos
+        em_casa = score.is_home
+ 
         if em_casa:
             if vitoria:
                 vitorias_casa = vitorias_casa + 1
@@ -367,40 +336,56 @@ def performance_time(time_id: int, temporada: int = Query(2025), stage: int = Qu
                 vitorias_fora = vitorias_fora + 1
             else:
                 derrotas_fora = derrotas_fora + 1
-
-        if contador < 5:
+ 
+        if contador < n_jogos:
             if em_casa:
                 adversario_id = jogo.away_team_id
             else:
                 adversario_id = jogo.home_team_id
-            resultado = "V" if vitoria else "D"
-            ultimos_5.append({
+ 
+            time_adversario = db.query(Team).filter(Team.id == adversario_id).first()
+            if time_adversario:
+                nome_adversario = time_adversario.name     
+            else:
+                nome_adversario = "—"
+            if time_adversario:
+                logo_adversario = time_adversario.logo
+            else:
+                logo_adversario = None
+ 
+            if vitoria:
+                resultado = "V"     
+            else:
+                resultado = "D"
+            ultimos_jogos.append({
                 "jogo_id": jogo.id,
                 "data": jogo.date_start,
                 "adversario_id": adversario_id,
+                "nome_adversario": nome_adversario,
+                "logo_adversario": logo_adversario,
                 "em_casa": em_casa,
                 "pontos_feitos": pontos_feitos,
                 "pontos_sofridos": pontos_sofridos,
                 "resultado": resultado,
             })
-
-        contador = contador + 1
-
-    total_jogos    = len(jogos)
+ 
+        contador += 1
+ 
+    total_jogos = len(jogos)
     total_vitorias = vitorias_casa + vitorias_fora
     total_derrotas = derrotas_casa + derrotas_fora
-
-    media_pontos_feitos   = 0.0
+ 
+    media_pontos_feitos = 0.0
     media_pontos_sofridos = 0.0
-    diferencial           = 0.0
-    aproveitamento        = 0.0
-
+    diferencial = 0.0
+    aproveitamento = 0.0
+ 
     if total_jogos > 0:
-        media_pontos_feitos   = round(total_pontos_feitos   / total_jogos, 2)
+        media_pontos_feitos = round(total_pontos_feitos   / total_jogos, 2)
         media_pontos_sofridos = round(total_pontos_sofridos / total_jogos, 2)
-        diferencial           = round((total_pontos_feitos - total_pontos_sofridos) / total_jogos, 2)
-        aproveitamento        = round(total_vitorias / total_jogos * 100, 2)
-
+        diferencial = round((total_pontos_feitos - total_pontos_sofridos) / total_jogos, 2)
+        aproveitamento = round(total_vitorias / total_jogos * 100, 2)
+ 
     return {
         "time_id": time_id,
         "nome_time": time.name,
@@ -414,5 +399,5 @@ def performance_time(time_id: int, temporada: int = Query(2025), stage: int = Qu
         "media_pontos_feitos": media_pontos_feitos,
         "media_pontos_sofridos": media_pontos_sofridos,
         "diferencial_pontos": diferencial,
-        "ultimos_5_jogos": ultimos_5,
+        "ultimos_jogos": ultimos_jogos,
     }

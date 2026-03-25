@@ -1,5 +1,4 @@
 from typing import Optional, List
-
 from pydantic import BaseModel, ConfigDict
 
 class TeamBase(BaseModel):
@@ -24,7 +23,6 @@ class TeamLeagueInfoBase(BaseModel):
 
 class TeamLeagueInfoOut(TeamLeagueInfoBase):
     id: int
-
     model_config = ConfigDict(from_attributes=True)
 
 class TeamListItem(BaseModel):
@@ -36,7 +34,6 @@ class TeamListItem(BaseModel):
     logo: Optional[str] = None
     nba_franchise: bool
     all_star: bool
-
     model_config = ConfigDict(from_attributes=True)
 
 class TeamListResponse(BaseModel):
@@ -49,7 +46,6 @@ class InfoLiga(BaseModel):
     liga: Optional[str] = None
     conferencia: Optional[str] = None
     divisao: Optional[str] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 class TeamDetalheResponse(BaseModel):
@@ -62,7 +58,6 @@ class TeamDetalheResponse(BaseModel):
     all_star: bool
     nba_franchise: bool
     info_liga: Optional[InfoLiga] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 class EstatisticasTimeResponse(BaseModel):
@@ -81,6 +76,8 @@ class UltimoJogoPerformance(BaseModel):
     jogo_id: int
     data: Optional[object] = None
     adversario_id: int
+    nome_adversario: Optional[str] = None
+    logo_adversario: Optional[str] = None
     em_casa: bool
     pontos_feitos: int
     pontos_sofridos: int
@@ -99,7 +96,7 @@ class PerformanceTimeResponse(BaseModel):
     media_pontos_feitos: float
     media_pontos_sofridos: float
     diferencial_pontos: float
-    ultimos_5_jogos: List[UltimoJogoPerformance]
+    ultimos_jogos: List[UltimoJogoPerformance]
     mensagem: Optional[str] = None
 
 class TimeComparacao(BaseModel):

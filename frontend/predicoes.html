@@ -3,30 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Predições</title>
-
+    <title>NbaAnalyst — Palpites</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/predicoes.css">
+    <style>
+        .card-jogo-palpite {
+            background: #16172A;
+            border: 1px solid #252540;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .jogo-titulo {
+            background: #12121C;
+            border-bottom: 1px solid #252540;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .jogo-titulo:hover { background: #1A1B2E; }
+        .jogo-titulo .times-nome {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #EEEEF5;
+            letter-spacing: .02em;
+        }
+        .jogo-titulo .times-nome span { color: #555570; margin: 0 6px; }
+        .jogo-titulo .jogo-seta { color: #555570; transition: transform .2s; }
+        .jogo-titulo .jogo-seta.aberto { transform: rotate(180deg); }
+        .jogo-corpo { display: block; }
+        .times-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        .time-coluna {
+            padding: 16px;
+        }
+        .time-coluna:first-child {
+            border-right: 1px solid #252540;
+        }
+        .time-coluna-titulo {
+            font-family: 'Oswald', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #555570;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #252540;
+        }
+        .time-coluna-titulo.casa { color: #F75C03; border-color: #F75C03; }
+        .linha-jogador {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #1D1E35;
+            gap: 8px;
+        }
+        .linha-jogador:last-child { border-bottom: none; }
+        .jogador-nome {
+            font-size: .82rem;
+            color: #EEEEF5;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .jogador-nome a { color: #EEEEF5; text-decoration: none; }
+        .jogador-nome a:hover { color: #F75C03; }
+        .stats-inline {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .stat-pill {
+            text-align: center;
+            min-width: 32px;
+        }
+        .stat-pill .valor {
+            font-family: 'Oswald', sans-serif;
+            font-size: .9rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .stat-pill .rotulo {
+            font-size: .58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #555570;
+            margin-top: 1px;
+        }
+        @media (max-width: 576px) {
+            .times-grid { grid-template-columns: 1fr; }
+            .time-coluna:first-child { border-right: none; border-bottom: 1px solid #252540; }
+        }
+    </style>
 </head>
 <body>
 
 <div id="app-wrapper">
     <nav id="navbar-principal"></nav>
     <main id="conteudo-principal">
+
         <div class="cabecalho-predicoes">
             <div class="container">
                 <div class="linha-acento mb-2"></div>
-                <h1 class="titulo-secao mb-2">Predições do Dia</h1>
-                <div class="resumo-dia" id="resumo-dia" style="display: none;">
+                <h1 class="titulo-secao mb-2">Palpites do Dia</h1>
+                <div class="resumo-dia" id="resumo-dia" style="display:none;">
                     <div class="resumo-item">
                         <span class="resumo-valor" id="resumo-jogos">—</span>
                         <span class="resumo-rotulo">Jogos Hoje</span>
                     </div>
                     <div class="resumo-item">
-                        <span class="resumo-valor" id="resumo-predicoes">—</span>
-                        <span class="resumo-rotulo">Predições Geradas</span>
+                        <span class="resumo-valor" id="resumo-palpites">—</span>
+                        <span class="resumo-rotulo">Palpites Gerados</span>
                     </div>
                     <div class="resumo-item">
                         <span class="resumo-valor" id="resumo-data">—</span>
@@ -36,47 +138,36 @@
             </div>
         </div>
 
-        <div class="abas-predicoes">
-            <div class="container">
-                <div class="d-flex">
-                    <button class="nav-link ativo" id="aba-btn-jogos" onclick="trocarAba('jogos')">
-                        <i class="bi bi-trophy me-1"></i> Por Jogo
-                    </button>
-                    <button class="nav-link" id="aba-btn-ranking" onclick="trocarAba('ranking')">
-                        <i class="bi bi-bar-chart-fill me-1"></i> Ranking do Dia
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="area-predicoes">
-            <div class="container">
+            <div class="container" style="padding-top:28px;padding-bottom:48px;">
+
                 <div id="pagina-carregando">
                     <div class="spinner-nba">
                         <div class="bola-animada"></div>
-                        <span>Carregando predições.</span>
+                        <span>Carregando palpites...</span>
                     </div>
                 </div>
-                <div id="pagina-conteudo" style="display: none;">
-                    <div id="aba-jogos">
-                        <div id="lista-jogos">
-                        </div>
-                    </div>
-                    <div id="aba-ranking" style="display: none;">
-                        <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Top Pontuadores Previstos</h2>
-                        <div class="grafico-container">
-                            <div id="grafico-ranking">
-                            </div>
-                        </div>
-                    </div>
+
+                <div id="pagina-conteudo" style="display:none;">
+                    <div id="lista-jogos"></div>
                 </div>
-                <div id="pagina-vazio" style="display: none;">
+
+                <div id="pagina-sem-jogos" style="display:none;">
                     <div class="estado-vazio">
-                        <i class="bi bi-graph-up-arrow icone-vazio"></i>
-                        <p class="titulo-vazio">Sem predições para hoje</p>
-                        <p class="desc-vazio">Nenhuma predição foi gerada para os jogos de hoje ainda.</p>
+                        <i class="bi bi-calendar-x icone-vazio"></i>
+                        <p class="titulo-vazio">Nenhum jogo hoje</p>
+                        <p class="desc-vazio">Não há partidas agendadas para hoje na temporada atual.</p>
                     </div>
                 </div>
+
+                <div id="pagina-aguardando" style="display:none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-hourglass-split icone-vazio"></i>
+                        <p class="titulo-vazio">Palpites sendo processados</p>
+                        <p class="desc-vazio">Há <strong id="desc-n-jogos">—</strong> jogo(s) hoje. Os palpites são gerados automaticamente após a carga diária dos dados (06h).</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -84,7 +175,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
@@ -92,136 +182,191 @@
 <script>
 verificarAutenticacao();
 
-var todasPredicoes = [];
+// Quantos jogadores mostrar por time (os de maior pontuação prevista)
+var MAX_JOGADORES_POR_TIME = 8;
 
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
-    carregarPredicoes();
+    carregarPalpites();
 });
 
-function trocarAba(nomeAba) {
-    document.getElementById("aba-jogos").style.display = "none";
-    document.getElementById("aba-ranking").style.display = "none";
-    document.getElementById("aba-btn-jogos").classList.remove("ativo");
-    document.getElementById("aba-btn-ranking").classList.remove("ativo");
-
-    document.getElementById("aba-" + nomeAba).style.display = "block";
-    document.getElementById("aba-btn-" + nomeAba).classList.add("ativo");
-
-    if (nomeAba === "ranking" && todasPredicoes.length > 0) {
-        renderizarGraficoRanking(todasPredicoes);
-    }
+function esconderTudos() {
+    document.getElementById("pagina-carregando").style.display = "none";
+    document.getElementById("pagina-conteudo").style.display   = "none";
+    document.getElementById("pagina-sem-jogos").style.display  = "none";
+    document.getElementById("pagina-aguardando").style.display = "none";
 }
 
-async function carregarPredicoes() {
+async function carregarPalpites() {
     try {
         var dados = await chamarApiAutenticada("/predicoes/hoje");
 
-        document.getElementById("pagina-carregando").style.display = "none";
-        document.getElementById("resumo-jogos").textContent = dados.total_jogos;
-        document.getElementById("resumo-predicoes").textContent = dados.total_predicoes;
-        document.getElementById("resumo-data").textContent = dados.data || "—";
-        document.getElementById("resumo-dia").style.display = "flex";
+        esconderTudos();
 
-        if (!dados.predicoes || dados.predicoes.length === 0) {
-            document.getElementById("pagina-vazio").style.display = "block";
+        document.getElementById("resumo-jogos").textContent    = dados.total_jogos;
+        document.getElementById("resumo-palpites").textContent = dados.total_predicoes;
+        document.getElementById("resumo-data").textContent     = dados.data || "—";
+        document.getElementById("resumo-dia").style.display    = "flex";
+
+        if (dados.total_jogos === 0) {
+            document.getElementById("pagina-sem-jogos").style.display = "block";
             return;
         }
 
-        todasPredicoes = dados.predicoes;
-        renderizarCardsPorJogo(dados.predicoes);
+        if (!dados.predicoes || dados.predicoes.length === 0) {
+            document.getElementById("desc-n-jogos").textContent        = dados.total_jogos;
+            document.getElementById("pagina-aguardando").style.display = "block";
+            return;
+        }
+
+        renderizarJogos(dados.predicoes);
         document.getElementById("pagina-conteudo").style.display = "block";
+
     } catch (erro) {
-        document.getElementById("pagina-carregando").style.display = "none";
-        document.getElementById("pagina-vazio").style.display = "block";
+        esconderTudos();
+        document.getElementById("pagina-sem-jogos").style.display = "block";
     }
 }
 
-function renderizarCardsPorJogo(predicoes) {
+function renderizarJogos(palpites) {
     var container = document.getElementById("lista-jogos");
-    var grupos = {};
-    for (var i = 0; i < predicoes.length; i++) {
-        var pred = predicoes[i];
-        var gid = pred.game_id;
 
-        if (!grupos[gid]) {
-            grupos[gid] = {game_id: gid, nome_casa: "", nome_fora: "", jogadores: []};
+    // Agrupa por jogo, separando casa e fora
+    var jogos = {};
+    for (var i = 0; i < palpites.length; i++) {
+        var p   = palpites[i];
+        var gid = p.game_id;
+
+        if (!jogos[gid]) {
+            jogos[gid] = {};
+            jogos[gid]["nome_casa"]  = "";
+            jogos[gid]["nome_fora"]  = "";
+            jogos[gid]["time_casa"]  = [];
+            jogos[gid]["time_fora"]  = [];
         }
 
-        if (pred.eh_casa === 1 || pred.eh_casa === true) {
-            grupos[gid].nome_casa = pred.nome_time || "";
-            grupos[gid].nome_fora = pred.nome_adversario || "";
+        if (p.eh_casa === 1 || p.eh_casa === true) {
+            if (!jogos[gid]["nome_casa"]) {
+                jogos[gid]["nome_casa"] = p.nome_time || "";
+            }
+            jogos[gid]["time_casa"].push(p);
         } else {
-            grupos[gid].nome_fora = pred.nome_time || "";
-            grupos[gid].nome_casa = pred.nome_adversario || "";
+            if (!jogos[gid]["nome_fora"]) {
+                jogos[gid]["nome_fora"] = p.nome_time || "";
+            }
+            jogos[gid]["time_fora"].push(p);
         }
-
-        grupos[gid].jogadores.push(pred);
     }
 
     var html = "";
-    var ids = Object.keys(grupos);
+    var ids  = Object.keys(jogos);
 
     for (var j = 0; j < ids.length; j++) {
-        var gid = ids[j];
-        var grupo = grupos[gid];
-        var totalJogadores = grupo.jogadores.length;
+        var gid  = ids[j];
+        var jogo = jogos[gid];
 
-        grupo.jogadores.sort(function(a, b) {
-            return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
+        // Ordena cada time por pontos previstos desc e limita ao máximo definido
+        jogo["time_casa"].sort(function(a, b) {
+            var pa = parseFloat(a.pontos_previstos) || 0;
+            var pb = parseFloat(b.pontos_previstos) || 0;
+            if (pb > pa) { return 1; }
+            if (pb < pa) { return -1; }
+            return 0;
         });
 
-        var linhasHtml = "";
-        for (var k = 0; k < grupo.jogadores.length; k++) {
-            var jog = grupo.jogadores[k];
+        jogo["time_fora"].sort(function(a, b) {
+            var pa = parseFloat(a.pontos_previstos) || 0;
+            var pb = parseFloat(b.pontos_previstos) || 0;
+            if (pb > pa) { return 1; }
+            if (pb < pa) { return -1; }
+            return 0;
+        });
 
-            var pts  = jog.pontos_previstos      !== null ? parseFloat(jog.pontos_previstos).toFixed(1)      : "—";
-            var ast  = jog.assistencias_previstas !== null ? parseFloat(jog.assistencias_previstas).toFixed(1) : "—";
-            var reb  = jog.rebotes_previstos      !== null ? parseFloat(jog.rebotes_previstos).toFixed(1)      : "—";
-            var local = (jog.eh_casa === 1 || jog.eh_casa === true) ? "Casa" : "Fora";
-
-            linhasHtml = linhasHtml
-                + '<tr>'
-                +   '<td class="td-jogador">'
-                +     '<a href="jogador.html?id=' + jog.player_id + '">' + jog.nome_jogador + '</a>'
-                +   '</td>'
-                +   '<td class="td-local">' + local + '</td>'
-                +   '<td class="td-valor">' + pts + ' <span style="font-size:0.65rem;color:#555570;">PTS</span></td>'
-                +   '<td class="td-valor-sec">' + ast + ' <span style="font-size:0.65rem;">AST</span></td>'
-                +   '<td class="td-valor-sec">' + reb + ' <span style="font-size:0.65rem;">REB</span></td>'
-                + '</tr>';
+        var jogadoresCasa = [];
+        for (var k = 0; k < jogo["time_casa"].length; k++) {
+            if (k >= MAX_JOGADORES_POR_TIME) { break; }
+            jogadoresCasa.push(jogo["time_casa"][k]);
         }
 
-        html = html
-            + '<div class="card-jogo-predicao">'
-            +   '<div class="jogo-header" onclick="toggleJogo(this)">'
-            +     '<div class="jogo-times">' + grupo.nome_casa + ' <span style="color:#555570;">vs</span> ' + grupo.nome_fora + '</div>'
-            +     '<div class="jogo-badge">' + totalJogadores + ' predições</div>'
-            +     '<i class="bi bi-chevron-down jogo-seta aberto"></i>'
-            +   '</div>'
-            +   '<div class="jogo-corpo">'
-            +     '<table class="tabela-predicoes">'
-            +       '<thead>'
-            +         '<tr>'
-            +           '<th>Jogador</th>'
-            +           '<th>Local</th>'
-            +           '<th style="text-align:right;">PTS</th>'
-            +           '<th style="text-align:right;">AST</th>'
-            +           '<th style="text-align:right;">REB</th>'
-            +         '</tr>'
-            +       '</thead>'
-            +       '<tbody>' + linhasHtml + '</tbody>'
-            +     '</table>'
-            +   '</div>'
-            + '</div>';
+        var jogadoresFora = [];
+        for (var k = 0; k < jogo["time_fora"].length; k++) {
+            if (k >= MAX_JOGADORES_POR_TIME) { break; }
+            jogadoresFora.push(jogo["time_fora"][k]);
+        }
+
+        html = html + '<div class="card-jogo-palpite">';
+
+        // Cabeçalho clicável
+        html = html + '<div class="jogo-titulo" onclick="toggleJogo(this)">';
+        html = html + '<div class="times-nome">' + jogo["nome_casa"] + '<span>vs</span>' + jogo["nome_fora"] + '</div>';
+        html = html + '<i class="bi bi-chevron-down jogo-seta aberto"></i>';
+        html = html + '</div>';
+
+        // Grid dois times lado a lado
+        html = html + '<div class="jogo-corpo">';
+        html = html + '<div class="times-grid">';
+
+        // Coluna casa
+        html = html + '<div class="time-coluna">';
+        html = html + '<div class="time-coluna-titulo casa">' + jogo["nome_casa"] + ' <span style="font-size:.62rem;color:#555570;margin-left:4px;">Casa</span></div>';
+        html = html + renderizarColunaTimes(jogadoresCasa);
+        html = html + '</div>';
+
+        // Coluna visitante
+        html = html + '<div class="time-coluna">';
+        html = html + '<div class="time-coluna-titulo">' + jogo["nome_fora"] + ' <span style="font-size:.62rem;color:#555570;margin-left:4px;">Fora</span></div>';
+        html = html + renderizarColunaTimes(jogadoresFora);
+        html = html + '</div>';
+
+        html = html + '</div>';
+        html = html + '</div>';
+        html = html + '</div>';
     }
 
     container.innerHTML = html;
 }
 
+function renderizarColunaTimes(jogadores) {
+    if (jogadores.length === 0) {
+        return '<p style="font-size:.78rem;color:#555570;padding:8px 0;">Sem palpites.</p>';
+    }
+
+    var html = "";
+
+    for (var i = 0; i < jogadores.length; i++) {
+        var p = jogadores[i];
+
+        var pts = "—";
+        if (p.pontos_previstos !== null && p.pontos_previstos !== undefined) {
+            pts = parseFloat(p.pontos_previstos).toFixed(1);
+        }
+
+        var ast = "—";
+        if (p.assistencias_previstas !== null && p.assistencias_previstas !== undefined) {
+            ast = parseFloat(p.assistencias_previstas).toFixed(1);
+        }
+
+        var reb = "—";
+        if (p.rebotes_previstos !== null && p.rebotes_previstos !== undefined && parseFloat(p.rebotes_previstos) > 0) {
+            reb = parseFloat(p.rebotes_previstos).toFixed(1);
+        }
+
+        html = html + '<div class="linha-jogador">';
+        html = html + '<div class="jogador-nome"><a href="jogador.html?id=' + p.player_id + '">' + p.nome_jogador + '</a></div>';
+        html = html + '<div class="stats-inline">';
+        html = html + '<div class="stat-pill"><div class="valor" style="color:#F75C03;">' + pts + '</div><div class="rotulo">PTS</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor" style="color:#3B9EFF;">' + ast + '</div><div class="rotulo">AST</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor" style="color:#00C896;">' + reb + '</div><div class="rotulo">REB</div></div>';
+        html = html + '</div>';
+        html = html + '</div>';
+    }
+
+    return html;
+}
+
 function toggleJogo(header) {
     var corpo = header.nextElementSibling;
-    var seta = header.querySelector(".jogo-seta");
+    var seta  = header.querySelector(".jogo-seta");
 
     if (corpo.style.display === "none") {
         corpo.style.display = "block";
@@ -230,102 +375,6 @@ function toggleJogo(header) {
         corpo.style.display = "none";
         seta.classList.remove("aberto");
     }
-}
-
-function renderizarGraficoRanking(predicoes) {
-    var container = document.getElementById("grafico-ranking");
-    container.innerHTML = "";
-
-    var ordenados = predicoes.slice();
-    ordenados.sort(function(a, b) {
-        return (b.pontos_previstos || 0) - (a.pontos_previstos || 0);
-    });
-    if (ordenados.length > 15) {
-        ordenados = ordenados.slice(0, 15);
-    }
-
-    var larguraTotal  = container.offsetWidth || 560;
-    var margemEsq     = 140;
-    var margemDir     = 60;
-    var margemTopo    = 10;
-    var margemBaixo   = 10;
-    var alturaLinha   = 32;
-    var alturaTotal   = ordenados.length * alturaLinha + margemTopo + margemBaixo;
-    var larguraBarras = larguraTotal - margemEsq - margemDir;
-
-    var svg = d3.select("#grafico-ranking")
-        .append("svg")
-        .attr("width", larguraTotal)
-        .attr("height", alturaTotal);
-
-    var g = svg.append("g")
-        .attr("transform", "translate(" + margemEsq + "," + margemTopo + ")");
-
-    var maiorValor = d3.max(ordenados, function(d) { return parseFloat(d.pontos_previstos) || 0; });
-
-    var escalaX = d3.scaleLinear()
-        .domain([0, maiorValor * 1.15])
-        .range([0, larguraBarras]);
-
-    var escalaY = d3.scaleBand()
-        .domain(ordenados.map(function(d) { return d.player_id + ""; }))
-        .range([0, ordenados.length * alturaLinha])
-        .padding(0.3);
-
-    g.selectAll(".barra")
-        .data(ordenados)
-        .enter()
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", function(d) { return escalaY(d.player_id + ""); })
-        .attr("width", function(d) { return escalaX(parseFloat(d.pontos_previstos) || 0); })
-        .attr("height", escalaY.bandwidth())
-        .attr("fill", "#F75C03")
-        .attr("rx", 3)
-        .attr("opacity", function(d, i) { return 1 - (i * 0.04); });
-
-    g.selectAll(".nome")
-        .data(ordenados)
-        .enter()
-        .append("text")
-        .attr("x", -8)
-        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2; })
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "end")
-        .attr("fill", "#8888AA")
-        .attr("font-size", "11px")
-        .text(function(d) {
-            var partes = d.nome_jogador.split(" ");
-            if (partes.length >= 2) {
-                return partes[0].charAt(0) + ". " + partes[partes.length - 1];
-            }
-            return d.nome_jogador;
-        });
-
-    g.selectAll(".time-label")
-        .data(ordenados)
-        .enter()
-        .append("text")
-        .attr("x", -8)
-        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2 + 11; })
-        .attr("text-anchor", "end")
-        .attr("fill", "#555570")
-        .attr("font-size", "9px")
-        .text(function(d) { return d.nome_time || ""; });
-
-    g.selectAll(".valor")
-        .data(ordenados)
-        .enter()
-        .append("text")
-        .attr("x", function(d) { return escalaX(parseFloat(d.pontos_previstos) || 0) + 6; })
-        .attr("y", function(d) { return escalaY(d.player_id + "") + escalaY.bandwidth() / 2; })
-        .attr("dy", "0.35em")
-        .attr("fill", "#EEEEF5")
-        .attr("font-size", "11px")
-        .attr("font-weight", "600")
-        .text(function(d) {
-            return parseFloat(d.pontos_previstos).toFixed(1);
-        });
 }
 </script>
 </body>

@@ -48,7 +48,8 @@ class HistoricoTimeItem(BaseModel):
     nome_time: str
     camisa: Optional[int] = None
     posicao: Optional[str] = None
-    ativo: bool
+    ativo: Optional[bool] = None
+    mes_ingresso: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -106,6 +107,7 @@ class MediasTemporada(BaseModel):
     fg_pct: float
     three_pct: float
     ft_pct: float
+    plus_minus: Optional[float] = None
 
 class EstatisticasTemporadaResponse(BaseModel):
     jogador_id: int
@@ -144,9 +146,19 @@ class EstatisticasJogosResponse(BaseModel):
 class JogoResumoItem(BaseModel):
     jogo_id: int
     data: Optional[datetime] = None
+    adversario_id: Optional[int] = None
+    adversario: Optional[str] = None
+    em_casa: Optional[bool] = None
     pontos: Optional[int] = None
     assistencias: Optional[int] = None
     rebotes: Optional[int] = None
+    roubos: Optional[int] = None
+    bloqueios: Optional[int] = None
+    turnovers: Optional[int] = None
+    minutos: Optional[str] = None
+    fg_pct: Optional[float] = None
+    three_pct: Optional[float] = None
+    plus_minus: Optional[int] = None
 
 class MediasUltimosJogos(BaseModel):
     pontos: float
@@ -183,7 +195,7 @@ class MediasCasaFora(BaseModel):
 class EstatisticasCasaForaResponse(BaseModel):
     jogador_id: int
     nome_jogador: str
-    temporada: int
+    temporada: Optional[int] = None
     local: str
     jogos_disputados: Optional[int] = None
     medias: Optional[MediasCasaFora] = None

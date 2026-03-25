@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -69,14 +70,17 @@ def get_predicao_multiplas(jogador_id: int, time_adversario_id: int, temporada: 
 
 @router.get("/hoje")
 def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
-    agora = datetime.now(timezone.utc)
-    inicio_do_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
-    fim_do_dia = inicio_do_dia + timedelta(days=1)
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    agora_sp = datetime.now(fuso_sp)
+    inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
+    fim_sp = inicio_sp + timedelta(days=1, hours=6)
+    inicio_utc = inicio_sp.astimezone(timezone.utc)
+    fim_utc = fim_sp.astimezone(timezone.utc)
 
-    jogos_hoje = db.query(Game).filter(Game.season == temporada_alvo, Game.date_start >= inicio_do_dia, Game.date_start < fim_do_dia).all()
+    jogos_hoje = db.query(Game).filter(Game.season == temporada_alvo, Game.date_start >= inicio_utc, Game.date_start < fim_utc).all()
 
     if not jogos_hoje:
-        return {"temporada": temporada_alvo, "data": str(agora.date()), "total_jogos": 0, "total_predicoes": 0, "predicoes": []}
+        return {"temporada": temporada_alvo, "data": str(agora_sp.date()), "total_jogos": 0, "total_predicoes": 0, "predicoes": []}
 
     ids_jogos_hoje = []
     for jogo in jogos_hoje:
@@ -87,7 +91,10 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
     lista_resultado = []
     for pred in predicoes:
         jogador = db.query(Player).filter(Player.id == pred.player_id).first()
-        nome_jogador = f"{jogador.firstname} {jogador.lastname}" if jogador else "Desconhecido"
+        if jogador:
+            nome_jogador = f"{jogador.firstname} {jogador.lastname}" 
+        else:
+            nome_jogador = "Desconhecido"
 
         time = db.query(Team).filter(Team.id == pred.team_id).first()
         adversario = db.query(Team).filter(Team.id == pred.opponent_team_id).first()
@@ -111,7 +118,7 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
 
     return {
         "temporada": temporada_alvo,
-        "data": str(agora.date()),
+        "data": str(agora_sp.date()),
         "total_jogos": len(jogos_hoje),
         "total_predicoes": len(lista_resultado),
         "predicoes": lista_resultado,
@@ -208,7 +215,7 @@ def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
     }
 
 @router.post("/gerar/temporada")
-def gerar_predicoes_temporada(temporada: int = Query(..., description="Temporada para gerar predicoes retroativas (ex: 2025)"), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
     try:
         total = salvar_predicoes_temporada(db=db, season=temporada)
     except Exception as erro:

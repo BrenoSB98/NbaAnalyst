@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/jogador_avancado.css">
+    <style>
+        .btn-donut { background:#1D1E35;border:1px solid #252540;color:#8888AA;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.05em; }
+        .btn-donut:hover { color:#EEEEF5; }
+        .btn-donut.ativo-fg  { background:#F75C03;border-color:#F75C03;color:#fff; }
+        .btn-donut.ativo-3p  { background:#3B9EFF;border-color:#3B9EFF;color:#fff; }
+        .btn-donut.ativo-ft  { background:#00C896;border-color:#00C896;color:#fff; }
+    </style>
 </head>
 <body>
 <div id="app-wrapper">
@@ -35,13 +42,16 @@
                 </div>
             </div>
 
-            <!-- Barra de filtros -->
+            <!-- Barra de filtros — sem "Ordenar por" (req 3.1) -->
             <div class="barra-controles-jav">
                 <div class="container">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
+
                         <div class="d-flex align-items-center gap-2">
                             <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Temporada</label>
-                            <select class="form-control-nba" id="sel-temp" style="max-width:115px;" onchange="recarregar()">
+                            <!-- "Todas as temporadas" como primeira opção (req 3.2) -->
+                            <select class="form-control-nba" id="sel-temp" style="max-width:175px;" onchange="recarregar()">
+                                <option value="">Todas as temporadas</option>
                                 <option value="2025" selected>2025</option>
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
@@ -49,6 +59,7 @@
                                 <option value="2021">2021</option>
                             </select>
                         </div>
+
                         <div class="d-flex align-items-center gap-2">
                             <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Últimos</label>
                             <div class="d-flex gap-1" id="btns-nj">
@@ -59,6 +70,7 @@
                                 <button class="btn-nj" id="bn-50" onclick="trocarN(50)">Todos</button>
                             </div>
                         </div>
+
                         <div class="d-flex align-items-center gap-2">
                             <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Local</label>
                             <select class="form-control-nba" id="sel-local" style="max-width:110px;" onchange="filtrarLocal()">
@@ -67,17 +79,7 @@
                                 <option value="fora">Fora</option>
                             </select>
                         </div>
-                        <div class="d-flex align-items-center gap-2 ms-auto">
-                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Ordenar por</label>
-                            <select class="form-control-nba" id="sel-ord-stat" style="max-width:130px;" onchange="atualizarGraficos()">
-                                <option value="pontos" selected>Pontos</option>
-                                <option value="assistencias">Assistências</option>
-                                <option value="rebotes">Rebotes</option>
-                                <option value="roubos">Roubos</option>
-                                <option value="bloqueios">Bloqueios</option>
-                                <option value="plus_minus">+/-</option>
-                            </select>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -85,126 +87,86 @@
             <div class="area-jav">
                 <div class="container">
 
-                    <!-- Spinner de dados -->
                     <div id="data-loading" style="padding:40px 0;"><div class="spinner-nba"><div class="bola-animada"></div><span>Carregando estatísticas...</span></div></div>
 
                     <div id="data-content" style="display:none;">
 
-                        <!-- ── CARDS ─────────────────────────────────── -->
+                        <!-- Cards: apenas PTS/AST/REB/STL/BLK/+/- (req 3.3) -->
                         <div class="acento"></div>
-                        <div class="sec-titulo">Médias da Temporada <span id="lbl-jogos" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
+                        <div class="sec-titulo">Médias <span id="lbl-jogos" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
                         <div class="row g-3 mb-4" id="grid-cards"></div>
 
-                        <!-- ── LINHA INTERATIVA ──────────────────────── -->
+                        <!-- Gráfico de linha: 4 linhas toggle + clique (itens 4 e 6) -->
                         <div class="acento"></div>
                         <div class="sec-titulo">Evolução por Jogo</div>
                         <div class="gc mb-4">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                <span class="gt mb-0">Estatística exibida</span>
-                                <div class="d-flex gap-1 flex-wrap" id="btns-stat-linha">
-                                    <button class="btn-stat ativo" id="bsl-pontos"       onclick="trocarLinha('pontos')">PTS</button>
-                                    <button class="btn-stat"       id="bsl-assistencias" onclick="trocarLinha('assistencias')">AST</button>
-                                    <button class="btn-stat"       id="bsl-rebotes"      onclick="trocarLinha('rebotes')">REB</button>
-                                    <button class="btn-stat"       id="bsl-roubos"       onclick="trocarLinha('roubos')">STL</button>
-                                    <button class="btn-stat"       id="bsl-bloqueios"    onclick="trocarLinha('bloqueios')">BLK</button>
-                                    <button class="btn-stat"       id="bsl-turnovers"    onclick="trocarLinha('turnovers')">TO</button>
-                                    <button class="btn-stat"       id="bsl-plus_minus"   onclick="trocarLinha('plus_minus')">+/-</button>
-                                    <button class="btn-stat"       id="bsl-minutos"      onclick="trocarLinha('minutos')">MIN</button>
-                                </div>
-                            </div>
+                            <!-- Botões de toggle de série -->
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="linha-toggles"></div>
                             <div id="g-linha"></div>
+                            <p style="font-size:.68rem;color:#555570;margin-top:8px;margin-bottom:0;">Clique na legenda ou na linha para mostrar/ocultar. Passe o mouse para ver os valores.</p>
                         </div>
 
-                        <!-- ── DISPERSÃO + CASA/FORA ──────────────────── -->
-                        <div class="row g-4 mb-4">
-                            <div class="col-12 col-lg-7">
-                                <div class="gc h-100">
-                                    <div class="d-flex align-items-center gap-3 mb-2">
-                                        <p class="gt mb-0">Dispersão — Minutos × Desempenho</p>
-                                        <select class="form-control-nba ms-auto" id="sel-disp" style="max-width:115px;font-size:.72rem;" onchange="renderDispersao()">
-                                            <option value="pontos" selected>Pontos</option>
-                                            <option value="assistencias">Assist.</option>
-                                            <option value="rebotes">Rebotes</option>
-                                            <option value="roubos">Roubos</option>
-                                            <option value="bloqueios">Bloqueios</option>
-                                        </select>
-                                    </div>
-                                    <div class="d-flex gap-3 mb-1" style="font-size:.7rem;color:#8888AA;">
-                                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F75C03;margin-right:4px;"></span>Casa</span>
-                                        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B9EFF;margin-right:4px;"></span>Fora</span>
-                                        <span style="color:#FFD600;">— Tendência</span>
-                                    </div>
-                                    <div id="g-disp"></div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-5">
-                                <div class="gc h-100">
-                                    <p class="gt">Casa vs Fora — Comparação de médias</p>
-                                    <div id="g-casafora"></div>
-                                    <div id="lbl-jogos-cf" style="font-size:.7rem;color:#555570;margin-top:8px;text-align:center;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── EFICIÊNCIA + HISTOGRAMA ────────────────── -->
+                        <!-- Donut + Tendência (req 3.4.3 e 3.4.4) -->
                         <div class="row g-4 mb-4">
                             <div class="col-12 col-lg-5">
                                 <div class="gc h-100">
-                                    <p class="gt">Eficiência de Arremesso</p>
-                                    <div id="g-efic"></div>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <p class="gt mb-0">Eficiência de Arremesso</p>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn-donut ativo-fg" id="btn-fg" onclick="trocarDonut('fg')">FG%</button>
+                                            <button class="btn-donut" id="btn-3p" onclick="trocarDonut('3p')">3P%</button>
+                                            <button class="btn-donut" id="btn-ft" onclick="trocarDonut('ft')">FT%</button>
+                                        </div>
+                                    </div>
+                                    <div id="g-donut"></div>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-7">
                                 <div class="gc h-100">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <p class="gt mb-0">Distribuição de valores por jogo</p>
-                                        <select class="form-control-nba ms-auto" id="sel-hist" style="max-width:115px;font-size:.72rem;" onchange="renderHistograma()">
-                                            <option value="pontos" selected>Pontos</option>
-                                            <option value="assistencias">Assist.</option>
-                                            <option value="rebotes">Rebotes</option>
-                                            <option value="plus_minus">+/-</option>
-                                        </select>
-                                    </div>
-                                    <div id="g-hist"></div>
+                                    <!-- Tendência D3: linha + média móvel 5j + banda de desvio (req 3.4.4) -->
+                                    <!-- Escolha D3 sobre Vega-Lite: tamanho controlado e tooltip reutilizável -->
+                                    <p class="gt">Tendência de Pontuação</p>
+                                    <div id="g-tendencia"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ── TABELA ─────────────────────────────────── -->
+                        <!-- Tabela de jogos (req 3.5) -->
                         <div class="acento"></div>
                         <div class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <span>Histórico de Jogos</span>
                             <span id="lbl-tabela" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span>
                         </div>
-                        <div class="card-nba mb-4"><div style="overflow-x:auto;">
+                        <div class="card-nba"><div style="overflow-x:auto;">
                             <table class="tabela-jogos-jav" id="tab-jogos">
                                 <thead><tr>
-                                    <th class="th-ord" data-c="adversario">Adversário</th>
-                                    <th class="th-ord" data-c="data">Data</th>
-                                    <th class="th-ord td-pts" data-c="pontos">PTS</th>
-                                    <th class="th-ord" data-c="assistencias">AST</th>
-                                    <th class="th-ord" data-c="rebotes">REB</th>
-                                    <th class="th-ord td-sec" data-c="roubos">STL</th>
-                                    <th class="th-ord td-sec" data-c="bloqueios">BLK</th>
-                                    <th class="th-ord td-sec" data-c="turnovers">TO</th>
-                                    <th class="th-ord td-sec" data-c="fg_pct">FG%</th>
-                                    <th class="th-ord td-sec" data-c="three_pct">3P%</th>
-                                    <th class="th-ord td-sec" data-c="plus_minus">+/-</th>
-                                    <th class="th-ord td-sec" data-c="minutos">MIN</th>
+                                    <th>Adversário</th>
+                                    <th>Data</th>
+                                    <th class="td-pts">PTS</th>
+                                    <th>AST</th>
+                                    <th>REB</th>
+                                    <th class="td-sec">STL</th>
+                                    <th class="td-sec">BLK</th>
+                                    <th class="td-sec">TO</th>
+                                    <th class="td-sec">FG%</th>
+                                    <th class="td-sec">3P%</th>
+                                    <th class="td-sec">+/-</th>
+                                    <th class="td-sec">MIN</th>
                                 </tr></thead>
                                 <tbody id="tbody-jogos"></tbody>
                             </table>
                         </div></div>
+                        <div id="paginacao-tabela" class="mb-4"></div>
 
-                    </div><!-- fim data-content -->
+                    </div>
 
                     <div id="data-vazio" style="display:none;">
-                        <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada para esta temporada.</p></div>
+                        <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada.</p></div>
                     </div>
 
                 </div>
             </div>
-        </div><!-- fim pg-content -->
+        </div>
 
         <div id="pg-erro" style="display:none;">
             <div class="estado-vazio" style="margin-top:80px;"><i class="bi bi-exclamation-circle icone-vazio"></i><p class="titulo-vazio">Jogador não encontrado</p></div>
@@ -222,29 +184,23 @@
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
 <script>
-verificarAutenticacao();
+var jogadorId  = obterParametroUrl("id");
+var nAtivo     = 10;
+var donutAtivo   = "fg";
+var dJogos       = null;
 
-var jogadorId    = obterParametroUrl("id");
-var nAtivo       = 10;
-var statLinha    = "pontos";
-var ordTabela    = { campo: "data", dir: "desc" };
-var svgLinha     = null;
-var gLinha       = null;
-var escXL        = null;
-var escYL        = null;
-var largL        = 0;
-var altL         = 0;
-
-var dTemporada   = null;   // resposta de /medias/temporada
-var dJogos       = null;   // resposta de /ultimos-jogos
-var dCasa        = null;   // resposta de /casa-fora?local=casa
-var dFora        = null;   // resposta de /casa-fora?local=fora
-
-var NOMES = {
-    pontos: "Pontos", assistencias: "Assistências", rebotes: "Rebotes",
-    roubos: "Roubos", bloqueios: "Bloqueios", turnovers: "Turnovers",
-    plus_minus: "+/-", fg_pct: "FG%", three_pct: "3P%", ft_pct: "FT%", minutos: "MIN"
+var POSICOES_PT = {
+    "PG": "Armador", "SG": "Ala-armador", "SF": "Ala",
+    "PF": "Ala-pivô", "C": "Pivô", "G": "Armador/Ala",
+    "F": "Ala/Ala-pivô", "GF": "Ala-armador/Ala", "FC": "Ala-pivô/Pivô"
 };
+
+function traduzirPosicao(abrev) {
+    if (!abrev) { return ""; }
+    return POSICOES_PT[abrev.toUpperCase()] || abrev;
+}
+var paginaTabela = 1;
+var porPagina    = 15;
 
 var tt = document.getElementById("tt");
 
@@ -256,13 +212,14 @@ function showTT(event, html) {
 function moveTT(event) {
     var x = event.clientX + 14;
     var y = event.clientY - 36;
-    if (x + 210 > window.innerWidth) { x = event.clientX - 210; }
+    if (x + 220 > window.innerWidth) { x = event.clientX - 220; }
     tt.style.left = x + "px";
     tt.style.top  = y + "px";
 }
 function hideTT() { tt.style.opacity = 0; }
 
-// ── INIT ──────────────────────────────────────────────────────
+
+// ── INIT ────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
     if (!jogadorId) {
@@ -273,7 +230,8 @@ document.addEventListener("DOMContentLoaded", function() {
     carregarCabecalho();
 });
 
-// ── CABEÇALHO ────────────────────────────────────────────────
+
+// ── CABEÇALHO ───────────────────────────────────────────────
 async function carregarCabecalho() {
     try {
         var dados = await chamarApi("/jogadores/" + jogadorId);
@@ -285,12 +243,11 @@ async function carregarCabecalho() {
 
         var meta = "";
         if (dados.historico_times && dados.historico_times.length > 0) {
-            var t = dados.historico_times[0];
-            meta += '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
-            if (t.posicao) { meta += '<span><i class="bi bi-person-fill"></i>' + t.posicao + '</span>'; }
+            var t = dados.historico_times[dados.historico_times.length - 1];
+            meta = meta + '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
+            if (t.posicao) { meta = meta + '<span><i class="bi bi-person-fill"></i>' + traduzirPosicao(t.posicao) + '</span>'; }
         }
-        if (dados.inicio_nba) { meta += '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
-        if (dados.pais_nascimento) { meta += '<span><i class="bi bi-globe2"></i>' + dados.pais_nascimento + '</span>'; }
+        if (dados.inicio_nba) { meta = meta + '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
         document.getElementById("jav-meta").innerHTML = meta;
 
         document.getElementById("pg-loading").style.display = "none";
@@ -302,6 +259,7 @@ async function carregarCabecalho() {
     }
 }
 
+
 // ── CARGA DE DADOS ──────────────────────────────────────────
 async function carregarDados() {
     var temp = document.getElementById("sel-temp").value;
@@ -310,16 +268,15 @@ async function carregarDados() {
     document.getElementById("data-vazio").style.display   = "none";
 
     try {
-        var res = await Promise.all([
-            chamarApiAutenticada("/analiticos/jogadores/" + jogadorId + "/medias/temporada?temporada=" + temp),
-            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos?n_jogos=" + nAtivo + "&temporada=" + temp),
-            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temp + "&local=casa"),
-            chamarApiAutenticada("/jogadores/" + jogadorId + "/estatisticas/casa-fora?temporada=" + temp + "&local=fora")
-        ]);
-        dTemporada = res[0];
-        dJogos     = res[1];
-        dCasa      = res[2];
-        dFora      = res[3];
+        // Quando "Todas as temporadas": omite n_jogos (backend retorna todos sem limite)
+        // Quando temporada específica: aplica n_jogos normalmente
+        var urlJogos = "/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos";
+        if (temp !== "") {
+            urlJogos = urlJogos + "?n_jogos=" + nAtivo + "&temporada=" + temp;
+        }
+        // temp=="" → sem n_jogos e sem temporada → backend retorna todos os jogos do banco
+
+        dJogos = await chamarApi(urlJogos);
 
         var temJogos = dJogos && dJogos.jogos && dJogos.jogos.length > 0;
         document.getElementById("data-loading").style.display = "none";
@@ -330,8 +287,14 @@ async function carregarDados() {
         }
 
         document.getElementById("data-content").style.display = "block";
-        iniciarOrdenacaoTabela();
-        renderTudo();
+
+        requestAnimationFrame(function() {
+            renderCards();
+            renderLinha();
+            renderDonut(donutAtivo);
+            renderTendencia();
+            renderTabela();
+        });
 
     } catch (e) {
         document.getElementById("data-loading").style.display = "none";
@@ -339,36 +302,28 @@ async function carregarDados() {
     }
 }
 
-function recarregar() {
-    dTemporada = null; dJogos = null; dCasa = null; dFora = null;
-    svgLinha = null;
-    carregarDados();
-}
+function recarregar() { dJogos = null; seriesVisiveis = { pontos: true, assistencias: true, rebotes: true, roubos: true }; paginaTabela = 1; carregarDados(); }
 
 function trocarN(n) {
     document.getElementById("bn-" + nAtivo).classList.remove("ativo");
     nAtivo = n;
     document.getElementById("bn-" + n).classList.add("ativo");
     dJogos = null;
+    paginaTabela = 1;
     carregarDados();
 }
 
-function filtrarLocal() { atualizarGraficos(); }
-
-function atualizarGraficos() {
-    svgLinha = null;
-    renderTudo();
+function filtrarLocal() {
+    paginaTabela = 1;
+    requestAnimationFrame(function() {
+        renderCards();
+        renderLinha();
+        renderDonut(donutAtivo);
+        renderTendencia();
+        renderTabela();
+    });
 }
 
-function renderTudo() {
-    renderCards();
-    renderLinha(statLinha);
-    renderDispersao();
-    renderCasaFora();
-    renderEfic();
-    renderHistograma();
-    renderTabela();
-}
 
 // ── FILTRO DE JOGOS ─────────────────────────────────────────
 function jogosVisiveis() {
@@ -378,17 +333,28 @@ function jogosVisiveis() {
     var out = [];
     for (var i = 0; i < dJogos.jogos.length; i++) {
         var j = dJogos.jogos[i];
-        if (local === "casa" && j.em_casa) { out.push(j); }
-        if (local === "fora" && !j.em_casa) { out.push(j); }
+        if (local === "casa" && j.em_casa === true)  { out.push(j); }
+        if (local === "fora" && j.em_casa === false) { out.push(j); }
     }
     return out;
 }
 
-// ── CARDS ────────────────────────────────────────────────────
+
+// ── CARDS: PTS/AST/REB/STL/BLK/+/- calculados dos jogos visíveis (req 3.3) ──
+function calcularMedia(jogos, campo) {
+    var soma = 0;
+    var cont = 0;
+    for (var i = 0; i < jogos.length; i++) {
+        var v = jogos[i][campo];
+        if (v !== null && v !== undefined) { soma = soma + v; cont = cont + 1; }
+    }
+    if (cont === 0) { return "—"; }
+    return (soma / cont).toFixed(1);
+}
+
 function renderCards() {
-    var med = (dTemporada && dTemporada.medias) ? dTemporada.medias : null;
-    var njd = (dTemporada && dTemporada.jogos_disputados) ? dTemporada.jogos_disputados : 0;
-    document.getElementById("lbl-jogos").textContent = njd > 0 ? "(" + njd + " jogos)" : "";
+    var jogos = jogosVisiveis();
+    document.getElementById("lbl-jogos").textContent = jogos.length > 0 ? "(" + jogos.length + " jogos)" : "";
 
     var defs = [
         { c: "pontos",       l: "PTS", cor: "#F75C03" },
@@ -396,503 +362,649 @@ function renderCards() {
         { c: "rebotes",      l: "REB", cor: "#00C896" },
         { c: "roubos",       l: "STL", cor: "#FFD600" },
         { c: "bloqueios",    l: "BLK", cor: "#8888AA" },
-        { c: "turnovers",    l: "TO",  cor: "#FF3B5C" },
-        { c: "fg_pct",       l: "FG%", cor: "#EEEEF5", suf: "%" },
-        { c: "three_pct",    l: "3P%", cor: "#EEEEF5", suf: "%" },
-        { c: "ft_pct",       l: "FT%", cor: "#EEEEF5", suf: "%" },
         { c: "plus_minus",   l: "+/-", cor: "#EEEEF5" }
     ];
 
     var html = "";
     for (var i = 0; i < defs.length; i++) {
         var d = defs[i];
-        var v = (med && med[d.c] !== null && med[d.c] !== undefined) ? med[d.c] + (d.suf || "") : "—";
-        html += '<div class="col-6 col-sm-4 col-md-2" style="min-width:95px;">'
+        var v = calcularMedia(jogos, d.c);
+        html = html + '<div class="col-6 col-sm-4 col-md-2" style="min-width:95px;">'
             + '<div class="card-kpi-jav"><div class="kv" style="color:' + d.cor + ';">' + v + '</div>'
             + '<div class="kr">' + d.l + '</div></div></div>';
     }
     document.getElementById("grid-cards").innerHTML = html;
 }
 
-// ── GRÁFICO 1: LINHA COM TRANSIÇÃO ──────────────────────────
-function trocarLinha(nova) {
-    document.getElementById("bsl-" + statLinha).classList.remove("ativo");
-    statLinha = nova;
-    document.getElementById("bsl-" + nova).classList.add("ativo");
 
-    if (!svgLinha) { renderLinha(nova); return; }
+// ── GRÁFICO LINHA INTERATIVO: toggle por série, clique na linha (itens 4 e 6) ──
+// Estado de visibilidade de cada série — começa tudo visível
+var seriesVisiveis = { pontos: true, assistencias: true, rebotes: true, roubos: true };
 
-    var jogos = jogosVisiveis().slice().reverse();
-    escYL.domain([d3.min(jogos, function(d) { return d[nova] || 0; }) * 0.9, d3.max(jogos, function(d) { return d[nova] || 0; }) * 1.2 || 1]);
+var SERIES_DEF = [
+    { campo: "pontos",       label: "PTS", cor: "#F75C03" },
+    { campo: "assistencias", label: "AST", cor: "#3B9EFF" },
+    { campo: "rebotes",      label: "REB", cor: "#00C896" },
+    { campo: "roubos",       label: "STL", cor: "#FFD600" }
+];
 
-    // Transição eixo Y
-    gLinha.select(".ey").transition().duration(450)
-        .call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
-        .call(function(g) { g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-
-    var geraL = d3.line().x(function(d,i){return escXL(i);}).y(function(d){return escYL(d[nova]||0);});
-    var geraA = d3.area().x(function(d,i){return escXL(i);}).y0(altL).y1(function(d){return escYL(d[nova]||0);});
-
-    gLinha.select(".area-l").datum(jogos).transition().duration(450).attr("d",geraA);
-    gLinha.select(".path-l").datum(jogos).transition().duration(450).attr("d",geraL);
-    gLinha.selectAll(".pt-l").data(jogos).transition().duration(450)
-        .attr("cx",function(d,i){return escXL(i);})
-        .attr("cy",function(d){return escYL(d[nova]||0);});
-
-    // Média
-    var soma = 0;
-    for (var i = 0; i < jogos.length; i++) { soma += (jogos[i][nova] || 0); }
-    var med = soma / jogos.length;
-    gLinha.select(".l-med").transition().duration(450).attr("y1",escYL(med)).attr("y2",escYL(med));
-    gLinha.select(".t-med").transition().duration(450).attr("y",escYL(med)).text("Méd " + med.toFixed(1));
-
-    gLinha.selectAll(".pt-l")
-        .on("mouseover", function(event,d){ d3.select(this).attr("r",7); ttLinha(event,d,nova); })
-        .on("mousemove", moveTT)
-        .on("mouseout",  function(){ d3.select(this).attr("r",4); hideTT(); });
+function renderBotoesLinha() {
+    var container = document.getElementById("linha-toggles");
+    var html = "";
+    for (var i = 0; i < SERIES_DEF.length; i++) {
+        var s   = SERIES_DEF[i];
+        var vis = seriesVisiveis[s.campo];
+        var bg  = vis ? s.cor : "#1D1E35";
+        var cor = vis ? "#fff" : s.cor;
+        var borda = vis ? s.cor : "#252540";
+        html = html + '<button id="btn-linha-' + s.campo + '" '
+            + 'onclick="toggleSerie(\'' + s.campo + '\')" '
+            + 'style="background:' + bg + ';border:1px solid ' + borda + ';color:' + cor + ';'
+            + 'font-size:.68rem;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer;'
+            + 'transition:all .2s;text-transform:uppercase;letter-spacing:.05em;">'
+            + '<span style="display:inline-block;width:14px;height:2px;background:' + (vis ? '#fff' : s.cor) + ';vertical-align:middle;margin-right:5px;border-radius:1px;"></span>'
+            + s.label + '</button>';
+    }
+    container.innerHTML = html;
 }
 
-function ttLinha(event, d, stat) {
-    var dt = d.data ? new Date(d.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "";
-    showTT(event, "<strong>" + NOMES[stat] + ": " + (d[stat]||0) + "</strong><br>"
-        + (d.adversario||"") + " · " + (d.em_casa?"Casa":"Fora") + "<br>" + dt);
+function toggleSerie(campo) {
+    seriesVisiveis[campo] = !seriesVisiveis[campo];
+    renderBotoesLinha();
+    renderLinha();
 }
 
-function renderLinha(stat) {
+function renderLinha() {
     var el = document.getElementById("g-linha");
     el.innerHTML = "";
-    svgLinha = null;
+    renderBotoesLinha();
 
     var jogos = jogosVisiveis().slice().reverse();
-    if (jogos.length === 0) { return; }
+    if (jogos.length < 2) { return; }
 
-    var mg = {t:12,r:24,b:30,l:36};
+    var mg = { t: 16, r: 28, b: 36, l: 36 };
     var W  = el.offsetWidth || 640;
-    largL  = W - mg.l - mg.r;
-    altL   = 170;
+    var LW = W - mg.l - mg.r;
+    var H  = 280;
 
-    svgLinha = d3.select("#g-linha").append("svg").attr("width",W).attr("height",altL+mg.t+mg.b);
-    gLinha   = svgLinha.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+    var svg = d3.select("#g-linha").append("svg").attr("width", W).attr("height", H + mg.t + mg.b);
+    var g   = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
 
-    var vals = jogos.map(function(d){return d[stat]||0;});
-    var minV = d3.min(vals);
-    var maxV = d3.max(vals) || 1;
+    var escX = d3.scaleLinear().domain([0, jogos.length - 1]).range([0, LW]);
 
-    escXL = d3.scaleLinear().domain([0, jogos.length-1]).range([0, largL]);
-    escYL = d3.scaleLinear().domain([minV * 0.9, maxV * 1.2]).range([altL, 0]);
+    // Domínio Y apenas com séries visíveis
+    var todosValores = [];
+    for (var si = 0; si < SERIES_DEF.length; si++) {
+        if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
+        for (var ji = 0; ji < jogos.length; ji++) {
+            var v = jogos[ji][SERIES_DEF[si].campo];
+            if (v !== null && v !== undefined) { todosValores.push(v); }
+        }
+    }
+    if (todosValores.length === 0) { return; }
+    var minV = d3.min(todosValores) || 0;
+    var maxV = d3.max(todosValores) || 1;
+    var escY = d3.scaleLinear().domain([Math.max(0, minV * 0.85), maxV * 1.18]).range([H, 0]);
 
     // Grid Y
-    gLinha.append("g").attr("class","ey")
-        .call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
-        .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-
-    // Eixo X com labels "J1, J2..."
-    gLinha.append("g").attr("transform","translate(0,"+altL+")")
-        .call(d3.axisBottom(escXL).ticks(Math.min(jogos.length,12)).tickFormat(function(d){return "J"+(d+1);}).tickSize(0))
-        .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px").attr("dy","1.2em"); });
-
-    // Área
-    var geraA = d3.area().x(function(d,i){return escXL(i);}).y0(altL).y1(function(d){return escYL(d[stat]||0);});
-    gLinha.append("path").datum(jogos).attr("class","area-l").attr("d",geraA).attr("fill","rgba(247,92,3,0.08)");
-
-    // Linha
-    var geraL = d3.line().x(function(d,i){return escXL(i);}).y(function(d){return escYL(d[stat]||0);});
-    gLinha.append("path").datum(jogos).attr("class","path-l").attr("d",geraL).attr("fill","none").attr("stroke","#F75C03").attr("stroke-width",2);
-
-    // Média
-    var soma = 0;
-    for (var i = 0; i < jogos.length; i++) { soma += (vals[i]); }
-    var med = soma / jogos.length;
-    gLinha.append("line").attr("class","l-med").attr("x1",0).attr("y1",escYL(med)).attr("x2",largL).attr("y2",escYL(med)).attr("stroke","#555570").attr("stroke-width",1).attr("stroke-dasharray","4,4");
-    gLinha.append("text").attr("class","t-med").attr("x",largL+2).attr("y",escYL(med)).attr("dy","0.35em").attr("fill","#555570").attr("font-size","9px").text("Méd "+med.toFixed(1));
-
-    // Pontos interativos
-    gLinha.selectAll(".pt-l").data(jogos).enter().append("circle").attr("class","pt-l")
-        .attr("cx",function(d,i){return escXL(i);})
-        .attr("cy",function(d){return escYL(d[stat]||0);})
-        .attr("r",4).attr("fill","#F75C03").style("cursor","pointer")
-        .on("mouseover",function(event,d){ d3.select(this).attr("r",7); ttLinha(event,d,stat); })
-        .on("mousemove",moveTT)
-        .on("mouseout", function(){ d3.select(this).attr("r",4); hideTT(); })
-        .on("click", function(event,d){ destacarLinha(d.jogo_id); });
-
-    // Brush para zoom
-    var brush = d3.brushX()
-        .extent([[0,0],[largL,altL]])
-        .on("end", function(event) {
-            if (!event.selection) { return; }
-            var x0 = escXL.invert(event.selection[0]);
-            var x1 = escXL.invert(event.selection[1]);
-            escYL.domain([
-                d3.min(jogos.slice(Math.round(x0), Math.round(x1)+1), function(d){ return d[stat]||0; }) * 0.9,
-                d3.max(jogos.slice(Math.round(x0), Math.round(x1)+1), function(d){ return d[stat]||0; }) * 1.2 || 1
-            ]);
-            escXL.domain([x0, x1]);
-            gLinha.select(".area-l").datum(jogos).transition().duration(300).attr("d",geraA);
-            gLinha.select(".path-l").datum(jogos).transition().duration(300).attr("d",geraL);
-            gLinha.selectAll(".pt-l").transition().duration(300)
-                .attr("cx",function(d,i){return escXL(i);})
-                .attr("cy",function(d){return escYL(d[stat]||0);});
-            gLinha.select(".ey").transition().duration(300).call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
-                .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-            gLinha.select(".brush-layer").call(brush.move, null);
+    g.append("g").call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
+        .call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
         });
 
-    var dblclickTimer = null;
-    svgLinha.on("dblclick", function() {
-        // Reset zoom
-        escXL.domain([0, jogos.length-1]);
-        escYL.domain([minV*0.9, maxV*1.2]);
-        gLinha.select(".area-l").datum(jogos).transition().duration(300).attr("d",geraA);
-        gLinha.select(".path-l").datum(jogos).transition().duration(300).attr("d",geraL);
-        gLinha.selectAll(".pt-l").transition().duration(300)
-            .attr("cx",function(d,i){return escXL(i);})
-            .attr("cy",function(d){return escYL(d[stat]||0);});
-        gLinha.select(".ey").transition().duration(300).call(d3.axisLeft(escYL).ticks(4).tickSize(-largL))
-            .call(function(g){ g.select(".domain").remove(); g.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); g.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-    });
+    // Eixo X com datas
+    g.append("g").attr("class", "eixo-x").attr("transform", "translate(0," + H + ")")
+        .call(d3.axisBottom(escX).ticks(Math.min(jogos.length, 10)).tickFormat(function(idx) {
+            var j = jogos[Math.round(idx)];
+            if (!j || !j.data) { return ""; }
+            var d = new Date(j.data);
+            return (d.getMonth() + 1) + "/" + d.getDate() + "/" + String(d.getFullYear()).slice(-2);
+        }).tickSize(0))
+        .call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+        });
 
-    gLinha.append("g").attr("class","brush-layer").call(brush)
-        .selectAll("rect").attr("fill","rgba(247,92,3,0.08)").attr("rx",3);
-}
+    // Linha + hitbox clicável por série
+    for (var si = 0; si < SERIES_DEF.length; si++) {
+        var s     = SERIES_DEF[si];
+        var campo = s.campo;
+        if (!seriesVisiveis[campo]) { continue; }
 
-// ── GRÁFICO 2: DISPERSÃO ────────────────────────────────────
-function minFloat(s) {
-    if (!s) { return 0; }
-    var p = String(s).split(":");
-    return parseFloat(p[0]||0) + (p[1] ? parseFloat(p[1])/60 : 0);
-}
+        var linhaFn = d3.line()
+            .x(function(d, i) { return escX(i); })
+            .y(function(d) { return escY(d[campo] !== null && d[campo] !== undefined ? d[campo] : 0); })
+            .defined(function(d) { return d[campo] !== null && d[campo] !== undefined; })
+            .curve(d3.curveMonotoneX);
 
-function renderDispersao() {
-    var el = document.getElementById("g-disp");
-    el.innerHTML = "";
-    var stat = document.getElementById("sel-disp").value;
-    var jogos = jogosVisiveis();
-    if (jogos.length === 0) { return; }
+        // Linha visível
+        g.append("path").datum(jogos)
+            .attr("class", "linha-serie linha-" + campo)
+            .attr("fill", "none")
+            .attr("stroke", s.cor)
+            .attr("stroke-width", 2)
+            .attr("opacity", 0.85)
+            .attr("d", linhaFn)
+            .style("cursor", "pointer")
+            .on("mouseover", (function(ss) {
+                return function() {
+                    d3.select(this).attr("stroke-width", 4).attr("opacity", 1);
+                };
+            })(s))
+            .on("mouseout", function() {
+                d3.select(this).attr("stroke-width", 2).attr("opacity", 0.85);
+            })
+            .on("click", (function(cc) {
+                return function() { toggleSerie(cc); };
+            })(campo));
 
-    var mg = {t:8,r:20,b:32,l:36};
-    var W  = el.offsetWidth || 480;
-    var LW = W - mg.l - mg.r;
-    var H  = 190;
-
-    var svg = d3.select("#g-disp").append("svg").attr("width",W).attr("height",H+mg.t+mg.b);
-    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
-
-    var maxM = d3.max(jogos, function(d){ return minFloat(d.minutos); }) || 1;
-    var maxS = d3.max(jogos, function(d){ return Math.abs(d[stat]||0); }) || 1;
-
-    var escX = d3.scaleLinear().domain([0, maxM*1.1]).range([0, LW]);
-    var escY = d3.scaleLinear().domain([0, maxS*1.2]).range([H, 0]);
-
-    g.append("g").attr("transform","translate(0,"+H+")").call(d3.axisBottom(escX).ticks(5))
-        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); gr.selectAll(".tick line").attr("stroke","#252540"); });
-
-    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-LW))
-        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-
-    g.append("text").attr("x",LW/2).attr("y",H+28).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","10px").text("Minutos jogados");
-
-    // Linha de tendência linear
-    var n=jogos.length, sX=0, sY=0, sXY=0, sX2=0;
-    for (var i=0;i<n;i++){ var mx=minFloat(jogos[i].minutos),sy=jogos[i][stat]||0; sX+=mx;sY+=sy;sXY+=mx*sy;sX2+=mx*mx; }
-    var den = n*sX2 - sX*sX;
-    if (den !== 0) {
-        var slope = (n*sXY - sX*sY)/den;
-        var inter = (sY - slope*sX)/n;
-        g.append("line").attr("x1",escX(0)).attr("y1",escY(inter)).attr("x2",escX(maxM*1.1)).attr("y2",escY(slope*maxM*1.1+inter)).attr("stroke","#FFD600").attr("stroke-width",1.5).attr("stroke-dasharray","4,3").attr("opacity",0.7);
+        // Hitbox invisível mais largo para facilitar o clique
+        g.append("path").datum(jogos)
+            .attr("class", "hit-" + campo)
+            .attr("fill", "none")
+            .attr("stroke", "transparent")
+            .attr("stroke-width", 16)
+            .attr("d", linhaFn)
+            .style("cursor", "pointer")
+            .on("mouseover", (function(ss) {
+                return function() {
+                    g.select(".linha-" + ss.campo).attr("stroke-width", 4).attr("opacity", 1);
+                };
+            })(s))
+            .on("mouseout", function() {
+                g.selectAll(".linha-serie").attr("stroke-width", 2).attr("opacity", 0.85);
+            })
+            .on("click", (function(cc) {
+                return function() { toggleSerie(cc); };
+            })(campo));
     }
 
-    g.selectAll(".pd").data(jogos).enter().append("circle").attr("class","pd")
-        .attr("cx",function(d){ return escX(minFloat(d.minutos)); })
-        .attr("cy",function(d){ return escY(d[stat]||0); })
-        .attr("r",5).attr("fill",function(d){ return d.em_casa?"#F75C03":"#3B9EFF"; })
-        .attr("opacity",0.75).style("cursor","pointer")
-        .on("mouseover",function(event,d){
-            d3.select(this).attr("r",8).attr("opacity",1);
-            var dt = d.data ? new Date(d.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "";
-            showTT(event,"<strong>"+(d.adversario||"—")+" · "+dt+"</strong><br>"
-                +NOMES[stat]+": <strong>"+(d[stat]||0)+"</strong><br>"
-                +"Min: "+minFloat(d.minutos).toFixed(1)+"<br>"+(d.em_casa?"Casa":"Fora"));
+    // ── Estado de zoom — guardado fora do render para sobreviver a redraws ──
+    var escXZoom = escX.copy();
+    var emZoom   = false;
+
+    // ── Funções de redraw ao zoom ─────────────────────────────────────────
+    function redesenharLinhas(ex) {
+        for (var si = 0; si < SERIES_DEF.length; si++) {
+            var campo = SERIES_DEF[si].campo;
+            if (!seriesVisiveis[campo]) { continue; }
+
+            var fn = d3.line()
+                .x(function(d, i) { return ex(i); })
+                .y(function(d) { return escY(d[campo] !== null && d[campo] !== undefined ? d[campo] : 0); })
+                .defined(function(d) { return d[campo] !== null && d[campo] !== undefined; })
+                .curve(d3.curveMonotoneX);
+
+            g.selectAll(".linha-" + campo).attr("d", fn);
+            g.selectAll(".hit-" + campo).attr("d", fn);
+        }
+
+        // Redesenha eixo X
+        g.select(".eixo-x").call(
+            d3.axisBottom(ex)
+                .ticks(Math.min(jogos.length, 10))
+                .tickFormat(function(idx) {
+                    var j = jogos[Math.round(idx)];
+                    if (!j || !j.data) { return ""; }
+                    var d = new Date(j.data);
+                    return (d.getMonth() + 1) + "/" + d.getDate() + "/" + String(d.getFullYear()).slice(-2);
+                })
+                .tickSize(0)
+        ).call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+        });
+    }
+
+    // ── Botão de reset de zoom ───────────────────────────────────────────
+    var containerLinha = document.getElementById("g-linha");
+    containerLinha.style.position = "relative";
+    var btnReset = document.createElement("button");
+    btnReset.id = "btn-reset-zoom";
+    btnReset.textContent = "↺ Resetar zoom";
+    btnReset.style.cssText = "display:none;position:absolute;top:8px;right:8px;background:#1D1E35;"
+        + "border:1px solid #F75C03;color:#F75C03;font-size:.68rem;font-weight:700;"
+        + "padding:3px 10px;border-radius:6px;cursor:pointer;z-index:10;";
+    btnReset.onclick = function() { resetarZoom(); };
+    containerLinha.appendChild(btnReset);
+
+    function resetarZoom() {
+        escXZoom = escX.copy();
+        emZoom   = false;
+        var todosVals = [];
+        for (var si = 0; si < SERIES_DEF.length; si++) {
+            if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
+            for (var ji = 0; ji < jogos.length; ji++) {
+                var v = jogos[ji][SERIES_DEF[si].campo];
+                if (v !== null && v !== undefined) { todosVals.push(v); }
+            }
+        }
+        if (todosVals.length > 0) {
+            escY.domain([Math.max(0, d3.min(todosVals) * 0.85), d3.max(todosVals) * 1.18]);
+            g.select(".ey").transition().duration(300)
+                .call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
+                .call(function(gr) {
+                    gr.select(".domain").remove();
+                    gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
+                    gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+                });
+        }
+        redesenharLinhas(escX);
+        document.getElementById("btn-reset-zoom").style.display = "none";
+    }
+
+    // ── Brush de zoom ─────────────────────────────────────────────────────
+    // O brush fica na camada mais alta — captura drag corretamente.
+    // O tooltip é integrado via evento "brush" (mousemove durante drag mostra info).
+    var brush = d3.brushX()
+        .extent([[0, 0], [LW, H]])
+        .on("brush", function(event) {
+            // Tooltip durante a seleção mostra o intervalo
+            if (!event.selection || !event.sourceEvent) { return; }
+            var i0 = Math.round(escX.invert(event.selection[0]));
+            var i1 = Math.round(escX.invert(event.selection[1]));
+            i0 = Math.max(0, i0);
+            i1 = Math.min(jogos.length - 1, i1);
+            var j0 = jogos[i0];
+            var j1 = jogos[i1];
+            var d0 = j0 && j0.data ? new Date(j0.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "";
+            var d1 = j1 && j1.data ? new Date(j1.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "";
+            showTT(event.sourceEvent, "Selecionar: <strong>" + d0 + " → " + d1 + "</strong><br>" + (i1 - i0 + 1) + " jogos");
         })
-        .on("mousemove",moveTT)
-        .on("mouseout",function(){ d3.select(this).attr("r",5).attr("opacity",0.75); hideTT(); })
-        .on("click",function(event,d){ destacarLinha(d.jogo_id); });
+        .on("end", function(event) {
+            hideTT();
+            if (!event.selection) { return; }
+
+            var x0 = escX.invert(event.selection[0]);
+            var x1 = escX.invert(event.selection[1]);
+
+            if (Math.abs(x1 - x0) < 1) {
+                gBrush.call(brush.move, null);
+                return;
+            }
+
+            x0 = Math.max(0, Math.floor(x0));
+            x1 = Math.min(jogos.length - 1, Math.ceil(x1));
+
+            escXZoom = d3.scaleLinear().domain([x0, x1]).range([0, LW]);
+            emZoom   = true;
+
+            var valsZoom = [];
+            for (var si = 0; si < SERIES_DEF.length; si++) {
+                if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
+                for (var ji = x0; ji <= x1; ji++) {
+                    var v = jogos[ji][SERIES_DEF[si].campo];
+                    if (v !== null && v !== undefined) { valsZoom.push(v); }
+                }
+            }
+            if (valsZoom.length > 0) {
+                escY.domain([Math.max(0, d3.min(valsZoom) * 0.85), d3.max(valsZoom) * 1.18]);
+                g.select(".ey").transition().duration(300)
+                    .call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
+                    .call(function(gr) {
+                        gr.select(".domain").remove();
+                        gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
+                        gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+                    });
+            }
+
+            redesenharLinhas(escXZoom);
+            gBrush.call(brush.move, null);
+            document.getElementById("btn-reset-zoom").style.display = "inline-block";
+        });
+
+    // gBrush adicionado POR ÚLTIMO — fica no topo do DOM, recebe todos os eventos de mouse
+    var gBrush = g.append("g").attr("class", "brush-layer").call(brush);
+
+    gBrush.select(".selection")
+        .attr("fill", "rgba(247,92,3,0.15)")
+        .attr("stroke", "#F75C03")
+        .attr("stroke-width", 1);
+
+    gBrush.selectAll(".handle").attr("fill", "#F75C03").attr("opacity", 0.7);
+
+    // Cursor crosshair na área de overlay do brush
+    gBrush.select(".overlay").style("cursor", "crosshair");
+
+    // Duplo-clique reseta
+    gBrush.select(".overlay").on("dblclick", function() { resetarZoom(); });
+
+    // Tooltip no mousemove quando NÃO está arrastando (brush não captura mousemove puro)
+    gBrush.select(".overlay")
+        .on("mousemove.tt", function(event) {
+            var escAtiva = emZoom ? escXZoom : escX;
+            var xPos = d3.pointer(event)[0];
+            var idx  = Math.round(escAtiva.invert(xPos));
+            idx = Math.max(0, Math.min(idx, jogos.length - 1));
+            var j = jogos[idx];
+            if (!j) { return; }
+            var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "";
+            var linhas = "<strong>" + (j.adversario || "—") + " · " + dt + "</strong>";
+            for (var si = 0; si < SERIES_DEF.length; si++) {
+                var s = SERIES_DEF[si];
+                if (!seriesVisiveis[s.campo]) { continue; }
+                var v = j[s.campo];
+                linhas = linhas + "<br><b style='color:" + s.cor + "'>" + s.label + ":</b> " + (v !== null && v !== undefined ? v : "—");
+            }
+            showTT(event, linhas);
+        })
+        .on("mouseout.tt", hideTT);
 }
 
-// ── GRÁFICO 3: CASA VS FORA ─────────────────────────────────
-function renderCasaFora() {
-    var el = document.getElementById("g-casafora");
+
+// ── DONUT DE PROGRESSO (req 3.4.3) ──────────────────────────
+// Valor central em destaque. Botões alternam FG%/3P%/FT%.
+// Calcula a partir dos jogos visíveis para respeitar todos os filtros.
+var DONUT_CFG = {
+    "fg": { campo: "fg_pct",    cor: "#F75C03", label: "FG%",  max: 65  },
+    "3p": { campo: "three_pct", cor: "#3B9EFF", label: "3P%",  max: 50  },
+    "ft": { campo: "ft_pct",    cor: "#00C896", label: "FT%",  max: 100 }
+};
+
+function calcularPct(jogos, campo) {
+    var soma = 0; var cont = 0;
+    for (var i = 0; i < jogos.length; i++) {
+        var v = jogos[i][campo];
+        if (v !== null && v !== undefined) { soma = soma + v; cont = cont + 1; }
+    }
+    if (cont === 0) { return 0; }
+    return parseFloat((soma / cont).toFixed(1));
+}
+
+function trocarDonut(tipo) {
+    donutAtivo = tipo;
+    var ids = ["fg", "3p", "ft"];
+    for (var i = 0; i < ids.length; i++) {
+        var btn = document.getElementById("btn-" + ids[i]);
+        btn.className = "btn-donut" + (ids[i] === tipo ? " ativo-" + ids[i] : "");
+    }
+    renderDonut(tipo);
+}
+
+function renderDonut(tipo) {
+    var el  = document.getElementById("g-donut");
     el.innerHTML = "";
-    document.getElementById("lbl-jogos-cf").textContent = "";
+    var cfg   = DONUT_CFG[tipo];
+    var jogos = jogosVisiveis();
+    var valor = calcularPct(jogos, cfg.campo);
+    var prop  = Math.min(valor / cfg.max, 1);
 
-    var temC = dCasa && dCasa.medias;
-    var temF = dFora && dFora.medias;
+    var W  = el.offsetWidth || 260;
+    var H  = 190;
+    var cx = W / 2;
+    var cy = H / 2 + 8;
+    var R  = Math.min(W * 0.38, H * 0.42);
+    var ri = R * 0.68;
 
-    if (!temC && !temF) {
-        el.innerHTML = '<p style="font-size:.8rem;color:#555570;text-align:center;padding:20px;">Sem dados de casa/fora.</p>';
+    var svg = d3.select("#g-donut").append("svg").attr("width", W).attr("height", H);
+
+    var angI = -Math.PI * 0.75;
+    var angF =  Math.PI * 0.75;
+    var amp  = angF - angI;
+
+    var arc = d3.arc().innerRadius(ri).outerRadius(R).cornerRadius(4);
+
+    // Trilha de fundo
+    svg.append("path")
+        .datum({ startAngle: angI, endAngle: angF })
+        .attr("d", arc)
+        .attr("transform", "translate(" + cx + "," + cy + ")")
+        .attr("fill", "#252540");
+
+    // Arco de valor com hover interativo (item 6)
+    if (prop > 0) {
+        svg.append("path")
+            .datum({ startAngle: angI, endAngle: angI + amp * prop })
+            .attr("d", arc)
+            .attr("transform", "translate(" + cx + "," + cy + ")")
+            .attr("fill", cfg.cor)
+            .attr("opacity", 0.92)
+            .style("cursor", "pointer")
+            .on("mouseover", function(event) {
+                d3.select(this).attr("opacity", 1);
+                showTT(event, "<strong>" + cfg.label + ": " + valor + "%</strong><br>Ref. máx: " + cfg.max + "% · " + jogos.length + " jogos");
+            })
+            .on("mousemove", moveTT)
+            .on("mouseout", function() { d3.select(this).attr("opacity", 0.92); hideTT(); });
+    }
+
+    // Trilha clicável também (item 6)
+    svg.selectAll(".trilha-donut")
+        .on("mouseover", function(event) {
+            showTT(event, "<strong>" + cfg.label + ": " + valor + "%</strong><br>Ref. máx: " + cfg.max + "%");
+        })
+        .on("mousemove", moveTT)
+        .on("mouseout", hideTT);
+
+    // Valor central
+    svg.append("text")
+        .attr("x", cx).attr("y", cy - 4)
+        .attr("text-anchor", "middle")
+        .attr("fill", cfg.cor)
+        .attr("font-family", "Oswald, sans-serif")
+        .attr("font-size", "2.1rem")
+        .attr("font-weight", "700")
+        .text(valor + "%");
+
+    svg.append("text")
+        .attr("x", cx).attr("y", cy + 20)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#555570")
+        .attr("font-size", "11px")
+        .attr("font-weight", "700")
+        .attr("letter-spacing", "0.07em")
+        .text(cfg.label);
+
+    svg.append("text")
+        .attr("x", cx).attr("y", H - 6)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#555570")
+        .attr("font-size", "10px")
+        .text(jogos.length + " jogos");
+}
+
+
+// ── TENDÊNCIA DE PONTUAÇÃO (req 3.4.4) ──────────────────────
+// D3: linha de pontos por jogo + média móvel de 5j + banda de ±1 desvio.
+// Escolha D3 sobre Vega-Lite: encaixe exato no espaço disponível e tooltip
+// reutilizando showTT() sem dependência extra de biblioteca.
+function renderTendencia() {
+    var el = document.getElementById("g-tendencia");
+    el.innerHTML = "";
+    var jogos = jogosVisiveis().slice().reverse();
+    if (jogos.length < 2) {
+        el.innerHTML = '<p style="font-size:.8rem;color:#555570;padding:20px 0;">Dados insuficientes.</p>';
         return;
     }
 
-    // Número de jogos casa/fora
-    var njC = (dCasa && dCasa.jogos_disputados) ? dCasa.jogos_disputados : 0;
-    var njF = (dFora && dFora.jogos_disputados) ? dFora.jogos_disputados : 0;
-    document.getElementById("lbl-jogos-cf").textContent = njC + " jogos casa · " + njF + " jogos fora";
-
-    var cats = [
-        { c: "pontos",       l: "PTS" },
-        { c: "assistencias", l: "AST" },
-        { c: "rebotes",      l: "REB" },
-        { c: "roubos",       l: "STL" },
-        { c: "bloqueios",    l: "BLK" },
-        { c: "plus_minus",   l: "+/-" }
-    ];
-
-    var vC = []; var vF = [];
-    for (var i=0;i<cats.length;i++){
-        var c = cats[i].c;
-        vC.push(temC && dCasa.medias[c] !== null && dCasa.medias[c] !== undefined ? dCasa.medias[c] : 0);
-        vF.push(temF && dFora.medias[c] !== null && dFora.medias[c] !== undefined ? dFora.medias[c] : 0);
-    }
-
-    var mg = {t:8,r:50,b:22,l:36};
-    var W  = el.offsetWidth || 340;
+    var mg = { t: 12, r: 32, b: 36, l: 36 };
+    var W  = el.offsetWidth || 380;
     var LW = W - mg.l - mg.r;
-    var altG = 28;
-    var H  = cats.length * altG + mg.t + mg.b;
-    var altB = altG * 0.38;
+    var H  = 200;
 
-    var svg = d3.select("#g-casafora").append("svg").attr("width",W).attr("height",H);
-    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
+    var svg = d3.select("#g-tendencia").append("svg").attr("width", W).attr("height", H + mg.t + mg.b);
+    var g   = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
 
-    var todos = vC.concat(vF);
-    var maxV  = d3.max(todos.map(function(v){ return Math.abs(v); })) || 1;
-
-    var escX  = d3.scaleLinear().domain([0, maxV * 1.3]).range([0, LW]);
-    var escGr = d3.scaleBand().domain(cats.map(function(d){ return d.l; })).range([0, cats.length*altG]).padding(0.1);
-
-    // Labels Y
-    g.selectAll(".lc").data(cats).enter().append("text").attr("class","lc")
-        .attr("x",-6).attr("y",function(d){ return escGr(d.l)+escGr.bandwidth()/2; })
-        .attr("dy","0.35em").attr("text-anchor","end").attr("fill","#8888AA").attr("font-size","11px").attr("font-weight","700")
-        .text(function(d){ return d.l; });
-
-    // Barras Casa
-    g.selectAll(".bc").data(cats).enter().append("rect").attr("class","bc")
-        .attr("x",0).attr("y",function(d){ return escGr(d.l); })
-        .attr("width",function(d,i){ return escX(Math.abs(vC[i])||0); })
-        .attr("height",altB).attr("fill","#F75C03").attr("rx",2).attr("opacity",0.85)
-        .style("cursor","pointer")
-        .on("mouseover",function(event,d){ var i=cats.indexOf(d); showTT(event,"<strong>Casa — "+d.l+"</strong><br>"+vC[i]); })
-        .on("mousemove",moveTT).on("mouseout",hideTT);
-
-    // Barras Fora
-    g.selectAll(".bf").data(cats).enter().append("rect").attr("class","bf")
-        .attr("x",0).attr("y",function(d){ return escGr(d.l)+altB+2; })
-        .attr("width",function(d,i){ return escX(Math.abs(vF[i])||0); })
-        .attr("height",altB).attr("fill","#3B9EFF").attr("rx",2).attr("opacity",0.85)
-        .style("cursor","pointer")
-        .on("mouseover",function(event,d){ var i=cats.indexOf(d); showTT(event,"<strong>Fora — "+d.l+"</strong><br>"+vF[i]); })
-        .on("mousemove",moveTT).on("mouseout",hideTT);
-
-    // Valores
-    for (var j=0;j<cats.length;j++){
-        var yc = escGr(cats[j].l)+altB/2;
-        var yf = escGr(cats[j].l)+altB+2+altB/2;
-        g.append("text").attr("x",escX(Math.abs(vC[j])||0)+4).attr("y",yc).attr("dy","0.35em").attr("fill","#F75C03").attr("font-size","10px").attr("font-weight","700").text(vC[j]||0);
-        g.append("text").attr("x",escX(Math.abs(vF[j])||0)+4).attr("y",yf).attr("dy","0.35em").attr("fill","#3B9EFF").attr("font-size","10px").attr("font-weight","700").text(vF[j]||0);
-    }
-
-    // Legenda
-    var legY = H - mg.b + 6;
-    svg.append("rect").attr("x",mg.l).attr("y",legY-6).attr("width",10).attr("height",8).attr("rx",2).attr("fill","#F75C03");
-    svg.append("text").attr("x",mg.l+14).attr("y",legY).attr("fill","#8888AA").attr("font-size","10px").text("Casa");
-    svg.append("rect").attr("x",mg.l+48).attr("y",legY-6).attr("width",10).attr("height",8).attr("rx",2).attr("fill","#3B9EFF");
-    svg.append("text").attr("x",mg.l+62).attr("y",legY).attr("fill","#8888AA").attr("font-size","10px").text("Fora");
-}
-
-// ── GRÁFICO 4: EFICIÊNCIA (ARCOS) ───────────────────────────
-function renderEfic() {
-    var el = document.getElementById("g-efic");
-    el.innerHTML = "";
-
-    var fg = 0; var tp = 0; var ft = 0;
-    if (dTemporada && dTemporada.medias) {
-        fg = dTemporada.medias.fg_pct    || 0;
-        tp = dTemporada.medias.three_pct || 0;
-        ft = dTemporada.medias.ft_pct    || 0;
-    }
-
-    var W   = el.offsetWidth || 340;
-    var H   = 160;
-    var cx  = W / 2;
-    var cy  = H * 0.88;
-    var rP  = Math.min(W * 0.34, H * 0.75);
-    var esp = 13;
-
-    var svg = d3.select("#g-efic").append("svg").attr("width",W).attr("height",H);
-
-    var arcos = [
-        { l: "FG%", v: fg, max: 60,  cor: "#F75C03", r: rP },
-        { l: "3P%", v: tp, max: 50,  cor: "#3B9EFF", r: rP - esp - 4 },
-        { l: "FT%", v: ft, max: 100, cor: "#00C896", r: rP - 2*(esp+4) }
-    ];
-
-    var arc  = d3.arc().innerRadius(function(d){ return d.r - esp; }).outerRadius(function(d){ return d.r; });
-    var angI = -Math.PI * 0.9;
-    var angF =  Math.PI * 0.1;
-    var amp  = angF - angI;
-
-    for (var i=0; i<arcos.length; i++) {
-        var a = arcos[i];
-        var prop = Math.min(a.v / a.max, 1);
-
-        // Trilha (fundo)
-        svg.append("path").datum({ r: a.r, startAngle: angI, endAngle: angF }).attr("d", arc)
-            .attr("transform","translate("+cx+","+cy+")").attr("fill","#252540");
-
-        // Valor
-        if (prop > 0) {
-            var dadoArc = { r: a.r, startAngle: angI, endAngle: angI + amp * prop };
-            svg.append("path").datum(dadoArc).attr("d", arc)
-                .attr("transform","translate("+cx+","+cy+")").attr("fill", a.cor).attr("opacity", 0.9)
-                .style("cursor","pointer")
-                .on("mouseover", (function(aa){ return function(event){ showTT(event,"<strong>"+aa.l+"</strong><br>"+aa.v+"% (máx ref: "+aa.max+"%)"); }; })(a))
-                .on("mousemove",moveTT).on("mouseout",hideTT);
-        }
-    }
-
-    // Valores centrais
-    var yBase = cy - rP * 0.32;
-    var offX  = rP * 0.52;
-
-    svg.append("text").attr("x",cx-offX).attr("y",yBase).attr("text-anchor","middle").attr("fill","#F75C03").attr("font-size","1rem").attr("font-weight","700").text(fg+"%");
-    svg.append("text").attr("x",cx-offX).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("FG%");
-
-    svg.append("text").attr("x",cx).attr("y",yBase).attr("text-anchor","middle").attr("fill","#3B9EFF").attr("font-size","1rem").attr("font-weight","700").text(tp+"%");
-    svg.append("text").attr("x",cx).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("3P%");
-
-    svg.append("text").attr("x",cx+offX).attr("y",yBase).attr("text-anchor","middle").attr("fill","#00C896").attr("font-size","1rem").attr("font-weight","700").text(ft+"%");
-    svg.append("text").attr("x",cx+offX).attr("y",yBase+13).attr("text-anchor","middle").attr("fill","#555570").attr("font-size","9px").text("FT%");
-}
-
-// ── GRÁFICO 5: HISTOGRAMA ────────────────────────────────────
-function renderHistograma() {
-    var el = document.getElementById("g-hist");
-    el.innerHTML = "";
-
-    var stat  = document.getElementById("sel-hist").value;
-    var jogos = jogosVisiveis();
-    if (jogos.length === 0) { return; }
-
-    var vals = [];
-    for (var i=0; i<jogos.length; i++) {
-        if (jogos[i][stat] !== null && jogos[i][stat] !== undefined) { vals.push(+jogos[i][stat]); }
-    }
-    if (vals.length === 0) { return; }
-
-    var mg = {t:8,r:20,b:28,l:30};
-    var W  = el.offsetWidth || 480;
-    var LW = W - mg.l - mg.r;
-    var H  = 150;
-
-    var svg = d3.select("#g-hist").append("svg").attr("width",W).attr("height",H+mg.t+mg.b);
-    var g   = svg.append("g").attr("transform","translate("+mg.l+","+mg.t+")");
-
-    var minV = d3.min(vals);
-    var maxV = d3.max(vals);
-    var bins = d3.bin().domain([minV-1, maxV+1]).thresholds(9)(vals);
-
-    var escX = d3.scaleLinear().domain([minV-1, maxV+1]).range([0, LW]);
-    var escY = d3.scaleLinear().domain([0, d3.max(bins,function(d){ return d.length; })+1]).range([H, 0]);
-
-    g.append("g").attr("transform","translate(0,"+H+")").call(d3.axisBottom(escX).ticks(7))
-        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); gr.selectAll(".tick line").attr("stroke","#252540"); });
+    var vals   = jogos.map(function(d) { return d.pontos !== null && d.pontos !== undefined ? d.pontos : 0; });
+    var maxV   = d3.max(vals) || 1;
+    var escX   = d3.scaleLinear().domain([0, jogos.length - 1]).range([0, LW]);
+    var escY   = d3.scaleLinear().domain([0, maxV * 1.2]).range([H, 0]);
 
     g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-LW))
-        .call(function(gr){ gr.select(".domain").remove(); gr.selectAll(".tick line").attr("stroke","#252540").attr("stroke-dasharray","3,3"); gr.selectAll(".tick text").attr("fill","#555570").attr("font-size","10px"); });
-
-    g.selectAll(".bin").data(bins).enter().append("rect").attr("class","bin")
-        .attr("x",function(d){ return escX(d.x0)+1; })
-        .attr("y",function(d){ return escY(d.length); })
-        .attr("width",function(d){ return Math.max(0, escX(d.x1)-escX(d.x0)-2); })
-        .attr("height",function(d){ return H-escY(d.length); })
-        .attr("fill","#F75C03").attr("rx",2).attr("opacity",0.75)
-        .style("cursor","pointer")
-        .on("mouseover",function(event,d){ d3.select(this).attr("opacity",1); showTT(event,"<strong>"+d.x0+" – "+d.x1+" "+NOMES[stat]+"</strong><br>"+d.length+" jogo(s)"); })
-        .on("mousemove",moveTT)
-        .on("mouseout", function(){ d3.select(this).attr("opacity",0.75); hideTT(); });
-
-    // Linha da média
-    var soma=0; for(var i=0;i<vals.length;i++){soma+=vals[i];} var med=soma/vals.length;
-    g.append("line").attr("x1",escX(med)).attr("y1",0).attr("x2",escX(med)).attr("y2",H).attr("stroke","#FFD600").attr("stroke-width",1.5).attr("stroke-dasharray","4,3");
-    g.append("text").attr("x",escX(med)+3).attr("y",10).attr("fill","#FFD600").attr("font-size","9px").text("Méd "+med.toFixed(1));
-}
-
-// ── TABELA ORDENÁVEL ─────────────────────────────────────────
-function iniciarOrdenacaoTabela() {
-    var ths = document.querySelectorAll("#tab-jogos thead .th-ord");
-    for (var i=0;i<ths.length;i++){
-        ths[i].addEventListener("click", function(){
-            var c = this.getAttribute("data-c");
-            if (ordTabela.campo === c) {
-                ordTabela.dir = ordTabela.dir === "asc" ? "desc" : "asc";
-            } else {
-                ordTabela.campo = c;
-                ordTabela.dir = "desc";
-            }
-            document.querySelectorAll("#tab-jogos thead .th-ord").forEach(function(th){ th.classList.remove("asc","desc"); });
-            this.classList.add(ordTabela.dir);
-            renderTabela();
+        .call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
         });
-    }
-}
 
-function renderTabela() {
-    var jogos = jogosVisiveis().slice();
-    document.getElementById("lbl-tabela").textContent = jogos.length + " jogos";
+    g.append("g").attr("transform", "translate(0," + H + ")")
+        .call(d3.axisBottom(escX).ticks(Math.min(jogos.length, 8)).tickFormat(function(idx) {
+            var j = jogos[Math.round(idx)];
+            if (!j || !j.data) { return ""; }
+            var d = new Date(j.data);
+            return (d.getMonth() + 1) + "/" + d.getDate() + "/" + String(d.getFullYear()).slice(-2);
+        }).tickSize(0))
+        .call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+        });
 
-    // Ordena
-    jogos.sort(function(a, b) {
-        var va = a[ordTabela.campo]; if (va === null || va === undefined) { va = ""; }
-        var vb = b[ordTabela.campo]; if (vb === null || vb === undefined) { vb = ""; }
-        if (ordTabela.campo === "data") {
-            va = a.data ? new Date(a.data).getTime() : 0;
-            vb = b.data ? new Date(b.data).getTime() : 0;
-        }
-        if (ordTabela.dir === "asc") { return va > vb ? 1 : va < vb ? -1 : 0; }
-        return va < vb ? 1 : va > vb ? -1 : 0;
+    // Média e desvio padrão
+    var soma = 0;
+    for (var i = 0; i < vals.length; i++) { soma = soma + vals[i]; }
+    var mediGeral = soma / vals.length;
+
+    var somaDesvio = 0;
+    for (var i = 0; i < vals.length; i++) { somaDesvio = somaDesvio + (vals[i] - mediGeral) * (vals[i] - mediGeral); }
+    var desvio = Math.sqrt(somaDesvio / vals.length);
+
+    // Média móvel de 5 jogos
+    var janela = Math.min(5, vals.length);
+    var medMovel = vals.map(function(v, i) {
+        var inicio = Math.max(0, i - Math.floor(janela / 2));
+        var fim    = Math.min(vals.length, inicio + janela);
+        var s = 0;
+        for (var k = inicio; k < fim; k++) { s = s + vals[k]; }
+        return s / (fim - inicio);
     });
 
-    var html = "";
-    for (var i=0;i<jogos.length;i++){
-        var j = jogos[i];
-        var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "—";
-        var mn = j.minutos ? String(j.minutos).split(":")[0]+"m" : "—";
-        var pm = j.plus_minus !== null && j.plus_minus !== undefined ? j.plus_minus : null;
-        var pmHtml = pm !== null ? '<span style="color:'+(pm>0?"#00C896":pm<0?"#FF3B5C":"#8888AA")+'">'+(pm>0?"+":"")+pm+'</span>' : "—";
+    var linhaMM = d3.line()
+        .x(function(d, i) { return escX(i); })
+        .y(function(d) { return escY(d); })
+        .curve(d3.curveMonotoneX);
 
-        html += '<tr id="lj-'+j.jogo_id+'">'
-            + '<td class="td-sec">'+(j.adversario||"—")+'</td>'
-            + '<td class="td-sec">'+dt+'</td>'
-            + '<td class="td-pts">'+(j.pontos!==null&&j.pontos!==undefined?j.pontos:"—")+'</td>'
-            + '<td>'+(j.assistencias!==null&&j.assistencias!==undefined?j.assistencias:"—")+'</td>'
-            + '<td>'+(j.rebotes!==null&&j.rebotes!==undefined?j.rebotes:"—")+'</td>'
-            + '<td class="td-sec">'+(j.roubos!==null&&j.roubos!==undefined?j.roubos:"—")+'</td>'
-            + '<td class="td-sec">'+(j.bloqueios!==null&&j.bloqueios!==undefined?j.bloqueios:"—")+'</td>'
-            + '<td class="td-sec">'+(j.turnovers!==null&&j.turnovers!==undefined?j.turnovers:"—")+'</td>'
-            + '<td class="td-sec">'+(j.fg_pct!==null&&j.fg_pct!==undefined?j.fg_pct+"%":"—")+'</td>'
-            + '<td class="td-sec">'+(j.three_pct!==null&&j.three_pct!==undefined?j.three_pct+"%":"—")+'</td>'
-            + '<td class="td-sec">'+pmHtml+'</td>'
-            + '<td class="td-sec">'+mn+'</td>'
+    g.append("path").datum(medMovel)
+        .attr("fill", "none").attr("stroke", "#F75C03")
+        .attr("stroke-width", 2.5).attr("d", linhaMM);
+
+    // Linha de média geral pontilhada
+    g.append("line")
+        .attr("x1", 0).attr("y1", escY(mediGeral))
+        .attr("x2", LW).attr("y2", escY(mediGeral))
+        .attr("stroke", "#555570").attr("stroke-width", 1).attr("stroke-dasharray", "4,4");
+
+    g.append("text")
+        .attr("x", LW + 3).attr("y", escY(mediGeral))
+        .attr("dy", "0.35em").attr("fill", "#555570").attr("font-size", "9px")
+        .text("Méd " + mediGeral.toFixed(1));
+
+    // Overlay tooltip
+    svg.append("rect")
+        .attr("fill", "none").attr("pointer-events", "all")
+        .attr("x", mg.l).attr("y", mg.t).attr("width", LW).attr("height", H)
+        .on("mousemove", function(event) {
+            var xPos = d3.pointer(event)[0] - mg.l;
+            var idx  = Math.round(escX.invert(xPos));
+            idx = Math.max(0, Math.min(idx, jogos.length - 1));
+            var j = jogos[idx];
+            if (!j) { return; }
+            var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "";
+            showTT(event, "Méd móvel: <strong>" + medMovel[idx].toFixed(1) + " PTS</strong>");
+        })
+        .on("mouseout", hideTT);
+}
+
+
+// ── TABELA COM PAGINAÇÃO (item 1) ────────────────────────────
+function renderTabela() {
+    var jogos = jogosVisiveis().slice();
+
+    jogos.sort(function(a, b) {
+        var va = a.data ? new Date(a.data).getTime() : 0;
+        var vb = b.data ? new Date(b.data).getTime() : 0;
+        return vb - va;
+    });
+
+    var totalJogos  = jogos.length;
+    var totalPaginas = Math.max(1, Math.ceil(totalJogos / porPagina));
+    if (paginaTabela > totalPaginas) { paginaTabela = totalPaginas; }
+
+    var inicio = (paginaTabela - 1) * porPagina;
+    var fim    = Math.min(inicio + porPagina, totalJogos);
+    var jogosPag = jogos.slice(inicio, fim);
+
+    document.getElementById("lbl-tabela").textContent = totalJogos + " jogos · pág " + paginaTabela + "/" + totalPaginas;
+
+    var html = "";
+    for (var i = 0; i < jogosPag.length; i++) {
+        var j  = jogosPag[i];
+        var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
+        var mn = j.minutos ? String(j.minutos).split(":")[0] + "m" : "—";
+
+        var pm = j.plus_minus;
+        var pmHtml = "—";
+        if (pm !== null && pm !== undefined) {
+            var pmCor = pm > 0 ? "#00C896" : pm < 0 ? "#FF3B5C" : "#8888AA";
+            pmHtml = '<span style="color:' + pmCor + ';">' + (pm > 0 ? "+" : "") + pm + '</span>';
+        }
+
+        html = html + '<tr>'
+            + '<td class="td-sec">' + (j.adversario || "—") + '</td>'
+            + '<td class="td-sec">' + dt + '</td>'
+            + '<td class="td-pts">' + (j.pontos       !== null && j.pontos       !== undefined ? j.pontos       : "—") + '</td>'
+            + '<td>'                + (j.assistencias  !== null && j.assistencias  !== undefined ? j.assistencias  : "—") + '</td>'
+            + '<td>'                + (j.rebotes       !== null && j.rebotes       !== undefined ? j.rebotes       : "—") + '</td>'
+            + '<td class="td-sec">' + (j.roubos        !== null && j.roubos        !== undefined ? j.roubos        : "—") + '</td>'
+            + '<td class="td-sec">' + (j.bloqueios     !== null && j.bloqueios     !== undefined ? j.bloqueios     : "—") + '</td>'
+            + '<td class="td-sec">' + (j.turnovers     !== null && j.turnovers     !== undefined ? j.turnovers     : "—") + '</td>'
+            + '<td class="td-sec">' + (j.fg_pct        !== null && j.fg_pct        !== undefined ? j.fg_pct + "%"  : "—") + '</td>'
+            + '<td class="td-sec">' + (j.three_pct     !== null && j.three_pct     !== undefined ? j.three_pct + "%": "—") + '</td>'
+            + '<td class="td-sec">' + pmHtml + '</td>'
+            + '<td class="td-sec">' + mn + '</td>'
             + '</tr>';
     }
     document.getElementById("tbody-jogos").innerHTML = html;
+
+    // Paginação
+    var navHtml = "";
+    if (totalPaginas > 1) {
+        navHtml = navHtml + '<div class="d-flex align-items-center gap-2 mt-3" style="font-size:.8rem;">';
+        navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + (paginaTabela - 1) + ')" ' + (paginaTabela <= 1 ? "disabled" : "") + ' style="padding:4px 10px;">&lsaquo;</button>';
+
+        // Mostrar até 5 páginas ao redor da atual
+        var pInicio = Math.max(1, paginaTabela - 2);
+        var pFim    = Math.min(totalPaginas, paginaTabela + 2);
+
+        if (pInicio > 1) { navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(1)" style="padding:4px 10px;">1</button>'; }
+        if (pInicio > 2) { navHtml = navHtml + '<span style="color:#555570;">…</span>'; }
+
+        for (var pg = pInicio; pg <= pFim; pg++) {
+            var cls = pg === paginaTabela ? "btn-nj ativo" : "btn-nj";
+            navHtml = navHtml + '<button class="' + cls + '" onclick="irPagina(' + pg + ')" style="padding:4px 10px;">' + pg + '</button>';
+        }
+
+        if (pFim < totalPaginas - 1) { navHtml = navHtml + '<span style="color:#555570;">…</span>'; }
+        if (pFim < totalPaginas)     { navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + totalPaginas + ')" style="padding:4px 10px;">' + totalPaginas + '</button>'; }
+
+        navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + (paginaTabela + 1) + ')" ' + (paginaTabela >= totalPaginas ? "disabled" : "") + ' style="padding:4px 10px;">&rsaquo;</button>';
+
+        var opcoesPP = [10, 15, 25, 50];
+        navHtml = navHtml + '<span style="color:#555570;margin-left:8px;">por página</span>';
+        navHtml = navHtml + '<select class="form-control-nba" style="max-width:70px;font-size:.75rem;" onchange="trocarPorPagina(this.value)">';
+        for (var op = 0; op < opcoesPP.length; op++) {
+            navHtml = navHtml + '<option value="' + opcoesPP[op] + '"' + (opcoesPP[op] === porPagina ? " selected" : "") + '>' + opcoesPP[op] + '</option>';
+        }
+        navHtml = navHtml + '</select>';
+        navHtml = navHtml + '</div>';
+    }
+    document.getElementById("paginacao-tabela").innerHTML = navHtml;
 }
 
-function destacarLinha(id) {
-    document.querySelectorAll(".linha-dest").forEach(function(el){ el.classList.remove("linha-dest"); });
-    var el = document.getElementById("lj-"+id);
-    if (el) { el.classList.add("linha-dest"); el.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+function irPagina(pg) {
+    var jogos = jogosVisiveis();
+    var totalPaginas = Math.max(1, Math.ceil(jogos.length / porPagina));
+    if (pg < 1 || pg > totalPaginas) { return; }
+    paginaTabela = pg;
+    renderTabela();
+    document.getElementById("tab-jogos").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function trocarPorPagina(valor) {
+    porPagina    = parseInt(valor);
+    paginaTabela = 1;
+    renderTabela();
 }
 </script>
 </body>

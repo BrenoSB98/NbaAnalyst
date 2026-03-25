@@ -1,62 +1,87 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.db.models import PlayerGameStats, Game
-from app.services.analytics_service import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_medias_contra_time, calcular_defesa_adversaria_stat, calcular_dias_descanso
 import numpy as np
 from datetime import datetime
+
+from app.db.models import PlayerGameStats, Game
+from app.services.analytics_service import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_medias_contra_time, calcular_defesa_adversaria_stat, calcular_dias_descanso
 
 def converter_minutos_para_float(minutos_str):
     if not minutos_str or minutos_str == "":
         return 0.0
-    
+
     try:
-        if ":" in str(minutos_str):
-            partes = str(minutos_str).split(":")
+        texto = str(minutos_str)
+        if ":" in texto:
+            partes = texto.split(":")
             minutos = float(partes[0])
-            segundos = float(partes[1]) if len(partes) > 1 else 0
+            segundos = 0.0
+            if len(partes) > 1:
+                segundos = float(partes[1])
             return minutos + (segundos / 60)
         else:
-            return float(minutos_str)
+            return float(texto)
     except (ValueError, AttributeError):
         return 0.0
-    
-def prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name="points"):
+
+def _traduzir_chave_stat(stat_name):
+    if stat_name == "tot_reb":
+        return "rebounds"
+    return stat_name
+
+def prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name):
     media_temporada = calcular_medias_temporada_completa(db, player_id, season)
     media_ultimos_5 = calcular_medias_ultimos_n_jogos(db, player_id, n_games=5, season=season)
     media_contra_adversario = calcular_medias_contra_time(db, player_id, opponent_team_id, season)
 
+    chave_averages = _traduzir_chave_stat(stat_name)
+
     valor_temporada = 0
-    if media_temporada and media_temporada.get("averages"):
-        valor_temporada = media_temporada["averages"].get(stat_name, 0)
+    if media_temporada:
+        averages = media_temporada.get("averages")
+        if averages:
+            valor_bruto = averages.get(chave_averages, 0)
+            if valor_bruto:
+                valor_temporada = valor_bruto
 
     valor_ultimos_5 = 0
-    if media_ultimos_5 and media_ultimos_5.get("averages"):
-        valor_ultimos_5 = media_ultimos_5["averages"].get(stat_name, 0)
+    if media_ultimos_5:
+        averages = media_ultimos_5.get("averages")
+        if averages:
+            valor_bruto = averages.get(chave_averages, 0)
+            if valor_bruto:
+                valor_ultimos_5 = valor_bruto
 
     valor_contra_adversario = 0
-    if media_contra_adversario and media_contra_adversario.get("averages"):
-        valor_contra_adversario = media_contra_adversario["averages"].get(stat_name, 0)
+    if media_contra_adversario:
+        averages = media_contra_adversario.get("averages")
+        if averages:
+            valor_bruto = averages.get(chave_averages, 0)
+            if valor_bruto:
+                valor_contra_adversario = valor_bruto
 
-    peso_temporada = 0.40
-    peso_ultimos_5 = 0.40
+    peso_temporada  = 0.40
+    peso_ultimos_5  = 0.40
     peso_adversario = 0.20
-
-    previsao = ((valor_temporada * peso_temporada) + (valor_ultimos_5 * peso_ultimos_5) + (valor_contra_adversario * peso_adversario))
+    previsao = (valor_temporada * peso_temporada) + (valor_ultimos_5 * peso_ultimos_5) + (valor_contra_adversario * peso_adversario)
     return round(previsao, 2)
 
 def extrair_features_avancadas_jogador(db, player_id, season, stat_name):
-    jogos_query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id)
-                   .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3)
-                   .order_by(Game.date_start).all()
-                   )
+    jogos_query = db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).order_by(Game.date_start).all()
+
     if len(jogos_query) < 10:
         return None, None
 
-    features = []
-    targets = []
+    lista_features = []
+    lista_alvos    = []
     for i in range(5, len(jogos_query)):
-        ultimos_5_jogos = jogos_query[i-5:i]
-        valores_ultimos_5 = [float(getattr(jogo_data[0], stat_name, 0) or 0) for jogo_data in ultimos_5_jogos]
+        ultimos_5_jogos = jogos_query[i - 5:i]
+
+        valores_ultimos_5 = []
+        for jogo_data in ultimos_5_jogos:
+            valor_bruto = getattr(jogo_data[0], stat_name, 0)
+            if valor_bruto is None:
+                valor_bruto = 0
+            valores_ultimos_5.append(float(valor_bruto))
+
         media_movel = sum(valores_ultimos_5) / len(valores_ultimos_5)
 
         jogo_atual = jogos_query[i]
@@ -64,36 +89,56 @@ def extrair_features_avancadas_jogador(db, player_id, season, stat_name):
         game_atual = jogo_atual[1]
 
         time_jogador = stat_atual.team_id
-        is_home = 1 if game_atual.home_team_id == time_jogador else 0
+        if game_atual.home_team_id == time_jogador:
+            em_casa = 1
+        else:
+            em_casa = 0
 
-        adversario_id = game_atual.away_team_id if is_home else game_atual.home_team_id
-        defesa_adversaria = calcular_defesa_adversaria_stat(db, adversario_id, season, stat_name)
+        if em_casa == 1:
+            id_adversario = game_atual.away_team_id
+        else:
+            id_adversario = game_atual.home_team_id
+
+        defesa_adversaria = calcular_defesa_adversaria_stat(db, id_adversario, season, stat_name)
         dias_descanso = calcular_dias_descanso(db, player_id, game_atual.date_start, season)
 
-        minutos_ultimos_5 = [converter_minutos_para_float(jogo_data[0].minutes) for jogo_data in ultimos_5_jogos]
-        media_minutos = sum(minutos_ultimos_5) / len(minutos_ultimos_5) if minutos_ultimos_5 else 0
+        lista_minutos_ultimos_5 = []
+        for jogo_data in ultimos_5_jogos:
+            minutos_float = converter_minutos_para_float(jogo_data[0].minutes)
+            lista_minutos_ultimos_5.append(minutos_float)
+
+        if len(lista_minutos_ultimos_5) > 0:
+            media_minutos = sum(lista_minutos_ultimos_5) / len(lista_minutos_ultimos_5)
+        else:
+            media_minutos = 0
 
         if len(valores_ultimos_5) >= 3:
-            x = np.arange(len(valores_ultimos_5))
-            y = np.array(valores_ultimos_5)
-            slope = np.polyfit(x, y, 1)[0]
+            eixo_x     = np.arange(len(valores_ultimos_5))
+            eixo_y     = np.array(valores_ultimos_5)
+            inclinacao = np.polyfit(eixo_x, eixo_y, 1)[0]
         else:
-            slope = 0
+            inclinacao = 0
 
-        historico_adversario = calcular_medias_contra_time(db, player_id, adversario_id, season)
-        if historico_adversario and historico_adversario.get("averages"):
-            media_vs_adversario = historico_adversario["averages"].get(stat_name, media_movel)
-        else:
-            media_vs_adversario = media_movel
+        historico_adversario = calcular_medias_contra_time(db, player_id, id_adversario, season)
+        media_vs_adversario  = media_movel
+        if historico_adversario:
+            averages = historico_adversario.get("averages")
+            if averages:
+                valor_hist = averages.get(stat_name, None)
+                if valor_hist is not None:
+                    media_vs_adversario = valor_hist
 
-        feature_vector = [media_movel, is_home, defesa_adversaria, dias_descanso, media_minutos, slope, media_vs_adversario]
-        features.append(feature_vector)
+        vetor_feature = [media_movel, em_casa, defesa_adversaria, dias_descanso, media_minutos, inclinacao, media_vs_adversario]
+        lista_features.append(vetor_feature)
 
-        valor_target = float(getattr(stat_atual, stat_name, 0) or 0)
-        targets.append(valor_target)
-    return features, targets
+        valor_alvo = getattr(stat_atual, stat_name, 0)
+        if valor_alvo is None:
+            valor_alvo = 0
+        lista_alvos.append(float(valor_alvo))
 
-def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name="points", is_home=1):
+    return lista_features, lista_alvos
+
+def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name, em_casa):
     try:
         from xgboost import XGBRegressor
     except ImportError:
@@ -101,64 +146,84 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
             from sklearn.ensemble import RandomForestRegressor as XGBRegressor
         except ImportError:
             return prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name)
-    features, targets = extrair_features_avancadas_jogador(db, player_id, season, stat_name)
 
-    if features is None or len(features) < 10:
+    lista_features, lista_alvos = extrair_features_avancadas_jogador(db, player_id, season, stat_name)
+
+    if lista_features is None or len(lista_features) < 10:
         return prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name)
 
-    X = np.array(features)
-    y = np.array(targets)
+    matriz_features = np.array(lista_features)
+    vetor_alvos = np.array(lista_alvos)
 
     try:
         modelo = XGBRegressor(n_estimators=150, max_depth=6, learning_rate=0.1, subsample=0.8, colsample_bytree=0.8, random_state=42, objective='reg:squarederror')
     except TypeError:
         from sklearn.ensemble import RandomForestRegressor
-        modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)    
-    modelo.fit(X, y)
+        modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)
 
+    modelo.fit(matriz_features, vetor_alvos)
+
+    chave_averages = _traduzir_chave_stat(stat_name)
     media_ultimos_5_obj = calcular_medias_ultimos_n_jogos(db, player_id, n_games=5, season=season)
-    if media_ultimos_5_obj and media_ultimos_5_obj.get("averages"):
-        media_ultimos_5_valor = media_ultimos_5_obj["averages"].get(stat_name, 0)
-        media_minutos_valor = media_ultimos_5_obj["averages"].get("minutes", 30)
+    media_ultimos_5_valor = 0
+    media_minutos_valor  = 30
+
+    if media_ultimos_5_obj:
+        averages = media_ultimos_5_obj.get("averages")
+        if averages:
+            valor_bruto = averages.get(chave_averages, 0)
+            if valor_bruto:
+                media_ultimos_5_valor = valor_bruto
+            minutos_bruto = averages.get("minutes", 30)
+            if minutos_bruto:
+                media_minutos_valor = minutos_bruto
     else:
         media_temporada_obj = calcular_medias_temporada_completa(db, player_id, season)
-        if media_temporada_obj and media_temporada_obj.get("averages"):
-            media_ultimos_5_valor = media_temporada_obj["averages"].get(stat_name, 0)
-            media_minutos_valor = media_temporada_obj["averages"].get("minutes", 30)
-        else:
-            media_ultimos_5_valor = 0
-            media_minutos_valor = 30
+        if media_temporada_obj:
+            averages = media_temporada_obj.get("averages")
+            if averages:
+                valor_bruto = averages.get(chave_averages, 0)
+                if valor_bruto:
+                    media_ultimos_5_valor = valor_bruto
+                minutos_bruto = averages.get("minutes", 30)
+                if minutos_bruto:
+                    media_minutos_valor = minutos_bruto
 
     defesa_adversaria = calcular_defesa_adversaria_stat(db, opponent_team_id, season, stat_name)
-    previsao_dias_descanso = 2
+    dias_descanso_padrao = 2
 
-    ultimos_jogos = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id)
-                     .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3)
-                     .order_by(Game.date_start.desc()).limit(5).all()
-                     )
-    
+    ultimos_jogos = db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).order_by(Game.date_start.desc()).limit(5).all()
+
+    inclinacao_previsao = 0
     if len(ultimos_jogos) >= 3:
-        valores_recentes = [float(getattr(j[0], stat_name, 0) or 0) for j in reversed(ultimos_jogos)]
-        x = np.arange(len(valores_recentes))
-        y_vals = np.array(valores_recentes)
-        slope_previsao = np.polyfit(x, y_vals, 1)[0]
-    else:
-        slope_previsao = 0
+        valores_recentes = []
+        for j in reversed(ultimos_jogos):
+            valor_bruto = getattr(j[0], stat_name, 0)
+            if valor_bruto is None:
+                valor_bruto = 0
+            valores_recentes.append(float(valor_bruto))
 
+        eixo_x = np.arange(len(valores_recentes))
+        eixo_y = np.array(valores_recentes)
+        inclinacao_previsao = np.polyfit(eixo_x, eixo_y, 1)[0]
+
+    media_vs_adversario = media_ultimos_5_valor
     historico_adversario = calcular_medias_contra_time(db, player_id, opponent_team_id, season)
-    if historico_adversario and historico_adversario.get("averages"):
-        media_vs_adversario = historico_adversario["averages"].get(stat_name, media_ultimos_5_valor)
-    else:
-        media_vs_adversario = media_ultimos_5_valor
+    if historico_adversario:
+        averages = historico_adversario.get("averages")
+        if averages:
+            valor_hist = averages.get(stat_name, None)
+            if valor_hist is not None:
+                media_vs_adversario = valor_hist
 
-    feature_previsao = np.array([[media_ultimos_5_valor, is_home, defesa_adversaria, previsao_dias_descanso, media_minutos_valor, slope_previsao, media_vs_adversario]])
-    previsao = modelo.predict(feature_previsao)[0]
-    return round(float(previsao), 2)
+    vetor_previsao = np.array([[media_ultimos_5_valor, em_casa, defesa_adversaria, dias_descanso_padrao, media_minutos_valor, inclinacao_previsao, media_vs_adversario]])
+    resultado      = modelo.predict(vetor_previsao)[0]
+    return round(float(resultado), 2)
 
-def prever_performance_jogador(db, player_id, opponent_team_id, season, stat_name="points", is_home=1):
-    return prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name, is_home)
+def prever_performance_jogador(db, player_id, opponent_team_id, season, stat_name, em_casa):
+    return prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name, em_casa)
 
-def prever_multiplas_stats_jogador(db, player_id, opponent_team_id, season, is_home=1):
+def prever_multiplas_stats_jogador(db, player_id, opponent_team_id, season, is_home):
     stats_para_prever = ["points", "assists", "tot_reb", "steals", "blocks"]
 
     previsoes = {}

@@ -6,6 +6,17 @@ from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_inteiro, _normalizar_boolean, _normalizar_string
 
 logger = logging.getLogger(__name__)
+_TERMOS_BUSCA_LIGA_NBA = ["NBA", "National Basketball Association", "standard"]
+
+def _buscar_liga_nba_fallback(db):
+    for termo in _TERMOS_BUSCA_LIGA_NBA:
+        liga = db.query(League).filter(League.description.ilike(f"%{termo}%")).first()
+        if liga:
+            return liga
+    liga = db.query(League).filter(League.code == "12").first()
+    if liga:
+        return liga
+    return None
 
 def carregar_times():
     dados_times = nba_api_client.get_teams()
@@ -14,8 +25,9 @@ def carregar_times():
         return
 
     for db in get_db():
-        total_inseridos = 0
+        total_inseridos  = 0
         total_atualizados = 0
+        total_sem_liga   = 0
 
         for item in dados_times:
             team_id = _normalizar_inteiro(item.get("id"))
@@ -31,13 +43,15 @@ def carregar_times():
                 continue
             if not nba_franchise:
                 continue
+            if not all_star:
+                continue
 
             time_existente = db.query(Team).filter(Team.id == team_id).first()
             if time_existente:
                 time_existente.name = team_name
                 time_existente.nickname = team_nickname
                 time_existente.code = team_code
-                time_existente.city = team_city
+                time_existente.city  = team_city
                 time_existente.logo = team_logo
                 time_existente.all_star = all_star if all_star is not None else False
                 time_existente.nba_franchise = nba_franchise if nba_franchise is not None else False
@@ -62,37 +76,52 @@ def carregar_times():
             conference    = _normalizar_string(standard_info.get("conference"))
             division      = _normalizar_string(standard_info.get("division"))
 
-            if league_id_api is not None:
-                league_code_busca = str(league_id_api)
-            else:
-                league_code_busca = _normalizar_string(standard_info.get("code"))
+            liga = None
 
-            if not league_code_busca:
-                logger.warning(f"Time {team_id} ({team_name}) —> campo league id/code ausente.")
-                continue
-            
-            liga = db.query(League).filter(League.code == league_code_busca).first()
+            if league_id_api is not None:
+                liga = db.query(League).filter(League.code == str(league_id_api)).first()
+
             if not liga:
-                liga = db.query(League).filter(League.description.ilike(f"%{league_code_busca}%")).first()
- 
+                league_code_str = _normalizar_string(standard_info.get("code"))
+                if league_code_str:
+                    liga = db.query(League).filter(League.code == league_code_str).first()
+
             if not liga:
-                logger.warning(f"Liga '{league_code_busca}' não encontrada no banco para time {team_id} ({team_name}).")
-                continue
- 
-            info_existente = db.query(TeamLeagueInfo).filter(TeamLeagueInfo.team_id   == team_id, TeamLeagueInfo.league_id == liga.id).first()
- 
+                liga = _buscar_liga_nba_fallback(db)
+
+                if liga:
+                    logger.warning(f"Time {team_id} ({team_name}) —> campo league ausente na API. Liga encontrada via fallback: code='{liga.code}'.")
+                else:
+                    logger.warning(f"Time {team_id} ({team_name}) —> campo league ausente e liga NBA nao encontrada no banco. TeamLeagueInfo nao sera salvo.")
+                    total_sem_liga = total_sem_liga + 1
+                    continue
+
+            info_existente = db.query(TeamLeagueInfo).filter(
+                TeamLeagueInfo.team_id   == team_id,
+                TeamLeagueInfo.league_id == liga.id
+            ).first()
+
             if info_existente:
-                info_existente.conference = conference
-                info_existente.division   = division
+                if conference:
+                    info_existente.conference = conference
+                if division:
+                    info_existente.division = division
             else:
-                nova_info = TeamLeagueInfo(team_id=team_id, league_id=liga.id, conference=conference, division=division)
-                db.add(nova_info) 
+                nova_info = TeamLeagueInfo(
+                    team_id=team_id,
+                    league_id=liga.id,
+                    conference=conference,
+                    division=division,
+                )
+                db.add(nova_info)
+
         db.commit()
- 
+
         if total_inseridos == 0 and total_atualizados == 0:
             logger.warning("Nenhum time inserido ou atualizado.")
         else:
-            logger.warning(f"Franquias carregadas —> inseridos={total_inseridos}, atualizados={total_atualizados}")
- 
+            logger.warning(f"Franquias carregadas —> inseridos={total_inseridos}, atualizados={total_atualizados}, sem_liga={total_sem_liga}")
+
+
 if __name__ == "__main__":
     carregar_times()

@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <!-- Abas -->
+            <!-- Abas: apenas Visão Geral e Elenco -->
             <div class="abas-time">
                 <div class="container">
                     <div class="d-flex">
@@ -58,9 +58,6 @@
                         <button class="nav-link" id="aba-btn-elenco" onclick="trocarAba('elenco')">
                             <i class="bi bi-people me-1"></i> Elenco
                         </button>
-                        <button class="nav-link" id="aba-btn-performance" onclick="trocarAba('performance')">
-                            <i class="bi bi-graph-up me-1"></i> Performance
-                        </button>
                     </div>
                 </div>
             </div>
@@ -69,7 +66,7 @@
             <div class="conteudo-aba ativo" id="aba-geral">
                 <div class="container">
 
-                    <!-- Dados cadastrais -->
+                    <!-- Informações da Franquia -->
                     <h2 class="titulo-secao mb-3" style="font-size:1rem; margin-top:28px;">Informações da Franquia</h2>
                     <div class="card-nba mb-4">
                         <div class="card-body-nba">
@@ -117,7 +114,43 @@
 
                     <!-- Cards de retrospecto -->
                     <div id="stats-conteudo" style="display:none;">
-                        <div class="row g-3" id="cards-estatisticas"></div>
+                        <div class="row g-3 mb-4" id="cards-estatisticas"></div>
+                    </div>
+
+                    <!-- Seção de últimas partidas -->
+                    <div id="jogos-secao" style="display:none;">
+
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <h2 class="titulo-secao mb-0" style="font-size:1rem;">Últimas Partidas</h2>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label-nba mb-0" style="font-size:0.82rem; color:#888; white-space:nowrap;">Exibir</label>
+                                <select class="form-control-nba" id="select-n-jogos" style="max-width:120px;" onchange="trocarNJogos()">
+                                    <option value="5">5 jogos</option>
+                                    <option value="10" selected>10 jogos</option>
+                                    <option value="15">15 jogos</option>
+                                    <option value="20">20 jogos</option>
+                                    <option value="50">Todas</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card-nba mb-4">
+                            <div style="overflow-x: auto;">
+                                <table class="tabela-elenco" id="tabela-jogos">
+                                    <thead>
+                                        <tr>
+                                            <th>Res.</th>
+                                            <th>Adversário</th>
+                                            <th>Local</th>
+                                            <th>Placar</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="jogos-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -164,40 +197,6 @@
                 </div>
             </div>
 
-            <!-- ABA: PERFORMANCE -->
-            <div class="conteudo-aba" id="aba-performance">
-                <div class="container">
-
-                    <div id="performance-bloqueada" style="display: none;">
-                        <div class="estado-vazio">
-                            <i class="bi bi-lock-fill icone-vazio"></i>
-                            <p class="titulo-vazio">Requer login</p>
-                            <p class="desc-vazio">
-                                <a href="login.html" class="texto-laranja">Faça login</a>
-                                para ver a performance detalhada do time.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div id="performance-conteudo" style="display: none;">
-                        <div id="performance-carregando">
-                            <div class="spinner-nba">
-                                <div class="bola-animada"></div>
-                                <span>Carregando performance...</span>
-                            </div>
-                        </div>
-                        <div id="performance-dados" style="display: none;">
-                            <div class="row g-3 mb-4" id="cards-performance"></div>
-                            <h3 class="titulo-secao" style="font-size: 1.1rem;">Últimos Jogos</h3>
-                            <div class="card-nba mb-3">
-                                <div class="card-body-nba" id="lista-ultimos-jogos"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
         </div>
 
         <div id="pagina-erro" style="display: none;">
@@ -223,6 +222,7 @@ var timeId         = obterParametroUrl("id");
 var dadosTime      = null;
 var temporadaAtual = 2025;
 var stageAtual     = "";
+var nJogosAtual    = 10;
 
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
@@ -245,30 +245,27 @@ function obterStageSelecionado() {
     return document.getElementById("select-stage").value;
 }
 
+function obterNJogosSelecionado() {
+    return parseInt(document.getElementById("select-n-jogos").value);
+}
 
-// Chamado quando qualquer seletor muda
+
 function trocarFiltros() {
     temporadaAtual = obterTemporadaSelecionada();
     stageAtual     = obterStageSelecionado();
 
-    // Reseta e recarrega o retrospecto
     document.getElementById("cards-estatisticas").innerHTML = "";
     document.getElementById("stats-conteudo").style.display = "none";
     document.getElementById("stats-carregando").style.display = "block";
-    carregarEstatisticas(temporadaAtual, stageAtual);
+    document.getElementById("jogos-secao").style.display = "none";
 
-    // O elenco não depende de temporada — mostra sempre o elenco atual da franquia
-    // Não reseta nem recarrega ao trocar filtros
+    carregarPerformance(temporadaAtual, stageAtual, nJogosAtual);
+}
 
-    // Reseta a performance se estava carregada
-    document.getElementById("cards-performance").innerHTML = "";
-    document.getElementById("performance-dados").style.display = "none";
-    document.getElementById("performance-carregando").style.display = "block";
 
-    var abaPerformance = document.getElementById("aba-performance");
-    if (abaPerformance.classList.contains("ativo") && estaLogado()) {
-        carregarPerformance();
-    }
+function trocarNJogos() {
+    nJogosAtual = obterNJogosSelecionado();
+    carregarPerformance(temporadaAtual, stageAtual, nJogosAtual);
 }
 
 
@@ -297,7 +294,7 @@ async function carregarTime() {
         document.getElementById("pagina-conteudo").style.display = "block";
 
         renderizarDadosCadastrais(dadosTime);
-        carregarEstatisticas(temporadaAtual, stageAtual);
+        carregarPerformance(temporadaAtual, stageAtual, nJogosAtual);
 
     } catch (erro) {
         document.getElementById("pagina-carregando").style.display = "none";
@@ -356,29 +353,30 @@ function trocarAba(nomeAba) {
             carregarElenco();
         }
     }
-
-    if (nomeAba === "performance") {
-        mostrarPerformance();
-    }
 }
 
 
-async function carregarEstatisticas(temporada, stage) {
+async function carregarPerformance(temporada, stage, nJogos) {
+    document.getElementById("stats-carregando").style.display = "block";
+    document.getElementById("stats-conteudo").style.display = "none";
+    document.getElementById("jogos-secao").style.display = "none";
+
     try {
-        var url = "/times/" + timeId + "/estatisticas?temporada=" + temporada;
+        var url = "/times/" + timeId + "/performance?temporada=" + temporada + "&n_jogos=" + nJogos;
         if (stage !== "" && stage !== null && stage !== undefined) {
             url = url + "&stage=" + stage;
         }
 
         var dados = await chamarApi(url);
 
+        // Cards: Jogos (primeiro), Vitórias, Derrotas, Aproveitamento, Média Pts Feitos, Média Pts Sofridos
         var cards = [
-            { numero: dados.vitorias,             rotulo: "Vitórias",       cor: "#00C896" },
-            { numero: dados.derrotas,             rotulo: "Derrotas",       cor: "#FF3B5C" },
-            { numero: dados.aproveitamento + "%", rotulo: "Aproveitamento", cor: "#F75C03" },
-            { numero: dados.total_jogos,          rotulo: "Jogos",          cor: "#EEEEF5" },
-            { numero: dados.jogos_casa,           rotulo: "Em Casa",        cor: "#EEEEF5" },
-            { numero: dados.jogos_fora,           rotulo: "Fora",           cor: "#EEEEF5" }
+            { numero: dados.total_jogos,                   rotulo: "Jogos",             cor: "#EEEEF5" },
+            { numero: dados.vitorias,                      rotulo: "Vitórias",           cor: "#00C896" },
+            { numero: dados.derrotas,                      rotulo: "Derrotas",           cor: "#FF3B5C" },
+            { numero: dados.aproveitamento + "%",          rotulo: "Aproveitamento",     cor: "#F75C03" },
+            { numero: dados.media_pontos_feitos,           rotulo: "Média Pts Feitos",   cor: "#3B9EFF" },
+            { numero: dados.media_pontos_sofridos,         rotulo: "Média Pts Sofridos", cor: "#8888AA" }
         ];
 
         var html = "";
@@ -397,12 +395,55 @@ async function carregarEstatisticas(temporada, stage) {
         document.getElementById("stats-carregando").style.display = "none";
         document.getElementById("stats-conteudo").style.display = "block";
 
+        renderizarTabelaJogos(dados.ultimos_jogos);
+
     } catch (erro) {
         document.getElementById("stats-carregando").style.display = "none";
         document.getElementById("cards-estatisticas").innerHTML =
             '<div class="col-12"><p class="texto-suave" style="font-size:0.88rem; padding:8px 0;">Sem dados para esta seleção.</p></div>';
         document.getElementById("stats-conteudo").style.display = "block";
     }
+}
+
+
+function renderizarTabelaJogos(jogos) {
+    if (!jogos || jogos.length === 0) {
+        document.getElementById("jogos-secao").style.display = "none";
+        return;
+    }
+
+    var tbody = "";
+    for (var i = 0; i < jogos.length; i++) {
+        var j = jogos[i];
+
+        var classeRes = j.resultado === "V" ? "vitoria" : "derrota";
+
+        var dataFmt = "—";
+        if (j.data) {
+            var dt = new Date(j.data);
+            dataFmt = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "2-digit" });
+        }
+
+        var localTexto = j.em_casa ? "Casa" : "Fora";
+
+        var adversarioHtml = "";
+        if (j.logo_adversario) {
+            adversarioHtml = '<img src="' + j.logo_adversario + '" alt="" style="width:20px;height:20px;object-fit:contain;margin-right:6px;vertical-align:middle;">';
+        }
+        adversarioHtml = adversarioHtml + (j.nome_adversario || "—");
+
+        tbody = tbody
+            + '<tr>'
+            +   '<td><span class="resultado-badge ' + classeRes + '">' + j.resultado + '</span></td>'
+            +   '<td>' + adversarioHtml + '</td>'
+            +   '<td class="texto-suave">' + localTexto + '</td>'
+            +   '<td style="font-family:\'Oswald\',sans-serif;font-size:1rem;">' + j.pontos_feitos + ' — ' + j.pontos_sofridos + '</td>'
+            +   '<td class="texto-suave">' + dataFmt + '</td>'
+            + '</tr>';
+    }
+
+    document.getElementById("jogos-tbody").innerHTML = tbody;
+    document.getElementById("jogos-secao").style.display = "block";
 }
 
 
@@ -448,79 +489,6 @@ async function carregarElenco() {
     } catch (erro) {
         document.getElementById("elenco-carregando").style.display = "none";
         document.getElementById("elenco-vazio").style.display = "block";
-    }
-}
-
-
-function mostrarPerformance() {
-    if (!estaLogado()) {
-        document.getElementById("performance-bloqueada").style.display = "block";
-        return;
-    }
-
-    document.getElementById("performance-conteudo").style.display = "block";
-    carregarPerformance();
-}
-
-
-async function carregarPerformance() {
-    if (document.getElementById("cards-performance").innerHTML !== "") {
-        return;
-    }
-
-    try {
-        var url = "/times/" + timeId + "/performance?temporada=" + temporadaAtual;
-        if (stageAtual !== "" && stageAtual !== null && stageAtual !== undefined) {
-            url = url + "&stage=" + stageAtual;
-        }
-
-        var dados = await chamarApiAutenticada(url);
-
-        document.getElementById("performance-carregando").style.display = "none";
-
-        var cardsHtml = ""
-            + '<div class="col-6 col-md-3"><div class="card-stat-time"><div class="stat-numero" style="color:#00C896;">' + dados.vitorias + '</div><div class="stat-rotulo">Vitórias</div></div></div>'
-            + '<div class="col-6 col-md-3"><div class="card-stat-time"><div class="stat-numero" style="color:#FF3B5C;">' + dados.derrotas + '</div><div class="stat-rotulo">Derrotas</div></div></div>'
-            + '<div class="col-6 col-md-3"><div class="card-stat-time"><div class="stat-numero" style="color:#F75C03;">' + dados.media_pontos_feitos + '</div><div class="stat-rotulo">Média Pts Feitos</div></div></div>'
-            + '<div class="col-6 col-md-3"><div class="card-stat-time"><div class="stat-numero">' + dados.media_pontos_sofridos + '</div><div class="stat-rotulo">Média Pts Sofridos</div></div></div>';
-
-        document.getElementById("cards-performance").innerHTML = cardsHtml;
-
-        if (!dados.ultimos_5_jogos || dados.ultimos_5_jogos.length === 0) {
-            document.getElementById("lista-ultimos-jogos").innerHTML =
-                '<p class="texto-suave text-center">Nenhum jogo disponível.</p>';
-        } else {
-            var jogosHtml = "";
-            for (var i = 0; i < dados.ultimos_5_jogos.length; i++) {
-                var jogo = dados.ultimos_5_jogos[i];
-
-                var classeResultado = jogo.resultado === "V" ? "vitoria" : "derrota";
-                var localTexto = jogo.em_casa ? "Casa" : "Fora";
-
-                var dataFormatada = "—";
-                if (jogo.data) {
-                    var dt = new Date(jogo.data);
-                    dataFormatada = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-                }
-
-                jogosHtml = jogosHtml
-                    + '<div class="linha-jogo">'
-                    +   '<div class="resultado-badge ' + classeResultado + '">' + jogo.resultado + '</div>'
-                    +   '<div class="jogo-placar">' + jogo.pontos_feitos + ' — ' + jogo.pontos_sofridos + '</div>'
-                    +   '<div class="jogo-local texto-suave">' + localTexto + '</div>'
-                    +   '<div class="jogo-data">' + dataFormatada + '</div>'
-                    + '</div>';
-            }
-            document.getElementById("lista-ultimos-jogos").innerHTML = jogosHtml;
-        }
-
-        document.getElementById("performance-dados").style.display = "block";
-
-    } catch (erro) {
-        document.getElementById("performance-carregando").style.display = "none";
-        document.getElementById("performance-dados").innerHTML =
-            '<p class="texto-suave text-center">Não foi possível carregar a performance.</p>';
-        document.getElementById("performance-dados").style.display = "block";
     }
 }
 </script>

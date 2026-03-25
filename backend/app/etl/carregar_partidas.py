@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 from app.services import nba_api_client
 from app.db.models import Game, GameTeamScore, Team
@@ -6,6 +7,11 @@ from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _normalizar_boolean, _processar_datetime
 
 logger = logging.getLogger(__name__)
+
+STAGE_PRE_TEMPORADA = 1
+STAGE_REGULAR = 2
+STAGE_PLAYOFFS = 3
+STAGE_COPA_NBA = 4
 
 def carregar_partidas(season, date=None, team_id=None, league_id=None):
     dados_jogos = nba_api_client.get_games(season=season, date=date, team_id=team_id, league_id=league_id)
@@ -15,6 +21,10 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
         return
 
     for db in get_db():
+        total_inseridos = 0
+        total_ignorados_externos = 0
+        total_ignorados_regulares = 0
+
         for item in dados_jogos:
             game_id = _normalizar_inteiro(item.get("id") or item.get("gameId"))
 
@@ -22,45 +32,35 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
                 continue
 
             liga = _normalizar_string(item.get("league"))
-            estagio = _normalizar_string(item.get("stage"))
-
+            estagio = _normalizar_inteiro(item.get("stage"))
             date_info = item.get("date", {})
             data_inicio = date_info.get("start")
             data_fim = date_info.get("end")
             duracao = _normalizar_string(date_info.get("duration"))
-
             status = item.get("status", {})
             status_curto = _normalizar_inteiro(status.get("short"))
             status_longo = _normalizar_string(status.get("long"))
-
             periodos = item.get("periods", {})
             periodo_atual = _normalizar_inteiro(periodos.get("current"))
             total_periodos = _normalizar_inteiro(periodos.get("total"))
             fim_de_periodo = _normalizar_boolean(periodos.get("endOfPeriod"))
-
             arena = item.get("arena", {})
             nome_arena = _normalizar_string(arena.get("name"))
             cidade_arena = _normalizar_string(arena.get("city"))
             estado_arena = _normalizar_string(arena.get("state"))
             pais_arena = _normalizar_string(arena.get("country"))
-
             times = item.get("teams", {})
             info_time_casa = times.get("home", {})
             info_time_visitante = times.get("visitors", {}) or times.get("away", {})
-
             id_time_casa = _normalizar_inteiro(info_time_casa.get("id"))
             id_time_visitante = _normalizar_inteiro(info_time_visitante.get("id"))
-
             placares = item.get("scores", {})
             placar_casa = placares.get("home", {})
             placar_visitante = placares.get("visitors", {}) or placares.get("away", {})
-
             linescore_casa = placar_casa.get("linescore", [])
             linescore_visitante = placar_visitante.get("linescore", [])
-
             serie_casa = placar_casa.get("series", {})
             serie_visitante = placar_visitante.get("series", {})
-
             data_inicio_obj = _processar_datetime(data_inicio)
             data_fim_obj = _processar_datetime(data_fim)
 
@@ -74,10 +74,13 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
                 jogo_existente.date_end = data_fim_obj
                 jogo_existente.duration = duracao
 
-                _atualizar_placares_jogo(db=db, game_id=game_id, placar_casa=placar_casa, placar_visitante=placar_visitante,
-                                         id_time_casa=id_time_casa, id_time_visitante=id_time_visitante,
-                                         linescore_casa=linescore_casa, linescore_visitante=linescore_visitante,
-                                         serie_casa=serie_casa, serie_visitante=serie_visitante)
+                _atualizar_placares_jogo(
+                    db=db, game_id=game_id,
+                    placar_casa=placar_casa, placar_visitante=placar_visitante,
+                    id_time_casa=id_time_casa, id_time_visitante=id_time_visitante,
+                    linescore_casa=linescore_casa, linescore_visitante=linescore_visitante,
+                    serie_casa=serie_casa, serie_visitante=serie_visitante,
+                )
                 continue
 
             if not id_time_casa or not id_time_visitante:
@@ -88,11 +91,16 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
             time_visitante_existe = db.query(Team.id).filter(Team.id == id_time_visitante).first()
 
             if not time_casa_existe or not time_visitante_existe:
-                logger.warning(f"Jogo {game_id} ignorado —> time não cadastrado no banco: casa={id_time_casa}, visitante={id_time_visitante}")
+                if estagio == STAGE_PRE_TEMPORADA:
+                    logger.warning(f"Jogo {game_id} (pre-temporada) ignorado —> time externo nao cadastrado: casa={id_time_casa}, visitante={id_time_visitante}")
+                    total_ignorados_externos = total_ignorados_externos + 1
+                else:
+                    logger.warning(f"Jogo {game_id} (stage={estagio}) ignorado —> time nao cadastrado no banco: casa={id_time_casa}, visitante={id_time_visitante}")
+                    total_ignorados_regulares = total_ignorados_regulares + 1
                 continue
 
             if not data_inicio_obj:
-                logger.warning(f"Jogo {game_id} ignorado —> data_start inválida ou ausente: '{data_inicio}'")
+                logger.warning(f"Jogo {game_id} ignorado —> data_start invalida ou ausente: '{data_inicio}'")
                 continue
 
             novo_jogo = Game(
@@ -116,6 +124,7 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
                 away_team_id=id_time_visitante,
             )
             db.add(novo_jogo)
+            total_inseridos = total_inseridos + 1
 
             placar_time_casa = GameTeamScore(
                 game_id=game_id,
@@ -148,6 +157,11 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
                 linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None,
             )
             db.add(placar_time_visitante)
+
+        db.commit()
+
+        if total_ignorados_externos > 0 or total_ignorados_regulares > 0:
+            logger.warning(f"Partidas ignoradas —> pre_temporada_externos={total_ignorados_externos}, "f"regulares_sem_cadastro={total_ignorados_regulares}")
 
 def _atualizar_placares_jogo(db, game_id, placar_casa, placar_visitante, id_time_casa, id_time_visitante, linescore_casa, linescore_visitante, serie_casa, serie_visitante):
     placar_casa_existente = db.query(GameTeamScore).filter(GameTeamScore.game_id == game_id, GameTeamScore.team_id == id_time_casa).first()

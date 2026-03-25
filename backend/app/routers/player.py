@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
@@ -50,7 +50,7 @@ def listar_jogadores(time_id: int = Query(None), temporada: int = Query(None), n
 
     return {"total": total, "pagina": page, "tamanho_pagina": page_size, "jogadores": lista_jogadores}
 
-@router.get("/{jogador_id}", response_model=PlayerDetalheResponse)
+@router.get("/{jogador_id}")
 def obter_jogador(jogador_id: int, db: Session = Depends(get_db)):
     jogador = db.query(Player).filter(Player.id == jogador_id).first()
     if not jogador:
@@ -58,13 +58,52 @@ def obter_jogador(jogador_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Jogador não encontrado.")
 
     times_jogador = (db.query(PlayerTeamSeason, Team).join(Team, PlayerTeamSeason.team_id == Team.id)
-                     .filter(PlayerTeamSeason.player_id == jogador_id).order_by(PlayerTeamSeason.season.desc()).all())
+                     .filter(PlayerTeamSeason.player_id == jogador_id).all())
 
-    historico_times = []
+    # Constrói o histórico com a data do primeiro jogo em cada time/temporada
+    historico_times_raw = []
     for time_data in times_jogador:
-        pts = time_data[0]
+        pts  = time_data[0]
         time = time_data[1]
-        historico_times.append({"temporada": pts.season, "time_id": pts.team_id, "nome_time": time.name, "camisa": pts.jersey, "posicao": pts.pos, "ativo": pts.active})
+
+        primeiro_jogo = (db.query(Game.date_start)
+                           .join(PlayerGameStats, PlayerGameStats.game_id == Game.id)
+                           .filter(PlayerGameStats.player_id == jogador_id, PlayerGameStats.team_id == pts.team_id, Game.season == pts.season)
+                           .order_by(Game.date_start.asc())
+                           .first())
+
+        data_ingresso = None
+        mes_ingresso  = None
+        if primeiro_jogo and primeiro_jogo[0]:
+            data_ingresso = primeiro_jogo[0]
+            mes_ingresso  = primeiro_jogo[0].strftime("%m/%Y")
+
+        historico_times_raw.append({
+            "temporada":    pts.season,
+            "time_id":      pts.team_id,
+            "nome_time":    time.name,
+            "camisa":       pts.jersey,
+            "posicao":      pts.pos,
+            "ativo":        pts.active,
+            "mes_ingresso": mes_ingresso,
+            "_data_sort":   data_ingresso,
+        })
+
+    # Ordena cronologicamente pelo primeiro jogo; sem jogo registrado vai para o fim
+    historico_times_raw.sort(key=lambda x: (x["_data_sort"] is None, x["_data_sort"] or x["temporada"]))
+
+    # Remove campo auxiliar de ordenação antes de retornar
+    historico_times = []
+    for item in historico_times_raw:
+        historico_times.append({
+            "temporada":    item["temporada"],
+            "time_id":      item["time_id"],
+            "nome_time":    item["nome_time"],
+            "camisa":       item["camisa"],
+            "posicao":      item["posicao"],
+            "ativo":        item["ativo"],
+            "mes_ingresso": item["mes_ingresso"],
+        })
 
     return {
         "id": jogador.id,
@@ -84,7 +123,7 @@ def obter_jogador(jogador_id: int, db: Session = Depends(get_db)):
     }
 
 @router.get("/{jogador_id}/estatisticas/temporada", response_model=EstatisticasTemporadaResponse)
-def estatisticas_temporada_jogador(jogador_id: int, temporada: int = Query(2023), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def estatisticas_temporada_jogador(jogador_id: int, temporada: int = Query(2025), db: Session = Depends(get_db)):
     jogador = db.query(Player).filter(Player.id == jogador_id).first()
     if not jogador:
         logger.warning(f"Jogador não encontrado ao buscar estatísticas de temporada: id={jogador_id}")
@@ -102,17 +141,19 @@ def estatisticas_temporada_jogador(jogador_id: int, temporada: int = Query(2023)
     total_roubos = 0
     total_bloqueios = 0
     total_turnovers = 0
+    total_plus_minus = 0
     lista_fgp = []
     lista_tpp = []
     lista_ftp = []
 
     for stat in stats:
-        total_pontos = total_pontos + (stat.points or 0)
-        total_assistencias = total_assistencias + (stat.assists or 0)
-        total_rebotes = total_rebotes + (stat.tot_reb or 0)
-        total_roubos = total_roubos + (stat.steals or 0)
-        total_bloqueios = total_bloqueios + (stat.blocks or 0)
-        total_turnovers = total_turnovers + (stat.turnovers or 0)
+        total_pontos      = total_pontos      + (stat.points     or 0)
+        total_assistencias = total_assistencias + (stat.assists   or 0)
+        total_rebotes     = total_rebotes     + (stat.tot_reb    or 0)
+        total_roubos      = total_roubos      + (stat.steals     or 0)
+        total_bloqueios   = total_bloqueios   + (stat.blocks     or 0)
+        total_turnovers   = total_turnovers   + (stat.turnovers  or 0)
+        total_plus_minus  = total_plus_minus  + (stat.plus_minus or 0)
         if stat.fgp is not None:
             lista_fgp.append(float(stat.fgp))
         if stat.tpp is not None:
@@ -147,6 +188,7 @@ def estatisticas_temporada_jogador(jogador_id: int, temporada: int = Query(2023)
             "roubos": round(total_roubos / num_jogos, 2),
             "bloqueios": round(total_bloqueios / num_jogos, 2),
             "turnovers": round(total_turnovers / num_jogos, 2),
+            "plus_minus": round(total_plus_minus / num_jogos, 2),
             "fg_pct": media_fgp,
             "three_pct": media_tpp,
             "ft_pct": media_ftp,
@@ -203,15 +245,11 @@ def estatisticas_jogos_jogador(jogador_id: int, temporada: int = Query(None), li
         }
 
 @router.get("/{jogador_id}/estatisticas/ultimos-jogos", response_model=EstatisticasUltimosJogosResponse)
-def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, description="5, 10, 15 ou 20"), temporada: int = Query(None), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(None, description="Limite de jogos. Omitir = todos os jogos"), temporada: int = Query(None), db: Session = Depends(get_db)):
     jogador = db.query(Player).filter(Player.id == jogador_id).first()
     if not jogador:
         logger.warning(f"Jogador não encontrado ao buscar últimos jogos: id={jogador_id}")
         raise HTTPException(status_code=404, detail="Jogador não encontrado.")
-
-    valores_permitidos = [5, 10, 15, 20, 40, 50] 
-    if n_jogos not in valores_permitidos:
-        raise HTTPException(status_code=400, detail=f"n_jogos deve ser um dos valores: {valores_permitidos}")
 
     query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id)
              .filter(PlayerGameStats.player_id == jogador_id, Game.status_short == 3))
@@ -219,13 +257,17 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
     if temporada:
         query = query.filter(Game.season == temporada)
 
-    stats = query.order_by(Game.date_start.desc()).limit(n_jogos).all()
+    query = query.order_by(Game.date_start.desc())
+    if n_jogos is not None:
+        query = query.limit(n_jogos)
+
+    stats = query.all()
 
     if len(stats) == 0:
         return {
             "jogador_id": jogador_id, 
             "nome_jogador": f"{jogador.firstname} {jogador.lastname}", 
-            "n_jogos": n_jogos, 
+            "n_jogos": n_jogos or 0, 
             "jogos_analisados": 0, 
             "temporada": temporada, 
             "medias": None, 
@@ -273,19 +315,26 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
         time_adversario = db.query(Team).filter(Team.id == adversario_id).first()
         nome_adversario = time_adversario.name if time_adversario else "—"
 
-        fg_pct_jogo = 0.0
+        fg_pct_jogo = None
         if (stat.fga or 0) > 0:
             fg_pct_jogo = round(((stat.fgm or 0) / stat.fga) * 100, 1)
 
-        three_pct_jogo = 0.0
+        three_pct_jogo = None
         if (stat.tpa or 0) > 0:
             three_pct_jogo = round(((stat.tpm or 0) / stat.tpa) * 100, 1)
+
+        ft_pct_jogo = None
+        if (stat.fta or 0) > 0:
+            ft_pct_jogo = round(((stat.ftm or 0) / stat.fta) * 100, 1)
+
+        em_casa = stat.team_id == jogo.home_team_id
 
         lista_jogos.append({
             "jogo_id": jogo.id,
             "data": jogo.date_start,
             "adversario_id": adversario_id,
             "adversario": nome_adversario,
+            "em_casa": em_casa,
             "pontos": stat.points,
             "assistencias": stat.assists,
             "rebotes": stat.tot_reb,
@@ -295,6 +344,7 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
             "minutos": stat.minutes,
             "fg_pct": fg_pct_jogo,
             "three_pct": three_pct_jogo,
+            "ft_pct": ft_pct_jogo,
             "plus_minus": stat.plus_minus,
         })
 
@@ -315,7 +365,7 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
     return {
         "jogador_id": jogador_id,
         "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
-        "n_jogos": n_jogos,
+        "n_jogos": n_jogos or 0,
         "jogos_analisados": num_jogos,
         "temporada": temporada,
         "medias": {
@@ -333,7 +383,7 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(10, descr
     }
 
 @router.get("/{jogador_id}/estatisticas/casa-fora", response_model=EstatisticasCasaForaResponse)
-def estatisticas_casa_fora(jogador_id: int, temporada: int = Query(2023), local: str = Query(..., description="casa ou fora"), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def estatisticas_casa_fora(jogador_id: int, temporada: int = Query(None), local: str = Query(..., description="casa ou fora"), db: Session = Depends(get_db)):
     jogador = db.query(Player).filter(Player.id == jogador_id).first()
     if not jogador:
         logger.warning(f"Jogador não encontrado ao buscar stats casa/fora: id={jogador_id}")

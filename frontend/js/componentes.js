@@ -27,8 +27,8 @@ function renderizarMenu() {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link ${classeLinkAtivo(["apostas"])} d-flex align-items-center gap-2" href="/apostas.html">
-                    <i class="bi bi-currency-dollar"></i> Apostas
+                <a class="nav-link ${classeLinkAtivo(["confrontos"])} d-flex align-items-center gap-2" href="/confrontos.html">
+                    <i class="bi bi-bar-chart-steps"></i> Confrontos
                 </a>
             </li>
             <li class="nav-item">
@@ -134,45 +134,27 @@ function renderizarRodape() {
     var htmlRodape = `
         <div class="container">
             <div class="row gy-4">
-
-                <!-- Coluna 1: Logo e tagline -->
                 <div class="col-12 col-md-4">
                     <div class="rodape-logo">
                         <i class="bi bi-dribbble icone-logo"></i>
                         NbaAnalyst
                     </div>
-                    <p class="rodape-tagline">Dados que vencem a quadra.</p>
+                    <p class="rodape-tagline">Dados que vencem a banca.</p>
                 </div>
-
-                <!-- Coluna 2: Links rápidos -->
                 <div class="col-6 col-md-2">
                     <p class="rodape-titulo-coluna">Explorar</p>
                     <a class="rodape-link" href="/times.html">Times</a>
                     <a class="rodape-link" href="/estatisticas.html">Estatísticas</a>
                     <a class="rodape-link" href="/predicoes.html">Predições</a>
-                    <a class="rodape-link" href="/apostas.html">Apostas</a>
+                    <a class="rodape-link" href="/confrontos.html">Confrontos</a>
                 </div>
-
-                <!-- Coluna 3: Conta -->
                 <div class="col-6 col-md-2">
                     <p class="rodape-titulo-coluna">Conta</p>
                     <a class="rodape-link" href="/login.html">Entrar</a>
                     <a class="rodape-link" href="/cadastro.html">Cadastrar</a>
                     <a class="rodape-link" href="/perfil.html">Meu Perfil</a>
                     <a class="rodape-link" href="/onerb.html">Onerb IA NBA</a>
-                </div>
-
-                <!-- Coluna 4: Tecnologia -->
-                <div class="col-12 col-md-4">
-                    <p class="rodape-titulo-coluna">Tecnologia</p>
-                    <p style="font-size:0.85rem; line-height:1.8;">
-                        <i class="bi bi-lightning-fill texto-laranja me-1"></i> FastAPI + PostgreSQL<br>
-                        <i class="bi bi-robot texto-laranja me-1"></i> Modelo preditivo XGBoost<br>
-                        <i class="bi bi-wind texto-laranja me-1"></i> Airflow ETL diário<br>
-                        <i class="bi bi-palette-fill texto-laranja me-1"></i> Bootstrap 5
-                    </p>
-                </div>
-
+                </div>             
             </div>
 
             <div class="rodape-direitos">

@@ -1,9 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.config import config
 from app.core.dependencies import obter_temporada
 from app.db.db_utils import get_db
 from app.schemas.win_rate import WinRateResponse
@@ -17,6 +16,6 @@ def get_win_rate(temporada_alvo: int = Depends(obter_temporada), db: Session = D
     resultado = calcular_win_rate(db, temporada_alvo)
 
     if not resultado:
-        logger.warning(f"Sem dados —> temporada={temporada_alvo}")
-        raise HTTPException(status_code=404, detail=f"Nenhuma predição avaliável encontrada para a temporada {temporada_alvo}.")
+        logger.warning(f"Sem dados de win rate —> temporada={temporada_alvo}")
+        raise HTTPException(status_code=404, detail=f"Nenhum palpite avaliavel encontrada para a temporada {temporada_alvo}.")
     return resultado
