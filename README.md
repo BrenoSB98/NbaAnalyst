@@ -1,4 +1,4 @@
-# NbaAnalyst
+# NbaAnalytics
 
 Plataforma web de análise estatística da NBA desenvolvida como Trabalho de Conclusão de Curso (TCC) para o curso de **Sistemas de Informação**. O objetivo é tornar dados complexos da NBA acessíveis para **apostadores casuais e amadores**, transformando estatísticas brutas em palpites, gráficos e análises visuais de fácil interpretação.
 
