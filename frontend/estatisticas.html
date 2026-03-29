@@ -3,45 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Estatísticas</title>
-
+    <title>Estatísticas</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/estatisticas.css">
-
-    <style>
-        .d3-tooltip {
-            position: fixed;
-            background: #16172A;
-            border: 1px solid #252540;
-            border-radius: 8px;
-            padding: 9px 13px;
-            font-size: 12px;
-            color: #EEEEF5;
-            pointer-events: none;
-            opacity: 0;
-            z-index: 9999;
-            line-height: 1.6;
-            max-width: 220px;
-        }
-        .secao-titulo-grafico {
-            font-family: 'Oswald', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #EEEEF5;
-            margin-bottom: 4px;
-            letter-spacing: 0.03em;
-        }
-        .grafico-subtitulo {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #555570;
-            margin-bottom: 14px;
-        }
-    </style>
 </head>
 <body>
 
@@ -51,95 +17,99 @@
     <nav id="navbar-principal"></nav>
     <main id="conteudo-principal">
 
-        <!-- Cabeçalho -->
         <div class="cabecalho-estatisticas">
             <div class="container">
                 <div class="linha-acento mb-2"></div>
                 <h1 class="titulo-secao mb-1">Estatísticas</h1>
-                <p class="subtitulo-secao mb-0">Líderes e recordes individuais por categoria.</p>
             </div>
         </div>
 
-        <!-- Barra de controles — sticky, sem auth -->
-        <div class="barra-controles">
+        <div class="abas-estatisticas">
+            <div class="container">
+                <div class="d-flex">
+                    <button class="aba-btn ativo" id="aba-btn-medias" onclick="trocarAba('medias')">Médias por Jogo</button>
+                    <button class="aba-btn" id="aba-btn-recordes" onclick="trocarAba('recordes')">Recordes</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="barra-controles" id="barra-medias">
             <div class="container">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
-
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;color:#888;white-space:nowrap;">Temporada</label>
-                        <select class="form-control-nba" id="select-temporada" style="max-width:185px;" onchange="trocarFiltros()">
-                            <option value="">Todas as temporadas</option>
-                            <option value="2025" selected>2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                            <option value="2022">2022</option>
-                            <option value="2021">2021</option>
-                        </select>
+                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada-medias" style="max-width:185px;" onchange="carregarMedias()"></select>
                     </div>
-
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;color:#888;white-space:nowrap;">Jogadores</label>
-                        <select class="form-control-nba" id="select-limite" style="max-width:105px;" onchange="trocarFiltros()">
+                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Jogadores</label>
+                        <select class="form-control-nba" id="select-limite-medias" style="max-width:105px;" onchange="carregarMedias()">
                             <option value="5">Top 5</option>
                             <option value="10" selected>Top 10</option>
                             <option value="20">Top 20</option>
                             <option value="50">Top 50</option>
                         </select>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- Área principal -->
-        <div class="area-ranking">
+        <div class="barra-controles" id="barra-recordes" style="display:none;">
             <div class="container">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada-recordes" style="max-width:185px;" onchange="carregarRecordes()">
+                            <option value="">Todas as temporadas</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Jogadores</label>
+                        <select class="form-control-nba" id="select-limite-recordes" style="max-width:105px;" onchange="carregarRecordes()">
+                            <option value="5">Top 5</option>
+                            <option value="10" selected>Top 10</option>
+                            <option value="20">Top 20</option>
+                            <option value="50">Top 50</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <!-- Botões de categoria -->
-                <div class="lista-categorias" id="lista-categorias"></div>
-
-                <!-- Spinner -->
-                <div id="ranking-carregando">
+        <div class="area-ranking" id="conteudo-medias">
+            <div class="container">
+                <div id="medias-carregando">
                     <div class="spinner-nba">
                         <div class="bola-animada"></div>
                         <span>Carregando...</span>
                     </div>
                 </div>
-
-                <!-- Gráficos -->
-                <div id="ranking-conteudo" style="display:none;">
-                    <div class="row g-4">
-
-                        <!-- Gráfico A: barras horizontais — médias por jogo -->
-                        <div class="col-12 col-lg-6">
-                            <div class="grafico-container" style="min-height:460px;">
-                                <p class="secao-titulo-grafico" id="titulo-grafico-a">Média por jogo</p>
-                                <p class="grafico-subtitulo">Líderes — do maior para o menor</p>
-                                <div id="grafico-barras-h"></div>
-                            </div>
-                        </div>
-
-                        <!-- Gráfico B: barras verticais — maiores valores por partida -->
-                        <div class="col-12 col-lg-6">
-                            <div class="grafico-container" style="min-height:460px;">
-                                <p class="secao-titulo-grafico" id="titulo-grafico-b">Maiores performances individuais</p>
-                                <p class="grafico-subtitulo">Recordes por partida — passe o mouse para detalhes</p>
-                                <div id="grafico-barras-v"></div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Vazio -->
-                <div id="ranking-vazio" style="display:none;">
+                <div id="medias-graficos"></div>
+                <div id="medias-vazio" style="display:none;">
                     <div class="estado-vazio">
                         <i class="bi bi-bar-chart icone-vazio"></i>
                         <p class="titulo-vazio">Sem dados para esta seleção</p>
-                        <p class="desc-vazio">Tente outra temporada ou categoria.</p>
+                        <p class="desc-vazio">Tente outra temporada ou quantidade.</p>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <div class="area-ranking" id="conteudo-recordes" style="display:none;">
+            <div class="container">
+                <div id="recordes-carregando">
+                    <div class="spinner-nba">
+                        <div class="bola-animada"></div>
+                        <span>Carregando...</span>
+                    </div>
+                </div>
+                <div id="recordes-graficos"></div>
+                <div id="recordes-vazio" style="display:none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-bar-chart icone-vazio"></i>
+                        <p class="titulo-vazio">Sem dados para esta seleção</p>
+                        <p class="desc-vazio">Tente outra temporada ou quantidade.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -154,303 +124,326 @@
 <script src="js/componentes.js"></script>
 
 <script>
-var categoriaAtiva = "pontos";
-var temporadaAtiva = "2025";
-var limiteAtivo    = 10;
+var abaAtiva = "medias";
 
 var categorias = [
-    { id: "pontos",           label: "Pontos" },
-    { id: "assistencias",     label: "Assistências" },
-    { id: "rebotes",          label: "Rebotes" },
-    { id: "roubos",           label: "Roubos" },
-    { id: "bloqueios",        label: "Bloqueios" },
-    { id: "turnovers",        label: "Turnovers" },
-    { id: "arremessos-campo", label: "FGM" },
-    { id: "arremessos-tres",  label: "3P Made" },
-    { id: "lances-livres",    label: "FTM" },
-    { id: "plus-minus",       label: "Plus/Minus" }
+    { id: "pontos", label: "Pontos", cor: "#C8102E" },
+    { id: "assistencias", label: "Assistências", cor: "#1D428A" },
+    { id: "rebotes", label: "Rebotes", cor: "#007A33" },
+    { id: "roubos", label: "Roubos", cor: "#F9A01B" },
+    { id: "bloqueios", label: "Bloqueios", cor: "#552583" },
+    { id: "turnovers", label: "Turnovers", cor: "#00838A" },
+    { id: "arremessos-campo", label: "FGM", cor: "#006BB6" },
+    { id: "arremessos-tres", label: "3P Made", cor: "#E56020" },
+    { id: "lances-livres", label: "FTM", cor: "#008348" },
+    { id: "plus-minus", label: "Plus/Minus", cor: "#860038" }
 ];
 
 var tt = document.getElementById("tt");
 
-function showTT(event, html) {
+function showTT(evento, html) {
     tt.innerHTML = html;
     tt.style.opacity = 1;
-    moveTT(event);
+    moveTT(evento);
 }
-function moveTT(event) {
-    var x = event.clientX + 14;
-    var y = event.clientY - 36;
+
+function moveTT(evento) {
+    var x = evento.clientX + 14;
+    var y = evento.clientY - 36;
     if (x + 230 > window.innerWidth) {
-        x = event.clientX - 230;
+        x = evento.clientX - 230;
     }
     tt.style.left = x + "px";
-    tt.style.top  = y + "px";
+    tt.style.top = y + "px";
 }
+
 function hideTT() {
     tt.style.opacity = 0;
 }
 
-
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
-    renderizarBotoesCategorias();
-    carregarDados();
+    carregarTemporadas();
 });
 
+async function carregarTemporadas() {
+    try {
+        var resposta = await chamarApi("/temporadas");
+        var lista = resposta.temporadas || [];
 
-function renderizarBotoesCategorias() {
-    var container = document.getElementById("lista-categorias");
-    var html = "";
+        var selectMedias = document.getElementById("select-temporada-medias");
+        var selectRecordes = document.getElementById("select-temporada-recordes");
+
+        for (var i = 0; i < lista.length; i++) {
+            var ano = lista[i].season;
+
+            var opcaoM = document.createElement("option");
+            opcaoM.value = ano;
+            opcaoM.textContent = ano;
+            if (i === 0) {
+                opcaoM.selected = true;
+            }
+            selectMedias.appendChild(opcaoM);
+
+            var opcaoR = document.createElement("option");
+            opcaoR.value = ano;
+            opcaoR.textContent = ano;
+            selectRecordes.appendChild(opcaoR);
+        }
+
+        carregarMedias();
+    } catch (erro) {
+        document.getElementById("medias-carregando").style.display = "none";
+        document.getElementById("medias-vazio").style.display = "block";
+    }
+}
+
+function trocarAba(aba) {
+    abaAtiva = aba;
+
+    document.getElementById("aba-btn-medias").classList.remove("ativo");
+    document.getElementById("aba-btn-recordes").classList.remove("ativo");
+    document.getElementById("aba-btn-" + aba).classList.add("ativo");
+
+    document.getElementById("conteudo-medias").style.display = "none";
+    document.getElementById("conteudo-recordes").style.display = "none";
+    document.getElementById("barra-medias").style.display = "none";
+    document.getElementById("barra-recordes").style.display = "none";
+
+    if (aba === "medias") {
+        document.getElementById("conteudo-medias").style.display = "block";
+        document.getElementById("barra-medias").style.display = "block";
+        if (document.getElementById("medias-graficos").innerHTML === "") {
+            carregarMedias();
+        }
+    } else {
+        document.getElementById("conteudo-recordes").style.display = "block";
+        document.getElementById("barra-recordes").style.display = "block";
+        if (document.getElementById("recordes-graficos").innerHTML === "") {
+            carregarRecordes();
+        }
+    }
+}
+
+async function carregarMedias() {
+    var temporada = document.getElementById("select-temporada-medias").value;
+    var limite = document.getElementById("select-limite-medias").value;
+
+    document.getElementById("medias-graficos").innerHTML = "";
+    document.getElementById("medias-vazio").style.display = "none";
+    document.getElementById("medias-carregando").style.display = "block";
+
+    var temAlgumDado = false;
+
     for (var i = 0; i < categorias.length; i++) {
         var cat = categorias[i];
-        var classeAtivo = cat.id === categoriaAtiva ? " ativo" : "";
-        html = html
-            + '<button class="btn-categoria' + classeAtivo + '" id="btn-cat-' + cat.id + '" onclick="selecionarCategoria(\'' + cat.id + '\')">'
-            + cat.label
-            + '</button>';
+        try {
+            var url = "/analiticos/lideres?categoria=" + cat.id + "&temporada=" + temporada + "&limite=" + limite;
+            var resposta = await chamarApi(url);
+
+            if (resposta && resposta.lideres && resposta.lideres.length > 0) {
+                temAlgumDado = true;
+                adicionarGrafico("medias-graficos", "grafico-media-" + cat.id, cat.label);
+
+                (function(idG, dados, cor, label) {
+                    requestAnimationFrame(function() {
+                        renderizarBarrasH(idG, dados, cor, label);
+                    });
+                }("grafico-media-" + cat.id, resposta.lideres, cat.cor, cat.label));
+            }
+        } catch (erro) {
+        }
     }
-    container.innerHTML = html;
-}
 
+    document.getElementById("medias-carregando").style.display = "none";
 
-function selecionarCategoria(id) {
-    document.getElementById("btn-cat-" + categoriaAtiva).classList.remove("ativo");
-    categoriaAtiva = id;
-    document.getElementById("btn-cat-" + id).classList.add("ativo");
-    carregarDados();
-}
-
-
-function trocarFiltros() {
-    temporadaAtiva = document.getElementById("select-temporada").value;
-    limiteAtivo    = parseInt(document.getElementById("select-limite").value);
-    carregarDados();
-}
-
-
-async function carregarDados() {
-    document.getElementById("ranking-conteudo").style.display   = "none";
-    document.getElementById("ranking-vazio").style.display      = "none";
-    document.getElementById("ranking-carregando").style.display = "block";
-
-    try {
-        var paramTemp = temporadaAtiva !== "" ? "&temporada=" + temporadaAtiva : "";
-
-        var urlLideres  = "/analiticos/lideres?categoria="  + categoriaAtiva + paramTemp + "&limite=" + limiteAtivo;
-        var urlRecordes = "/analiticos/recordes?categoria=" + categoriaAtiva + paramTemp + "&limite=" + limiteAtivo;
-
-        var resLideres  = await chamarApi(urlLideres);
-        var resRecordes = await chamarApi(urlRecordes);
-
-        document.getElementById("ranking-carregando").style.display = "none";
-
-        var temLideres  = resLideres  && resLideres.lideres  && resLideres.lideres.length  > 0;
-        var temRecordes = resRecordes && resRecordes.recordes && resRecordes.recordes.length > 0;
-
-        if (!temLideres && !temRecordes) {
-            document.getElementById("ranking-vazio").style.display = "block";
-            return;
-        }
-
-        var labelCat = categoriaAtiva;
-        for (var i = 0; i < categorias.length; i++) {
-            if (categorias[i].id === categoriaAtiva) {
-                labelCat = categorias[i].label;
-                break;
-            }
-        }
-
-        var sufixoTemp = temporadaAtiva !== "" ? " — " + temporadaAtiva : " — Todas as temporadas";
-
-        document.getElementById("titulo-grafico-a").textContent = "Média de " + labelCat + " por jogo" + sufixoTemp;
-        document.getElementById("titulo-grafico-b").textContent = "Top " + limiteAtivo + " maiores performances" + sufixoTemp;
-
-        // Exibe o container antes de renderizar para que offsetWidth seja correto
-        document.getElementById("ranking-conteudo").style.display = "block";
-
-        // requestAnimationFrame garante que o browser calculou o layout e
-        // offsetWidth retorna a largura real dos containers dos gráficos
-        requestAnimationFrame(function() {
-            document.getElementById("grafico-barras-h").innerHTML = "";
-            document.getElementById("grafico-barras-v").innerHTML = "";
-
-            if (temLideres) {
-                renderizarBarrasH(resLideres.lideres, labelCat);
-            } else {
-                document.getElementById("grafico-barras-h").innerHTML = '<p style="font-size:0.82rem;color:#555570;padding:12px 0;">Sem dados de médias.</p>';
-            }
-
-            if (temRecordes) {
-                renderizarBarrasV(resRecordes.recordes, labelCat);
-            } else {
-                document.getElementById("grafico-barras-v").innerHTML = '<p style="font-size:0.82rem;color:#555570;padding:12px 0;">Sem dados de recordes.</p>';
-            }
-        });
-
-    } catch (erro) {
-        document.getElementById("ranking-carregando").style.display = "none";
-        document.getElementById("ranking-vazio").style.display      = "block";
+    if (!temAlgumDado) {
+        document.getElementById("medias-vazio").style.display = "block";
     }
 }
 
+async function carregarRecordes() {
+    var temporada = document.getElementById("select-temporada-recordes").value;
+    var limite = document.getElementById("select-limite-recordes").value;
 
-// ── GRÁFICO A: barras horizontais — média por jogo ──────────────────────────
-// Uso D3: controle preciso sobre truncamento de nomes e labels fora das barras.
-function renderizarBarrasH(lideres, labelCat) {
-    var container = document.getElementById("grafico-barras-h");
+    document.getElementById("recordes-graficos").innerHTML = "";
+    document.getElementById("recordes-vazio").style.display = "none";
+    document.getElementById("recordes-carregando").style.display = "block";
+
+    var temAlgumDado = false;
+
+    for (var i = 0; i < categorias.length; i++) {
+        var cat = categorias[i];
+        try {
+            var paramTemp = temporada !== "" ? "&temporada=" + temporada : "";
+            var url = "/analiticos/recordes?categoria=" + cat.id + paramTemp + "&limite=" + limite;
+            var resposta = await chamarApi(url);
+
+            if (resposta && resposta.recordes && resposta.recordes.length > 0) {
+                temAlgumDado = true;
+                adicionarGrafico("recordes-graficos", "grafico-recorde-" + cat.id, cat.label);
+
+                (function(idG, dados, cor, label) {
+                    requestAnimationFrame(function() {
+                        renderizarBarrasRecorde(idG, dados, cor, label);
+                    });
+                }("grafico-recorde-" + cat.id, resposta.recordes, cat.cor, cat.label));
+            }
+        } catch (erro) {
+        }
+    }
+
+    document.getElementById("recordes-carregando").style.display = "none";
+
+    if (!temAlgumDado) {
+        document.getElementById("recordes-vazio").style.display = "block";
+    }
+}
+
+function adicionarGrafico(idPai, idGrafico, titulo) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "grafico-container mb-4";
+    wrapper.innerHTML = '<p class="secao-titulo-grafico">' + titulo + '</p><div id="' + idGrafico + '"></div>';
+    document.getElementById(idPai).appendChild(wrapper);
+}
+
+function renderizarBarrasH(idContainer, lideres, cor, labelCat) {
+    var container = document.getElementById(idContainer);
+    if (!container) {
+        return;
+    }
     container.innerHTML = "";
 
     var dados = lideres.slice().sort(function(a, b) { return b.avg - a.avg; });
 
-    // margem.esq = 160 para acomodar nomes completos sem corte
-    // altLinha = 44 dá mais respiro entre as barras
-    var margem     = { topo: 8, dir: 55, baixo: 8, esq: 160 };
-    var largTotal  = container.offsetWidth || 500;
-    var largBarras = largTotal - margem.esq - margem.dir;
-    var altLinha   = 44;
-    var altTotal   = dados.length * altLinha + margem.topo + margem.baixo;
+    var margem = { topo: 24, dir: 16, baixo: 72, esq: 40 };
+    var largTotal = container.offsetWidth || 700;
+    var altColunas = 260;
+    var altTotal = altColunas + margem.topo + margem.baixo;
+    var largDisp = largTotal - margem.esq - margem.dir;
 
-    var svg = d3.select("#grafico-barras-h").append("svg").attr("width", largTotal).attr("height", altTotal);
-    var g   = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
+    var svg = d3.select("#" + idContainer).append("svg").attr("width", largTotal).attr("height", altTotal);
+    var g = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
 
     var maiorMedia = d3.max(dados, function(d) { return d.avg || 0; }) || 1;
-    var escX = d3.scaleLinear().domain([0, maiorMedia * 1.15]).range([0, largBarras]);
-    var escY = d3.scaleBand().domain(dados.map(function(d) { return d.player_name; })).range([0, dados.length * altLinha]).padding(0.3);
+    var escX = d3.scaleBand().domain(dados.map(function(d) { return d.player_name; })).range([0, largDisp]).padding(0.25);
+    var escY = d3.scaleLinear().domain([0, maiorMedia * 1.2]).range([altColunas, 0]);
 
-    g.selectAll(".bh").data(dados).enter().append("rect").attr("class", "bh")
-        .attr("x", 0)
-        .attr("y", function(d) { return escY(d.player_name); })
-        .attr("width", function(d) { return escX(d.avg || 0); })
-        .attr("height", escY.bandwidth())
-        .attr("fill", "#F75C03")
-        .attr("rx", 4)
-        .attr("opacity", 1)
-        .style("cursor", "pointer")
-        .on("mouseover", function(event, d) {
-            d3.select(this).attr("opacity", 1);
-            showTT(event, "<strong>" + d.player_name + "</strong><br>"
-                + labelCat + ": <strong>" + d.avg + "</strong> por jogo<br>"
-                + d.games_played + " jogos disputados");
-        })
-        .on("mousemove", moveTT)
-        .on("mouseout", function(event, d) {
-            var i = dados.indexOf(d);
-            d3.select(this).attr("opacity", 1);
-            hideTT();
-        });
-
-    // Nomes à esquerda
-    g.selectAll(".nome-h").data(dados).enter().append("text").attr("class", "nome-h")
-        .attr("x", -8)
-        .attr("y", function(d) { return escY(d.player_name) + escY.bandwidth() / 2; })
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "end")
-        .attr("fill", "#8888AA")
-        .attr("font-size", "11px")
-        .text(function(d) {
-            // Com margem maior podemos mostrar sobrenome + inicial: "James, L."
-            var partes = d.player_name.split(" ");
-            if (partes.length >= 2) {
-                return partes[partes.length - 1] + ", " + partes[0].charAt(0) + ".";
-            }
-            return d.player_name;
-        });
-
-    // Valores à direita
-    g.selectAll(".val-h").data(dados).enter().append("text").attr("class", "val-h")
-        .attr("x", function(d) { return escX(d.avg || 0) + 6; })
-        .attr("y", function(d) { return escY(d.player_name) + escY.bandwidth() / 2; })
-        .attr("dy", "0.35em")
-        .attr("fill", "#EEEEF5")
-        .attr("font-size", "11px")
-        .attr("font-weight", "600")
-        .text(function(d) { return d.avg; });
-}
-
-
-// ── GRÁFICO B: barras verticais — maiores valores por partida ───────────────
-// D3 também: tooltip com 4 campos (valor, jogador, data, adversário) e mudança
-// de cor ao hover exigem event listeners por elemento — D3 é mais direto que Vega-Lite.
-function renderizarBarrasV(recordes, labelCat) {
-    var container = document.getElementById("grafico-barras-v");
-    container.innerHTML = "";
-
-    var dados = recordes.slice().sort(function(a, b) { return b.valor - a.valor; });
-
-    // altBarras = 340 para preencher o espaço disponível verticalmente
-    // baixo = 70 para acomodar nomes rotacionados
-    var margem   = { topo: 10, dir: 12, baixo: 70, esq: 40 };
-    var largTotal = container.offsetWidth || 500;
-    var altBarras = 340;
-    var altTotal  = altBarras + margem.topo + margem.baixo;
-    var largDisp  = largTotal - margem.esq - margem.dir;
-
-    var svg = d3.select("#grafico-barras-v").append("svg").attr("width", largTotal).attr("height", altTotal);
-    var g   = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
-
-    var maiorValor = d3.max(dados, function(d) { return d.valor || 0; }) || 1;
-    var escX = d3.scaleBand().domain(dados.map(function(d, i) { return i; })).range([0, largDisp]).padding(0.22);
-    var escY = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([altBarras, 0]);
-
-    // Grid Y suave
     g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-largDisp))
         .call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+            gr.selectAll(".tick line").attr("stroke", "#D0D0E0").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#888899").attr("font-size", "10px");
         });
 
-    // Barras
-    g.selectAll(".bv").data(dados).enter().append("rect").attr("class", "bv")
-        .attr("x", function(d, i) { return escX(i); })
-        .attr("y", function(d) { return escY(d.valor || 0); })
+    g.selectAll(".col").data(dados).enter().append("rect").attr("class", "col")
+        .attr("x", function(d) { return escX(d.player_name); })
+        .attr("y", function(d) { return escY(d.avg || 0); })
         .attr("width", escX.bandwidth())
-        .attr("height", function(d) { return altBarras - escY(d.valor || 0); })
-        .attr("fill", "#3B9EFF")
+        .attr("height", function(d) { return altColunas - escY(d.avg || 0); })
+        .attr("fill", cor)
         .attr("rx", 4)
-        .attr("opacity", 1)
         .style("cursor", "pointer")
-        .on("mouseover", function(event, d) {
-            d3.select(this).attr("fill", "#F75C03").attr("opacity", 1);
-            showTT(event,
-                "<strong>" + d.valor + " " + labelCat + "</strong><br>"
-                + "<span style='color:#aaa'>" + d.player_name + "</span><br>"
-                + "vs " + d.adversario + "<br>"
-                + d.data);
+        .on("mouseover", function(evento, d) {
+            showTT(evento, "<strong>" + d.player_name + "</strong><br>" + labelCat + ": <strong>" + d.avg + "</strong> por jogo<br>" + d.games_played + " jogos");
         })
         .on("mousemove", moveTT)
-        .on("mouseout", function(event, d) {
-            var i = dados.indexOf(d);
-            d3.select(this).attr("fill", "#3B9EFF").attr("opacity", 1);
-            hideTT();
-        });
+        .on("mouseout", function() { hideTT(); });
 
-    // Valor acima de cada barra
-    g.selectAll(".val-v").data(dados).enter().append("text").attr("class", "val-v")
-        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
-        .attr("y", function(d) { return escY(d.valor || 0) - 4; })
+    g.selectAll(".val-col").data(dados).enter().append("text").attr("class", "val-col")
+        .attr("x", function(d) { return escX(d.player_name) + escX.bandwidth() / 2; })
+        .attr("y", function(d) { return escY(d.avg || 0) - 5; })
         .attr("text-anchor", "middle")
-        .attr("fill", "#EEEEF5")
+        .attr("fill", "#1A1A2E")
         .attr("font-size", "10px")
         .attr("font-weight", "600")
-        .text(function(d) { return d.valor; });
+        .text(function(d) { return d.avg; });
 
-    // Nome no eixo X, rotacionado
-    g.selectAll(".nome-v").data(dados).enter().append("text").attr("class", "nome-v")
-        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
-        .attr("y", altBarras + 12)
+    g.selectAll(".nome-col").data(dados).enter().append("text").attr("class", "nome-col")
+        .attr("x", function(d) { return escX(d.player_name) + escX.bandwidth() / 2; })
+        .attr("y", altColunas + 10)
         .attr("text-anchor", "end")
-        .attr("transform", function(d, i) {
-            var cx = escX(i) + escX.bandwidth() / 2;
-            return "rotate(-40," + cx + "," + (altBarras + 12) + ")";
+        .attr("transform", function(d) {
+            var cx = escX(d.player_name) + escX.bandwidth() / 2;
+            return "rotate(-40," + cx + "," + (altColunas + 10) + ")";
         })
         .attr("fill", "#555570")
         .attr("font-size", "10px")
         .text(function(d) {
             var partes = d.player_name.split(" ");
             if (partes.length >= 2) {
-                return partes[0].charAt(0) + ". " + partes[partes.length - 1];
+                return partes[partes.length - 1] + ", " + partes[0].charAt(0) + ".";
+            }
+            return d.player_name;
+        });
+}
+
+function renderizarBarrasRecorde(idContainer, recordes, cor, labelCat) {
+    var container = document.getElementById(idContainer);
+    if (!container) {
+        return;
+    }
+    container.innerHTML = "";
+
+    var dados = recordes.slice().sort(function(a, b) { return b.valor - a.valor; });
+
+    var margem = { topo: 24, dir: 16, baixo: 72, esq: 40 };
+    var largTotal = container.offsetWidth || 700;
+    var altColunas = 260;
+    var altTotal = altColunas + margem.topo + margem.baixo;
+    var largDisp = largTotal - margem.esq - margem.dir;
+
+    var svg = d3.select("#" + idContainer).append("svg").attr("width", largTotal).attr("height", altTotal);
+    var g = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
+
+    var maiorValor = d3.max(dados, function(d) { return d.valor || 0; }) || 1;
+    var escX = d3.scaleBand().domain(dados.map(function(d, i) { return i; })).range([0, largDisp]).padding(0.25);
+    var escY = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([altColunas, 0]);
+
+    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-largDisp))
+        .call(function(gr) {
+            gr.select(".domain").remove();
+            gr.selectAll(".tick line").attr("stroke", "#D0D0E0").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#888899").attr("font-size", "10px");
+        });
+
+    g.selectAll(".col-r").data(dados).enter().append("rect").attr("class", "col-r")
+        .attr("x", function(d, i) { return escX(i); })
+        .attr("y", function(d) { return escY(d.valor || 0); })
+        .attr("width", escX.bandwidth())
+        .attr("height", function(d) { return altColunas - escY(d.valor || 0); })
+        .attr("fill", cor)
+        .attr("rx", 4)
+        .style("cursor", "pointer")
+        .on("mouseover", function(evento, d) {
+            showTT(evento, "<strong>" + d.valor + " " + labelCat + "</strong><br>" + d.player_name + "<br>vs " + d.adversario + "<br>" + d.data);
+        })
+        .on("mousemove", moveTT)
+        .on("mouseout", function() { hideTT(); });
+
+    g.selectAll(".val-r").data(dados).enter().append("text").attr("class", "val-r")
+        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
+        .attr("y", function(d) { return escY(d.valor || 0) - 5; })
+        .attr("text-anchor", "middle")
+        .attr("fill", "#1A1A2E")
+        .attr("font-size", "10px")
+        .attr("font-weight", "600")
+        .text(function(d) { return d.valor; });
+
+    g.selectAll(".nome-r").data(dados).enter().append("text").attr("class", "nome-r")
+        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
+        .attr("y", altColunas + 10)
+        .attr("text-anchor", "end")
+        .attr("transform", function(d, i) {
+            var cx = escX(i) + escX.bandwidth() / 2;
+            return "rotate(-40," + cx + "," + (altColunas + 10) + ")";
+        })
+        .attr("fill", "#555570")
+        .attr("font-size", "10px")
+        .text(function(d) {
+            var partes = d.player_name.split(" ");
+            if (partes.length >= 2) {
+                return partes[partes.length - 1] + ", " + partes[0].charAt(0) + ".";
             }
             return d.player_name;
         });

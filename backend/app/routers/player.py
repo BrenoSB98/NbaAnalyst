@@ -313,7 +313,11 @@ def estatisticas_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(None, des
             adversario_id = jogo.home_team_id
 
         time_adversario = db.query(Team).filter(Team.id == adversario_id).first()
-        nome_adversario = time_adversario.name if time_adversario else "—"
+
+        if time_adversario:
+            nome_adversario = time_adversario.name
+        else:
+            nome_adversario = "—"
 
         fg_pct_jogo = None
         if (stat.fga or 0) > 0:

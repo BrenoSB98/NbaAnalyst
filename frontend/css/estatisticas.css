@@ -1,20 +1,12 @@
-/* ============================================
-   estatisticas.css — Rankings gerais
-   ============================================ */
-
-
-/* Cabeçalho */
 .cabecalho-estatisticas {
     padding: 40px 0 32px;
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
 }
 
-
-/* Barra de controles — categoria e temporada */
 .barra-controles {
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     padding: 14px 0;
     position: sticky;
     top: 64px;
@@ -25,8 +17,6 @@
     max-width: 220px;
 }
 
-
-/* Botões de seleção de categoria */
 .lista-categorias {
     display: flex;
     flex-wrap: wrap;
@@ -35,44 +25,40 @@
 }
 
 .btn-categoria {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 20px;
-    color: #8888AA;
+    color: #555570;
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 6px 14px;
     cursor: pointer;
-    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-categoria:hover {
-    border-color: rgba(247, 92, 3, 0.4);
-    color: #EEEEF5;
-}
-
-.btn-categoria.ativo {
-    background-color: rgba(247, 92, 3, 0.12);
     border-color: #F75C03;
     color: #F75C03;
 }
 
+.btn-categoria.ativo {
+    background-color: rgba(247, 92, 3, 0.10);
+    border-color: #F75C03;
+    color: #F75C03;
+}
 
-/* Área de conteúdo */
 .area-ranking {
     padding: 32px 0 48px;
 }
 
-
-/* Linha de ranking */
 .linha-ranking {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 10px 0;
-    border-bottom: 1px solid #252540;
+    border-bottom: 1px solid #D0D0E0;
 }
 
 .linha-ranking:last-child {
@@ -83,7 +69,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1rem;
     font-weight: 700;
-    color: #555570;
+    color: #888899;
     width: 28px;
     text-align: center;
     flex-shrink: 0;
@@ -96,7 +82,7 @@
 .linha-ranking .nome-jogador {
     flex: 1;
     font-weight: 600;
-    color: #EEEEF5;
+    color: #1A1A2E;
     font-size: 0.9rem;
     text-decoration: none;
     white-space: nowrap;
@@ -110,7 +96,7 @@
 
 .linha-ranking .jogos {
     font-size: 0.75rem;
-    color: #555570;
+    color: #888899;
     white-space: nowrap;
 }
 
@@ -124,11 +110,9 @@
     text-align: right;
 }
 
-
-/* Container do gráfico D3 */
 .grafico-container {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 20px;
     overflow-x: auto;
@@ -138,11 +122,9 @@
     font-family: 'Karla', sans-serif;
 }
 
-
-/* Banner de login */
 .banner-login-stats {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 40px 24px;
     text-align: center;
@@ -153,12 +135,72 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #EEEEF5;
+    color: #1A1A2E;
     margin-bottom: 8px;
 }
 
 .banner-login-stats .desc {
     font-size: 0.88rem;
-    color: #8888AA;
+    color: #555570;
     margin-bottom: 20px;
+}
+
+.d3-tooltip {
+    position: fixed;
+    background: #FFFFFF;
+    border: 1px solid #D0D0E0;
+    border-radius: 8px;
+    padding: 9px 13px;
+    font-size: 12px;
+    color: #1A1A2E;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 9999;
+    line-height: 1.6;
+    max-width: 220px;
+}
+
+.secao-titulo-grafico {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1A1A2E;
+    margin-bottom: 4px;
+    letter-spacing: 0.03em;
+}
+
+.grafico-subtitulo {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888899;
+    margin-bottom: 14px;
+}
+
+.abas-estatisticas {
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
+}
+
+.aba-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #555570;
+    font-family: 'Karla', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.aba-btn:hover {
+    color: #1A1A2E;
+}
+
+.aba-btn.ativo {
+    color: #F75C03;
+    border-bottom-color: #F75C03;
 }

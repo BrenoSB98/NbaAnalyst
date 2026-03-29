@@ -3,18 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Jogador Avançado</title>
+    <title>Estatísticas Privadas do Atleta</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/jogador_avancado.css">
-    <style>
-        .btn-donut { background:#1D1E35;border:1px solid #252540;color:#8888AA;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.05em; }
-        .btn-donut:hover { color:#EEEEF5; }
-        .btn-donut.ativo-fg  { background:#F75C03;border-color:#F75C03;color:#fff; }
-        .btn-donut.ativo-3p  { background:#3B9EFF;border-color:#3B9EFF;color:#fff; }
-        .btn-donut.ativo-ft  { background:#00C896;border-color:#00C896;color:#fff; }
-    </style>
 </head>
 <body>
 <div id="app-wrapper">
@@ -24,8 +17,6 @@
         <div id="pg-loading"><div class="spinner-nba" style="margin-top:80px;"><div class="bola-animada"></div><span>Carregando...</span></div></div>
 
         <div id="pg-content" style="display:none;">
-
-            <!-- Cabeçalho -->
             <div class="cabecalho-jav">
                 <div class="container">
                     <div class="d-flex align-items-center gap-4 flex-wrap">
@@ -41,15 +32,12 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Barra de filtros — sem "Ordenar por" (req 3.1) -->
             <div class="barra-controles-jav">
                 <div class="container">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
 
                         <div class="d-flex align-items-center gap-2">
                             <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Temporada</label>
-                            <!-- "Todas as temporadas" como primeira opção (req 3.2) -->
                             <select class="form-control-nba" id="sel-temp" style="max-width:175px;" onchange="recarregar()">
                                 <option value="">Todas as temporadas</option>
                                 <option value="2025" selected>2025</option>
@@ -90,23 +78,17 @@
                     <div id="data-loading" style="padding:40px 0;"><div class="spinner-nba"><div class="bola-animada"></div><span>Carregando estatísticas...</span></div></div>
 
                     <div id="data-content" style="display:none;">
-
-                        <!-- Cards: apenas PTS/AST/REB/STL/BLK/+/- (req 3.3) -->
                         <div class="acento"></div>
-                        <div class="sec-titulo">Médias <span id="lbl-jogos" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
+                        <div class="sec-titulo">Médias <span id="lbl-jogos" style="font-size:.75rem;color:#9999B0;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
                         <div class="row g-3 mb-4" id="grid-cards"></div>
-
-                        <!-- Gráfico de linha: 4 linhas toggle + clique (itens 4 e 6) -->
                         <div class="acento"></div>
                         <div class="sec-titulo">Evolução por Jogo</div>
                         <div class="gc mb-4">
-                            <!-- Botões de toggle de série -->
                             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="linha-toggles"></div>
                             <div id="g-linha"></div>
-                            <p style="font-size:.68rem;color:#555570;margin-top:8px;margin-bottom:0;">Clique na legenda ou na linha para mostrar/ocultar. Passe o mouse para ver os valores.</p>
+                            <p style="font-size:.68rem;color:#9999B0;margin-top:8px;margin-bottom:0;">Clique na legenda ou na linha para mostrar/ocultar. Passe o mouse para ver os valores.</p>
                         </div>
 
-                        <!-- Donut + Tendência (req 3.4.3 e 3.4.4) -->
                         <div class="row g-4 mb-4">
                             <div class="col-12 col-lg-5">
                                 <div class="gc h-100">
@@ -123,8 +105,6 @@
                             </div>
                             <div class="col-12 col-lg-7">
                                 <div class="gc h-100">
-                                    <!-- Tendência D3: linha + média móvel 5j + banda de desvio (req 3.4.4) -->
-                                    <!-- Escolha D3 sobre Vega-Lite: tamanho controlado e tooltip reutilizável -->
                                     <p class="gt">Tendência de Pontuação</p>
                                     <div id="g-tendencia"></div>
                                 </div>
@@ -135,7 +115,7 @@
                         <div class="acento"></div>
                         <div class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <span>Histórico de Jogos</span>
-                            <span id="lbl-tabela" style="font-size:.75rem;color:#555570;font-family:'Karla',sans-serif;font-weight:400;"></span>
+                            <span id="lbl-tabela" style="font-size:.75rem;color:#9999B0;font-family:'Karla',sans-serif;font-weight:400;"></span>
                         </div>
                         <div class="card-nba"><div style="overflow-x:auto;">
                             <table class="tabela-jogos-jav" id="tab-jogos">
@@ -184,10 +164,10 @@
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
 <script>
-var jogadorId  = obterParametroUrl("id");
-var nAtivo     = 10;
-var donutAtivo   = "fg";
-var dJogos       = null;
+var jogadorId = obterParametroUrl("id");
+var nAtivo = 10;
+var donutAtivo = "fg";
+var dJogos = null;
 
 var POSICOES_PT = {
     "PG": "Armador", "SG": "Ala-armador", "SF": "Ala",
@@ -200,7 +180,7 @@ function traduzirPosicao(abrev) {
     return POSICOES_PT[abrev.toUpperCase()] || abrev;
 }
 var paginaTabela = 1;
-var porPagina    = 15;
+var porPagina = 15;
 
 var tt = document.getElementById("tt");
 
@@ -214,12 +194,10 @@ function moveTT(event) {
     var y = event.clientY - 36;
     if (x + 220 > window.innerWidth) { x = event.clientX - 220; }
     tt.style.left = x + "px";
-    tt.style.top  = y + "px";
+    tt.style.top = y + "px";
 }
 function hideTT() { tt.style.opacity = 0; }
 
-
-// ── INIT ────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
     if (!jogadorId) {
@@ -230,8 +208,6 @@ document.addEventListener("DOMContentLoaded", function() {
     carregarCabecalho();
 });
 
-
-// ── CABEÇALHO ───────────────────────────────────────────────
 async function carregarCabecalho() {
     try {
         var dados = await chamarApi("/jogadores/" + jogadorId);
@@ -244,7 +220,7 @@ async function carregarCabecalho() {
         var meta = "";
         if (dados.historico_times && dados.historico_times.length > 0) {
             var t = dados.historico_times[dados.historico_times.length - 1];
-            meta = meta + '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#8888AA;text-decoration:none;">' + t.nome_time + '</a></span>';
+            meta = meta + '<span><i class="bi bi-shield-fill"></i><a href="time.html?id=' + t.time_id + '" style="color:#555570;text-decoration:none;">' + t.nome_time + '</a></span>';
             if (t.posicao) { meta = meta + '<span><i class="bi bi-person-fill"></i>' + traduzirPosicao(t.posicao) + '</span>'; }
         }
         if (dados.inicio_nba) { meta = meta + '<span><i class="bi bi-trophy"></i>NBA desde ' + dados.inicio_nba + '</span>'; }
@@ -259,23 +235,17 @@ async function carregarCabecalho() {
     }
 }
 
-
-// ── CARGA DE DADOS ──────────────────────────────────────────
 async function carregarDados() {
     var temp = document.getElementById("sel-temp").value;
     document.getElementById("data-loading").style.display = "block";
     document.getElementById("data-content").style.display = "none";
-    document.getElementById("data-vazio").style.display   = "none";
+    document.getElementById("data-vazio").style.display = "none";
 
     try {
-        // Quando "Todas as temporadas": omite n_jogos (backend retorna todos sem limite)
-        // Quando temporada específica: aplica n_jogos normalmente
         var urlJogos = "/jogadores/" + jogadorId + "/estatisticas/ultimos-jogos";
         if (temp !== "") {
             urlJogos = urlJogos + "?n_jogos=" + nAtivo + "&temporada=" + temp;
         }
-        // temp=="" → sem n_jogos e sem temporada → backend retorna todos os jogos do banco
-
         dJogos = await chamarApi(urlJogos);
 
         var temJogos = dJogos && dJogos.jogos && dJogos.jogos.length > 0;
@@ -298,7 +268,7 @@ async function carregarDados() {
 
     } catch (e) {
         document.getElementById("data-loading").style.display = "none";
-        document.getElementById("data-vazio").style.display   = "block";
+        document.getElementById("data-vazio").style.display = "block";
     }
 }
 
@@ -324,8 +294,7 @@ function filtrarLocal() {
     });
 }
 
-
-// ── FILTRO DE JOGOS ─────────────────────────────────────────
+// ── FILTRO
 function jogosVisiveis() {
     if (!dJogos || !dJogos.jogos) { return []; }
     var local = document.getElementById("sel-local").value;
@@ -340,7 +309,7 @@ function jogosVisiveis() {
 }
 
 
-// ── CARDS: PTS/AST/REB/STL/BLK/+/- calculados dos jogos visíveis (req 3.3) ──
+// ── CARDS: PTS/AST/REB/STL/BLK/+/
 function calcularMedia(jogos, campo) {
     var soma = 0;
     var cont = 0;
@@ -357,12 +326,12 @@ function renderCards() {
     document.getElementById("lbl-jogos").textContent = jogos.length > 0 ? "(" + jogos.length + " jogos)" : "";
 
     var defs = [
-        { c: "pontos",       l: "PTS", cor: "#F75C03" },
-        { c: "assistencias", l: "AST", cor: "#3B9EFF" },
-        { c: "rebotes",      l: "REB", cor: "#00C896" },
-        { c: "roubos",       l: "STL", cor: "#FFD600" },
-        { c: "bloqueios",    l: "BLK", cor: "#8888AA" },
-        { c: "plus_minus",   l: "+/-", cor: "#EEEEF5" }
+        {c: "pontos", l: "PTS", cor: "#F75C03" },
+        {c: "assistencias", l: "AST", cor: "#3B9EFF" },
+        {c: "rebotes", l: "REB", cor: "#00C896" },
+        {c: "roubos", l: "STL", cor: "#FFD600" },
+        {c: "bloqueios", l: "BLK", cor: "#555570" },
+        {c: "plus_minus", l: "+/-", cor: "#1A1A2E" }
     ];
 
     var html = "";
@@ -377,8 +346,7 @@ function renderCards() {
 }
 
 
-// ── GRÁFICO LINHA INTERATIVO: toggle por série, clique na linha (itens 4 e 6) ──
-// Estado de visibilidade de cada série — começa tudo visível
+// ── GRÁFICO LINHA
 var seriesVisiveis = { pontos: true, assistencias: true, rebotes: true, roubos: true };
 
 var SERIES_DEF = [
@@ -392,11 +360,11 @@ function renderBotoesLinha() {
     var container = document.getElementById("linha-toggles");
     var html = "";
     for (var i = 0; i < SERIES_DEF.length; i++) {
-        var s   = SERIES_DEF[i];
+        var s = SERIES_DEF[i];
         var vis = seriesVisiveis[s.campo];
-        var bg  = vis ? s.cor : "#1D1E35";
+        var bg = vis ? s.cor : "#F5F5FA";
         var cor = vis ? "#fff" : s.cor;
-        var borda = vis ? s.cor : "#252540";
+        var borda = vis ? s.cor : "#CCCCDD";
         html = html + '<button id="btn-linha-' + s.campo + '" '
             + 'onclick="toggleSerie(\'' + s.campo + '\')" '
             + 'style="background:' + bg + ';border:1px solid ' + borda + ';color:' + cor + ';'
@@ -423,16 +391,15 @@ function renderLinha() {
     if (jogos.length < 2) { return; }
 
     var mg = { t: 16, r: 28, b: 36, l: 36 };
-    var W  = el.offsetWidth || 640;
+    var W = el.offsetWidth || 640;
     var LW = W - mg.l - mg.r;
-    var H  = 280;
+    var H = 280;
 
     var svg = d3.select("#g-linha").append("svg").attr("width", W).attr("height", H + mg.t + mg.b);
-    var g   = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
+    var g = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
 
     var escX = d3.scaleLinear().domain([0, jogos.length - 1]).range([0, LW]);
 
-    // Domínio Y apenas com séries visíveis
     var todosValores = [];
     for (var si = 0; si < SERIES_DEF.length; si++) {
         if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
@@ -446,15 +413,13 @@ function renderLinha() {
     var maxV = d3.max(todosValores) || 1;
     var escY = d3.scaleLinear().domain([Math.max(0, minV * 0.85), maxV * 1.18]).range([H, 0]);
 
-    // Grid Y
     g.append("g").call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
         .call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+            gr.selectAll(".tick line").attr("stroke", "#CCCCDD").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px");
         });
 
-    // Eixo X com datas
     g.append("g").attr("class", "eixo-x").attr("transform", "translate(0," + H + ")")
         .call(d3.axisBottom(escX).ticks(Math.min(jogos.length, 10)).tickFormat(function(idx) {
             var j = jogos[Math.round(idx)];
@@ -464,12 +429,11 @@ function renderLinha() {
         }).tickSize(0))
         .call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+            gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "9px").attr("dy", "1.3em");
         });
 
-    // Linha + hitbox clicável por série
     for (var si = 0; si < SERIES_DEF.length; si++) {
-        var s     = SERIES_DEF[si];
+        var s = SERIES_DEF[si];
         var campo = s.campo;
         if (!seriesVisiveis[campo]) { continue; }
 
@@ -479,7 +443,6 @@ function renderLinha() {
             .defined(function(d) { return d[campo] !== null && d[campo] !== undefined; })
             .curve(d3.curveMonotoneX);
 
-        // Linha visível
         g.append("path").datum(jogos)
             .attr("class", "linha-serie linha-" + campo)
             .attr("fill", "none")
@@ -500,7 +463,6 @@ function renderLinha() {
                 return function() { toggleSerie(cc); };
             })(campo));
 
-        // Hitbox invisível mais largo para facilitar o clique
         g.append("path").datum(jogos)
             .attr("class", "hit-" + campo)
             .attr("fill", "none")
@@ -520,12 +482,9 @@ function renderLinha() {
                 return function() { toggleSerie(cc); };
             })(campo));
     }
-
-    // ── Estado de zoom — guardado fora do render para sobreviver a redraws ──
     var escXZoom = escX.copy();
-    var emZoom   = false;
+    var emZoom = false;
 
-    // ── Funções de redraw ao zoom ─────────────────────────────────────────
     function redesenharLinhas(ex) {
         for (var si = 0; si < SERIES_DEF.length; si++) {
             var campo = SERIES_DEF[si].campo;
@@ -541,7 +500,6 @@ function renderLinha() {
             g.selectAll(".hit-" + campo).attr("d", fn);
         }
 
-        // Redesenha eixo X
         g.select(".eixo-x").call(
             d3.axisBottom(ex)
                 .ticks(Math.min(jogos.length, 10))
@@ -554,17 +512,16 @@ function renderLinha() {
                 .tickSize(0)
         ).call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+            gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "9px").attr("dy", "1.3em");
         });
     }
 
-    // ── Botão de reset de zoom ───────────────────────────────────────────
     var containerLinha = document.getElementById("g-linha");
     containerLinha.style.position = "relative";
     var btnReset = document.createElement("button");
     btnReset.id = "btn-reset-zoom";
     btnReset.textContent = "↺ Resetar zoom";
-    btnReset.style.cssText = "display:none;position:absolute;top:8px;right:8px;background:#1D1E35;"
+    btnReset.style.cssText = "display:none;position:absolute;top:8px;right:8px;background:#F5F5FA;"
         + "border:1px solid #F75C03;color:#F75C03;font-size:.68rem;font-weight:700;"
         + "padding:3px 10px;border-radius:6px;cursor:pointer;z-index:10;";
     btnReset.onclick = function() { resetarZoom(); };
@@ -572,7 +529,7 @@ function renderLinha() {
 
     function resetarZoom() {
         escXZoom = escX.copy();
-        emZoom   = false;
+        emZoom = false;
         var todosVals = [];
         for (var si = 0; si < SERIES_DEF.length; si++) {
             if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
@@ -587,21 +544,17 @@ function renderLinha() {
                 .call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
                 .call(function(gr) {
                     gr.select(".domain").remove();
-                    gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
-                    gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+                    gr.selectAll(".tick line").attr("stroke", "#CCCCDD").attr("stroke-dasharray", "3,3");
+                    gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px");
                 });
         }
         redesenharLinhas(escX);
         document.getElementById("btn-reset-zoom").style.display = "none";
     }
 
-    // ── Brush de zoom ─────────────────────────────────────────────────────
-    // O brush fica na camada mais alta — captura drag corretamente.
-    // O tooltip é integrado via evento "brush" (mousemove durante drag mostra info).
     var brush = d3.brushX()
         .extent([[0, 0], [LW, H]])
         .on("brush", function(event) {
-            // Tooltip durante a seleção mostra o intervalo
             if (!event.selection || !event.sourceEvent) { return; }
             var i0 = Math.round(escX.invert(event.selection[0]));
             var i1 = Math.round(escX.invert(event.selection[1]));
@@ -629,14 +582,16 @@ function renderLinha() {
             x1 = Math.min(jogos.length - 1, Math.ceil(x1));
 
             escXZoom = d3.scaleLinear().domain([x0, x1]).range([0, LW]);
-            emZoom   = true;
+            emZoom = true;
 
             var valsZoom = [];
             for (var si = 0; si < SERIES_DEF.length; si++) {
                 if (!seriesVisiveis[SERIES_DEF[si].campo]) { continue; }
                 for (var ji = x0; ji <= x1; ji++) {
                     var v = jogos[ji][SERIES_DEF[si].campo];
-                    if (v !== null && v !== undefined) { valsZoom.push(v); }
+                    if (v !== null && v !== undefined) { 
+                        valsZoom.push(v); 
+                    }
                 }
             }
             if (valsZoom.length > 0) {
@@ -645,8 +600,8 @@ function renderLinha() {
                     .call(d3.axisLeft(escY).ticks(5).tickSize(-LW))
                     .call(function(gr) {
                         gr.select(".domain").remove();
-                        gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
-                        gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+                        gr.selectAll(".tick line").attr("stroke", "#CCCCDD").attr("stroke-dasharray", "3,3");
+                        gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px");
                     });
             }
 
@@ -655,28 +610,16 @@ function renderLinha() {
             document.getElementById("btn-reset-zoom").style.display = "inline-block";
         });
 
-    // gBrush adicionado POR ÚLTIMO — fica no topo do DOM, recebe todos os eventos de mouse
     var gBrush = g.append("g").attr("class", "brush-layer").call(brush);
-
-    gBrush.select(".selection")
-        .attr("fill", "rgba(247,92,3,0.15)")
-        .attr("stroke", "#F75C03")
-        .attr("stroke-width", 1);
-
+    gBrush.select(".selection").attr("fill", "rgba(247,92,3,0.15)").attr("stroke", "#F75C03").attr("stroke-width", 1);
     gBrush.selectAll(".handle").attr("fill", "#F75C03").attr("opacity", 0.7);
-
-    // Cursor crosshair na área de overlay do brush
     gBrush.select(".overlay").style("cursor", "crosshair");
-
-    // Duplo-clique reseta
     gBrush.select(".overlay").on("dblclick", function() { resetarZoom(); });
-
-    // Tooltip no mousemove quando NÃO está arrastando (brush não captura mousemove puro)
     gBrush.select(".overlay")
         .on("mousemove.tt", function(event) {
             var escAtiva = emZoom ? escXZoom : escX;
             var xPos = d3.pointer(event)[0];
-            var idx  = Math.round(escAtiva.invert(xPos));
+            var idx = Math.round(escAtiva.invert(xPos));
             idx = Math.max(0, Math.min(idx, jogos.length - 1));
             var j = jogos[idx];
             if (!j) { return; }
@@ -693,21 +636,20 @@ function renderLinha() {
         .on("mouseout.tt", hideTT);
 }
 
-
-// ── DONUT DE PROGRESSO (req 3.4.3) ──────────────────────────
-// Valor central em destaque. Botões alternam FG%/3P%/FT%.
-// Calcula a partir dos jogos visíveis para respeitar todos os filtros.
+// ── DONUT DE PROGRESSO
 var DONUT_CFG = {
-    "fg": { campo: "fg_pct",    cor: "#F75C03", label: "FG%",  max: 65  },
-    "3p": { campo: "three_pct", cor: "#3B9EFF", label: "3P%",  max: 50  },
-    "ft": { campo: "ft_pct",    cor: "#00C896", label: "FT%",  max: 100 }
+    "fg": {campo: "fg_pct", cor: "#F75C03", label: "FG%", max: 65},
+    "3p": {campo: "three_pct", cor: "#3B9EFF", label: "3P%", max: 50},
+    "ft": {campo: "ft_pct", cor: "#00C896", label: "FT%", max: 100}
 };
 
 function calcularPct(jogos, campo) {
     var soma = 0; var cont = 0;
     for (var i = 0; i < jogos.length; i++) {
         var v = jogos[i][campo];
-        if (v !== null && v !== undefined) { soma = soma + v; cont = cont + 1; }
+        if (v !== null && v !== undefined) { 
+            soma = soma + v; cont = cont + 1; 
+        }
     }
     if (cont === 0) { return 0; }
     return parseFloat((soma / cont).toFixed(1));
@@ -724,36 +666,33 @@ function trocarDonut(tipo) {
 }
 
 function renderDonut(tipo) {
-    var el  = document.getElementById("g-donut");
+    var el = document.getElementById("g-donut");
     el.innerHTML = "";
-    var cfg   = DONUT_CFG[tipo];
+    var cfg = DONUT_CFG[tipo];
     var jogos = jogosVisiveis();
     var valor = calcularPct(jogos, cfg.campo);
-    var prop  = Math.min(valor / cfg.max, 1);
+    var prop = Math.min(valor / cfg.max, 1);
 
-    var W  = el.offsetWidth || 260;
-    var H  = 190;
+    var W = el.offsetWidth || 260;
+    var H = 190;
     var cx = W / 2;
     var cy = H / 2 + 8;
-    var R  = Math.min(W * 0.38, H * 0.42);
+    var R = Math.min(W * 0.38, H * 0.42);
     var ri = R * 0.68;
 
     var svg = d3.select("#g-donut").append("svg").attr("width", W).attr("height", H);
 
     var angI = -Math.PI * 0.75;
     var angF =  Math.PI * 0.75;
-    var amp  = angF - angI;
-
+    var amp = angF - angI;
     var arc = d3.arc().innerRadius(ri).outerRadius(R).cornerRadius(4);
 
-    // Trilha de fundo
     svg.append("path")
         .datum({ startAngle: angI, endAngle: angF })
         .attr("d", arc)
         .attr("transform", "translate(" + cx + "," + cy + ")")
-        .attr("fill", "#252540");
+        .attr("fill", "#CCCCDD");
 
-    // Arco de valor com hover interativo (item 6)
     if (prop > 0) {
         svg.append("path")
             .datum({ startAngle: angI, endAngle: angI + amp * prop })
@@ -770,15 +709,12 @@ function renderDonut(tipo) {
             .on("mouseout", function() { d3.select(this).attr("opacity", 0.92); hideTT(); });
     }
 
-    // Trilha clicável também (item 6)
-    svg.selectAll(".trilha-donut")
-        .on("mouseover", function(event) {
+    svg.selectAll(".trilha-donut").on("mouseover", function(event) {
             showTT(event, "<strong>" + cfg.label + ": " + valor + "%</strong><br>Ref. máx: " + cfg.max + "%");
         })
         .on("mousemove", moveTT)
         .on("mouseout", hideTT);
 
-    // Valor central
     svg.append("text")
         .attr("x", cx).attr("y", cy - 4)
         .attr("text-anchor", "middle")
@@ -791,7 +727,7 @@ function renderDonut(tipo) {
     svg.append("text")
         .attr("x", cx).attr("y", cy + 20)
         .attr("text-anchor", "middle")
-        .attr("fill", "#555570")
+        .attr("fill", "#9999B0")
         .attr("font-size", "11px")
         .attr("font-weight", "700")
         .attr("letter-spacing", "0.07em")
@@ -800,43 +736,37 @@ function renderDonut(tipo) {
     svg.append("text")
         .attr("x", cx).attr("y", H - 6)
         .attr("text-anchor", "middle")
-        .attr("fill", "#555570")
+        .attr("fill", "#9999B0")
         .attr("font-size", "10px")
         .text(jogos.length + " jogos");
 }
 
-
-// ── TENDÊNCIA DE PONTUAÇÃO (req 3.4.4) ──────────────────────
-// D3: linha de pontos por jogo + média móvel de 5j + banda de ±1 desvio.
-// Escolha D3 sobre Vega-Lite: encaixe exato no espaço disponível e tooltip
-// reutilizando showTT() sem dependência extra de biblioteca.
+// TENDÊNCIA DE PONTUAÇÃO
 function renderTendencia() {
     var el = document.getElementById("g-tendencia");
     el.innerHTML = "";
     var jogos = jogosVisiveis().slice().reverse();
     if (jogos.length < 2) {
-        el.innerHTML = '<p style="font-size:.8rem;color:#555570;padding:20px 0;">Dados insuficientes.</p>';
+        el.innerHTML = '<p style="font-size:.8rem;color:#9999B0;padding:20px 0;">Dados insuficientes.</p>';
         return;
     }
 
     var mg = { t: 12, r: 32, b: 36, l: 36 };
-    var W  = el.offsetWidth || 380;
+    var W = el.offsetWidth || 380;
     var LW = W - mg.l - mg.r;
-    var H  = 200;
-
+    var H = 200;
     var svg = d3.select("#g-tendencia").append("svg").attr("width", W).attr("height", H + mg.t + mg.b);
-    var g   = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
-
-    var vals   = jogos.map(function(d) { return d.pontos !== null && d.pontos !== undefined ? d.pontos : 0; });
-    var maxV   = d3.max(vals) || 1;
-    var escX   = d3.scaleLinear().domain([0, jogos.length - 1]).range([0, LW]);
-    var escY   = d3.scaleLinear().domain([0, maxV * 1.2]).range([H, 0]);
+    var g = svg.append("g").attr("transform", "translate(" + mg.l + "," + mg.t + ")");
+    var vals = jogos.map(function(d) { return d.pontos !== null && d.pontos !== undefined ? d.pontos : 0; });
+    var maxV = d3.max(vals) || 1;
+    var escX = d3.scaleLinear().domain([0, jogos.length - 1]).range([0, LW]);
+    var escY = d3.scaleLinear().domain([0, maxV * 1.2]).range([H, 0]);
 
     g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-LW))
         .call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick line").attr("stroke", "#252540").attr("stroke-dasharray", "3,3");
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+            gr.selectAll(".tick line").attr("stroke", "#CCCCDD").attr("stroke-dasharray", "3,3");
+            gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px");
         });
 
     g.append("g").attr("transform", "translate(0," + H + ")")
@@ -848,10 +778,9 @@ function renderTendencia() {
         }).tickSize(0))
         .call(function(gr) {
             gr.select(".domain").remove();
-            gr.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "9px").attr("dy", "1.3em");
+            gr.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "9px").attr("dy", "1.3em");
         });
 
-    // Média e desvio padrão
     var soma = 0;
     for (var i = 0; i < vals.length; i++) { soma = soma + vals[i]; }
     var mediGeral = soma / vals.length;
@@ -860,43 +789,37 @@ function renderTendencia() {
     for (var i = 0; i < vals.length; i++) { somaDesvio = somaDesvio + (vals[i] - mediGeral) * (vals[i] - mediGeral); }
     var desvio = Math.sqrt(somaDesvio / vals.length);
 
-    // Média móvel de 5 jogos
     var janela = Math.min(5, vals.length);
     var medMovel = vals.map(function(v, i) {
         var inicio = Math.max(0, i - Math.floor(janela / 2));
-        var fim    = Math.min(vals.length, inicio + janela);
+        var fim = Math.min(vals.length, inicio + janela);
         var s = 0;
         for (var k = inicio; k < fim; k++) { s = s + vals[k]; }
         return s / (fim - inicio);
     });
 
-    var linhaMM = d3.line()
-        .x(function(d, i) { return escX(i); })
-        .y(function(d) { return escY(d); })
-        .curve(d3.curveMonotoneX);
+    var linhaMM = d3.line().x(function(d, i) { return escX(i); }).y(function(d) { return escY(d); }).curve(d3.curveMonotoneX);
 
     g.append("path").datum(medMovel)
         .attr("fill", "none").attr("stroke", "#F75C03")
         .attr("stroke-width", 2.5).attr("d", linhaMM);
 
-    // Linha de média geral pontilhada
     g.append("line")
         .attr("x1", 0).attr("y1", escY(mediGeral))
         .attr("x2", LW).attr("y2", escY(mediGeral))
-        .attr("stroke", "#555570").attr("stroke-width", 1).attr("stroke-dasharray", "4,4");
+        .attr("stroke", "#9999B0").attr("stroke-width", 1).attr("stroke-dasharray", "4,4");
 
     g.append("text")
         .attr("x", LW + 3).attr("y", escY(mediGeral))
-        .attr("dy", "0.35em").attr("fill", "#555570").attr("font-size", "9px")
+        .attr("dy", "0.35em").attr("fill", "#9999B0").attr("font-size", "9px")
         .text("Méd " + mediGeral.toFixed(1));
 
-    // Overlay tooltip
     svg.append("rect")
         .attr("fill", "none").attr("pointer-events", "all")
         .attr("x", mg.l).attr("y", mg.t).attr("width", LW).attr("height", H)
         .on("mousemove", function(event) {
             var xPos = d3.pointer(event)[0] - mg.l;
-            var idx  = Math.round(escX.invert(xPos));
+            var idx = Math.round(escX.invert(xPos));
             idx = Math.max(0, Math.min(idx, jogos.length - 1));
             var j = jogos[idx];
             if (!j) { return; }
@@ -906,8 +829,6 @@ function renderTendencia() {
         .on("mouseout", hideTT);
 }
 
-
-// ── TABELA COM PAGINAÇÃO (item 1) ────────────────────────────
 function renderTabela() {
     var jogos = jogosVisiveis().slice();
 
@@ -917,71 +838,79 @@ function renderTabela() {
         return vb - va;
     });
 
-    var totalJogos  = jogos.length;
+    var totalJogos = jogos.length;
     var totalPaginas = Math.max(1, Math.ceil(totalJogos / porPagina));
-    if (paginaTabela > totalPaginas) { paginaTabela = totalPaginas; }
+    if (paginaTabela > totalPaginas) { 
+        paginaTabela = totalPaginas; 
+    }
 
     var inicio = (paginaTabela - 1) * porPagina;
-    var fim    = Math.min(inicio + porPagina, totalJogos);
+    var fim = Math.min(inicio + porPagina, totalJogos);
     var jogosPag = jogos.slice(inicio, fim);
 
     document.getElementById("lbl-tabela").textContent = totalJogos + " jogos · pág " + paginaTabela + "/" + totalPaginas;
 
     var html = "";
     for (var i = 0; i < jogosPag.length; i++) {
-        var j  = jogosPag[i];
+        var j = jogosPag[i];
         var dt = j.data ? new Date(j.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
         var mn = j.minutos ? String(j.minutos).split(":")[0] + "m" : "—";
 
         var pm = j.plus_minus;
         var pmHtml = "—";
         if (pm !== null && pm !== undefined) {
-            var pmCor = pm > 0 ? "#00C896" : pm < 0 ? "#FF3B5C" : "#8888AA";
+            var pmCor = pm > 0 ? "#00C896" : pm < 0 ? "#FF3B5C" : "#555570";
             pmHtml = '<span style="color:' + pmCor + ';">' + (pm > 0 ? "+" : "") + pm + '</span>';
         }
 
         html = html + '<tr>'
             + '<td class="td-sec">' + (j.adversario || "—") + '</td>'
             + '<td class="td-sec">' + dt + '</td>'
-            + '<td class="td-pts">' + (j.pontos       !== null && j.pontos       !== undefined ? j.pontos       : "—") + '</td>'
-            + '<td>'                + (j.assistencias  !== null && j.assistencias  !== undefined ? j.assistencias  : "—") + '</td>'
-            + '<td>'                + (j.rebotes       !== null && j.rebotes       !== undefined ? j.rebotes       : "—") + '</td>'
-            + '<td class="td-sec">' + (j.roubos        !== null && j.roubos        !== undefined ? j.roubos        : "—") + '</td>'
-            + '<td class="td-sec">' + (j.bloqueios     !== null && j.bloqueios     !== undefined ? j.bloqueios     : "—") + '</td>'
-            + '<td class="td-sec">' + (j.turnovers     !== null && j.turnovers     !== undefined ? j.turnovers     : "—") + '</td>'
-            + '<td class="td-sec">' + (j.fg_pct        !== null && j.fg_pct        !== undefined ? j.fg_pct + "%"  : "—") + '</td>'
-            + '<td class="td-sec">' + (j.three_pct     !== null && j.three_pct     !== undefined ? j.three_pct + "%": "—") + '</td>'
+            + '<td class="td-pts">' + (j.pontos !== null && j.pontos !== undefined ? j.pontos : "—") + '</td>'
+            + '<td>' + (j.assistencias  !== null && j.assistencias !== undefined ? j.assistencias : "—") + '</td>'
+            + '<td>' + (j.rebotes !== null && j.rebotes !== undefined ? j.rebotes : "—") + '</td>'
+            + '<td class="td-sec">' + (j.roubos !== null && j.roubos !== undefined ? j.roubos : "—") + '</td>'
+            + '<td class="td-sec">' + (j.bloqueios !== null && j.bloqueios !== undefined ? j.bloqueios : "—") + '</td>'
+            + '<td class="td-sec">' + (j.turnovers !== null && j.turnovers !== undefined ? j.turnovers : "—") + '</td>'
+            + '<td class="td-sec">' + (j.fg_pct !== null && j.fg_pct !== undefined ? j.fg_pct + "%"  : "—") + '</td>'
+            + '<td class="td-sec">' + (j.three_pct !== null && j.three_pct !== undefined ? j.three_pct + "%": "—") + '</td>'
             + '<td class="td-sec">' + pmHtml + '</td>'
             + '<td class="td-sec">' + mn + '</td>'
             + '</tr>';
     }
     document.getElementById("tbody-jogos").innerHTML = html;
 
-    // Paginação
     var navHtml = "";
     if (totalPaginas > 1) {
         navHtml = navHtml + '<div class="d-flex align-items-center gap-2 mt-3" style="font-size:.8rem;">';
         navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + (paginaTabela - 1) + ')" ' + (paginaTabela <= 1 ? "disabled" : "") + ' style="padding:4px 10px;">&lsaquo;</button>';
 
-        // Mostrar até 5 páginas ao redor da atual
         var pInicio = Math.max(1, paginaTabela - 2);
-        var pFim    = Math.min(totalPaginas, paginaTabela + 2);
+        var pFim = Math.min(totalPaginas, paginaTabela + 2);
 
-        if (pInicio > 1) { navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(1)" style="padding:4px 10px;">1</button>'; }
-        if (pInicio > 2) { navHtml = navHtml + '<span style="color:#555570;">…</span>'; }
+        if (pInicio > 1) { 
+            navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(1)" style="padding:4px 10px;">1</button>'; 
+        }
+        if (pInicio > 2) { 
+            navHtml = navHtml + '<span style="color:#9999B0;">…</span>'; 
+        }
 
         for (var pg = pInicio; pg <= pFim; pg++) {
             var cls = pg === paginaTabela ? "btn-nj ativo" : "btn-nj";
             navHtml = navHtml + '<button class="' + cls + '" onclick="irPagina(' + pg + ')" style="padding:4px 10px;">' + pg + '</button>';
         }
 
-        if (pFim < totalPaginas - 1) { navHtml = navHtml + '<span style="color:#555570;">…</span>'; }
-        if (pFim < totalPaginas)     { navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + totalPaginas + ')" style="padding:4px 10px;">' + totalPaginas + '</button>'; }
+        if (pFim < totalPaginas - 1) { 
+            navHtml = navHtml + '<span style="color:#9999B0;">…</span>'; 
+        }
+        if (pFim < totalPaginas) { 
+            navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + totalPaginas + ')" style="padding:4px 10px;">' + totalPaginas + '</button>'; 
+        }
 
         navHtml = navHtml + '<button class="btn-nj" onclick="irPagina(' + (paginaTabela + 1) + ')" ' + (paginaTabela >= totalPaginas ? "disabled" : "") + ' style="padding:4px 10px;">&rsaquo;</button>';
 
         var opcoesPP = [10, 15, 25, 50];
-        navHtml = navHtml + '<span style="color:#555570;margin-left:8px;">por página</span>';
+        navHtml = navHtml + '<span style="color:#9999B0;margin-left:8px;">por página</span>';
         navHtml = navHtml + '<select class="form-control-nba" style="max-width:70px;font-size:.75rem;" onchange="trocarPorPagina(this.value)">';
         for (var op = 0; op < opcoesPP.length; op++) {
             navHtml = navHtml + '<option value="' + opcoesPP[op] + '"' + (opcoesPP[op] === porPagina ? " selected" : "") + '>' + opcoesPP[op] + '</option>';
@@ -1002,7 +931,7 @@ function irPagina(pg) {
 }
 
 function trocarPorPagina(valor) {
-    porPagina    = parseInt(valor);
+    porPagina = parseInt(valor);
     paginaTabela = 1;
     renderTabela();
 }

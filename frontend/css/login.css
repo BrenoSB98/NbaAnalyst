@@ -1,5 +1,5 @@
 .pagina-login {
-    background-color: #0D0D14;
+    background-color: #F5F5F8;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -7,8 +7,8 @@
 }
 
 .card-login {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 40px 36px;
     width: 100%;
@@ -20,7 +20,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -32,21 +32,15 @@
     font-size: 1.6rem;
 }
 
-.login-subtitulo {
-    font-size: 0.88rem;
-    color: #8888AA;
-    margin-bottom: 32px;
-}
-
 .login-divisor {
-    border-color: #252540;
+    border-color: #D0D0E0;
     margin: 24px 0;
 }
 
 .login-rodape {
     text-align: center;
     font-size: 0.88rem;
-    color: #8888AA;
+    color: #555570;
     margin-top: 24px;
 }
 

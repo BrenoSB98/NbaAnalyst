@@ -8,7 +8,7 @@ from app.auth.auth import hash_password, verify_password, create_access_token, d
 from app.config import config
 from app.db.db_utils import get_db
 from app.db.models import Team, User
-from app.schemas.auth import Token, UserCreate, UserResponse
+from app.schemas.auth import Token, UserCreate, UserResponse, UserUpdateTimeFavorito
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/autenticacao/login")
@@ -85,4 +85,16 @@ def logout(token: str = Depends(oauth2_scheme)):
 
 @router.get("/eu", response_model=UserResponse)
 def meu_perfil(usuario_atual: User = Depends(obter_usuario_atual)):
+    return usuario_atual
+
+@router.patch("/eu/time-favorito", response_model=UserResponse)
+def atualizar_time_favorito(dados: UserUpdateTimeFavorito, db: Session = Depends(get_db), usuario_atual: User = Depends(obter_usuario_atual)):
+    if dados.favorite_team_id is not None:
+        time_existe = db.query(Team).filter(Team.id == dados.favorite_team_id).first()
+        if not time_existe:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time favorito não encontrado.")
+ 
+    usuario_atual.favorite_team_id = dados.favorite_team_id
+    db.commit()
+    db.refresh(usuario_atual)
     return usuario_atual

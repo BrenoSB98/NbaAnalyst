@@ -1,13 +1,7 @@
-/* ============================================
-   jogador-avancado.css — Perfil avançado de jogador
-   ============================================ */
-
-
-/* Cabeçalho */
 .cabecalho-jav {
     padding: 32px 0 24px;
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
 }
 
 .jav-avatar {
@@ -29,13 +23,13 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.7rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     margin-bottom: 4px;
 }
 
 .jav-meta {
     font-size: 0.82rem;
-    color: #8888AA;
+    color: #555570;
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
@@ -52,29 +46,25 @@
     font-size: 0.75rem;
 }
 
-
-/* Barra de controles fixa */
 .barra-controles-jav {
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     padding: 12px 0;
     position: sticky;
     top: 64px;
     z-index: 100;
 }
 
-
-/* Abas */
 .abas-jav {
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     position: sticky;
     top: 110px;
     z-index: 99;
 }
 
 .abas-jav .nav-link {
-    color: #8888AA;
+    color: #555570;
     font-size: 0.83rem;
     font-weight: 600;
     padding: 13px 18px;
@@ -87,24 +77,22 @@
     white-space: nowrap;
 }
 
-.abas-jav .nav-link:hover { color: #EEEEF5; }
+.abas-jav .nav-link:hover {
+    color: #1A1A2E;
+}
 
 .abas-jav .nav-link.ativo {
     color: #F75C03;
     border-bottom-color: #F75C03;
 }
 
-
-/* Área de conteúdo */
 .area-jav {
     padding: 28px 0 48px;
 }
 
-
-/* Card de KPI */
 .card-kpi-jav {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 16px;
     text-align: center;
@@ -125,14 +113,12 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #555570;
+    color: #888899;
 }
 
-
-/* Card de percentual de arremesso */
 .card-pct {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 16px 20px;
     display: flex;
@@ -144,7 +130,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     white-space: nowrap;
 }
 
@@ -153,13 +139,13 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #555570;
+    color: #888899;
 }
 
 .card-pct .pct-barra {
     flex: 1;
     height: 4px;
-    background-color: #252540;
+    background-color: #D0D0E0;
     border-radius: 2px;
     overflow: hidden;
 }
@@ -170,8 +156,6 @@
     background-color: #F75C03;
 }
 
-
-/* Linha de jogo na tabela */
 .tabela-jogos-jav {
     width: 100%;
     font-size: 0.82rem;
@@ -184,24 +168,28 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #555570;
+    color: #888899;
     padding: 8px 12px;
-    border-bottom: 1px solid #252540;
-    background-color: #12121C;
+    border-bottom: 1px solid #D0D0E0;
+    background-color: #EAEAF0;
     white-space: nowrap;
 }
 
 .tabela-jogos-jav tbody tr {
-    border-bottom: 1px solid #252540;
-    transition: background-color 0.15s ease;
+    border-bottom: 1px solid #D0D0E0;
 }
 
-.tabela-jogos-jav tbody tr:last-child { border-bottom: none; }
-.tabela-jogos-jav tbody tr:hover { background-color: #1D1E35; }
+.tabela-jogos-jav tbody tr:last-child {
+    border-bottom: none;
+}
+
+.tabela-jogos-jav tbody tr:hover {
+    background-color: #F0F0F7;
+}
 
 .tabela-jogos-jav tbody td {
     padding: 9px 12px;
-    color: #EEEEF5;
+    color: #1A1A2E;
     vertical-align: middle;
 }
 
@@ -211,13 +199,13 @@
     color: #F75C03;
 }
 
-.tabela-jogos-jav .td-sec { color: #8888AA; }
+.tabela-jogos-jav .td-sec {
+    color: #555570;
+}
 
-
-/* Containers gráfico D3 */
 .grafico-container {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 20px;
     overflow-x: auto;
@@ -229,30 +217,140 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #555570;
+    color: #888899;
     margin-bottom: 14px;
 }
 
-
 @media (max-width: 767px) {
-    .jav-nome { font-size: 1.35rem; }
-    .abas-jav { overflow-x: auto; }
-    .abas-jav .d-flex { flex-wrap: nowrap; }
+    .jav-nome {
+        font-size: 1.35rem;
+    }
+
+    .abas-jav {
+        overflow-x: auto;
+    }
+
+    .abas-jav .d-flex {
+        flex-wrap: nowrap;
+    }
 }
 
-.btn-stat { background:#1D1E35;border:1px solid #252540;color:#8888AA;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.05em; }
-.btn-stat:hover { border-color:#F75C03;color:#F75C03; }
-.btn-stat.ativo { background:#F75C03;border-color:#F75C03;color:#fff; }
-.btn-nj { background:#1D1E35;border:1px solid #252540;color:#8888AA;font-size:0.78rem;font-weight:700;padding:5px 13px;border-radius:6px;cursor:pointer;transition:all .15s; }
-.btn-nj:hover { border-color:#F75C03;color:#F75C03; }
-.btn-nj.ativo { background:#F75C03;border-color:#F75C03;color:#fff; }
-.sec-titulo { font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#EEEEF5;margin:28px 0 14px;letter-spacing:.02em; }
-.acento { width:28px;height:3px;background:#F75C03;border-radius:2px;margin-bottom:8px; }
-.gc { background:#16172A;border:1px solid #252540;border-radius:12px;padding:16px;overflow:hidden; }
-.gt { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#555570;margin-bottom:10px; }
-.d3-tt { position:fixed;background:#16172A;border:1px solid #252540;border-radius:8px;padding:8px 12px;font-size:11px;color:#EEEEF5;pointer-events:none;opacity:0;z-index:9999;line-height:1.6;max-width:200px; }
-.th-ord { cursor:pointer;user-select:none; }
-.th-ord:hover { color:#EEEEF5 !important; }
-.th-ord.asc::after  { content:" ▲";font-size:.6em; }
-.th-ord.desc::after { content:" ▼";font-size:.6em; }
-.linha-dest { background:#1A2840 !important; }
+.btn-stat {
+    background: #F0F0F7;
+    border: 1px solid #D0D0E0;
+    color: #555570;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-stat:hover {
+    border-color: #F75C03;
+    color: #F75C03;
+}
+
+.btn-stat.ativo {
+    background: #F75C03;
+    border-color: #F75C03;
+    color: #fff;
+}
+
+.btn-nj {
+    background: #F0F0F7;
+    border: 1px solid #D0D0E0;
+    color: #555570;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-nj:hover {
+    border-color: #F75C03;
+    color: #F75C03;
+}
+
+.btn-nj.ativo {
+    background: #F75C03;
+    border-color: #F75C03;
+    color: #fff;
+}
+
+.sec-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1A1A2E;
+    margin: 28px 0 14px;
+    letter-spacing: 0.02em;
+}
+
+.acento {
+    width: 28px;
+    height: 3px;
+    background: #F75C03;
+    border-radius: 2px;
+    margin-bottom: 8px;
+}
+
+.gc {
+    background: #FFFFFF;
+    border: 1px solid #D0D0E0;
+    border-radius: 12px;
+    padding: 16px;
+    overflow: hidden;
+}
+
+.gt {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888899;
+    margin-bottom: 10px;
+}
+
+.d3-tt {
+    position: fixed;
+    background: #FFFFFF;
+    border: 1px solid #D0D0E0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #1A1A2E;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 9999;
+    line-height: 1.6;
+    max-width: 200px;
+}
+
+.th-ord {
+    cursor: pointer;
+    user-select: none;
+}
+
+.th-ord:hover {
+    color: #1A1A2E !important;
+}
+
+.th-ord.asc::after {
+    content: " ▲";
+    font-size: 0.6em;
+}
+
+.th-ord.desc::after {
+    content: " ▼";
+    font-size: 0.6em;
+}
+
+.linha-dest {
+    background: #EAF0F8 !important;
+}

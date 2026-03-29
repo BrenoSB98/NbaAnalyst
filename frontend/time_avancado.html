@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Time Avançado</title>
+    <title>Perfil Privado Franquia</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -16,19 +16,13 @@
     <nav id="navbar-principal"></nav>
 
     <main id="conteudo-principal">
-
-        <!-- Spinner inicial -->
         <div id="pagina-carregando">
             <div class="spinner-nba" style="margin-top: 80px;">
                 <div class="bola-animada"></div>
                 <span>Carregando dashboard...</span>
             </div>
         </div>
-
-        <!-- Conteúdo principal -->
         <div id="pagina-conteudo" style="display: none;">
-
-            <!-- Cabeçalho -->
             <div class="cabecalho-avancado">
                 <div class="container">
                     <div class="d-flex align-items-center gap-4 flex-wrap">
@@ -39,7 +33,6 @@
                             <h1 class="time-nome-avancado" id="time-nome">—</h1>
                             <div class="time-meta" id="time-meta"></div>
                         </div>
-
                         <div class="d-flex gap-2">
                             <a href="javascript:history.back()" class="btn-nba-ghost btn-nba btn-sm">
                                 <i class="bi bi-arrow-left me-1"></i> Voltar
@@ -52,8 +45,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Seletor de temporada -->
             <div class="barra-temporada">
                 <div class="container">
                     <div class="d-flex align-items-center gap-3">
@@ -72,11 +63,8 @@
             <div class="area-conteudo-avancado">
                 <div class="container">
 
-                    <!-- KPIs de desempenho -->
                     <div class="linha-acento mb-2"></div>
                     <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Desempenho na Temporada</h2>
-
-                    <!-- Spinner dos KPIs -->
                     <div id="kpis-carregando">
                         <div class="spinner-nba" style="padding: 24px;">
                             <div class="bola-animada"></div>
@@ -87,8 +75,6 @@
                     <div id="kpis-conteudo" style="display: none;">
                         <div class="row g-3 mb-4" id="grid-kpis"></div>
                     </div>
-
-                    <!-- Tendências -->
                     <h2 class="titulo-secao mt-4 mb-3" style="font-size: 1rem;">Tendências Recentes</h2>
 
                     <div id="tendencias-carregando">
@@ -101,11 +87,7 @@
                     <div id="tendencias-conteudo" style="display: none;">
                         <div class="row g-3 mb-4" id="grid-tendencias"></div>
                     </div>
-
-                    <!-- Gráficos e últimos jogos lado a lado -->
                     <div class="row g-4 mt-1">
-
-                        <!-- Gráfico D3: pontos feitos vs sofridos -->
                         <div class="col-12 col-lg-8">
                             <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Pontos Feitos vs Sofridos</h2>
 
@@ -123,8 +105,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Últimos 5 jogos -->
                         <div class="col-12 col-lg-4">
                             <h2 class="titulo-secao mb-3" style="font-size: 1rem;">Últimos Jogos</h2>
 
@@ -143,8 +123,6 @@
                         </div>
 
                     </div>
-
-                    <!-- Gráfico D3: gauge de aproveitamento -->
                     <div class="row g-4 mt-1">
 
                         <div class="col-12 col-md-6">
@@ -169,8 +147,6 @@
             </div>
 
         </div>
-
-        <!-- Erro -->
         <div id="pagina-erro" style="display: none;">
             <div class="estado-vazio" style="margin-top: 80px;">
                 <i class="bi bi-exclamation-circle icone-vazio"></i>
@@ -192,12 +168,9 @@
 <script src="js/componentes.js"></script>
 
 <script>
-// Guarda de rota
 verificarAutenticacao();
 
 var timeId = obterParametroUrl("id");
-
-// Guarda os dados de performance para os gráficos
 var dadosPerformance = null;
 var dadosEstatisticas = null;
 
@@ -213,13 +186,9 @@ document.addEventListener("DOMContentLoaded", function() {
     carregarCabecalho();
 });
 
-
-// Recarrega tudo ao trocar temporada
 function recarregarDados() {
     dadosPerformance = null;
     dadosEstatisticas = null;
-
-    // Oculta todos os conteúdos e mostra spinners
     document.getElementById("kpis-conteudo").style.display = "none";
     document.getElementById("kpis-carregando").style.display = "block";
     document.getElementById("tendencias-conteudo").style.display = "none";
@@ -237,8 +206,6 @@ function recarregarDados() {
     carregarTendencias();
 }
 
-
-// Carrega dados básicos do time (público) para montar o cabeçalho
 async function carregarCabecalho() {
     try {
         var dados = await chamarApi("/times/" + timeId);
@@ -266,7 +233,6 @@ async function carregarCabecalho() {
         document.getElementById("pagina-carregando").style.display = "none";
         document.getElementById("pagina-conteudo").style.display = "block";
 
-        // Carrega os dados analíticos
         carregarEstatisticas();
         carregarPerformance();
         carregarTendencias();
@@ -277,8 +243,6 @@ async function carregarCabecalho() {
     }
 }
 
-
-// Carrega estatísticas gerais da temporada
 async function carregarEstatisticas() {
     var temporada = document.getElementById("select-temporada").value;
 
@@ -289,9 +253,9 @@ async function carregarEstatisticas() {
             { valor: dadosEstatisticas.vitorias,          rotulo: "Vitórias",        cor: "#00C896" },
             { valor: dadosEstatisticas.derrotas,           rotulo: "Derrotas",        cor: "#FF3B5C" },
             { valor: dadosEstatisticas.aproveitamento + "%", rotulo: "Aproveitamento", cor: "#F75C03" },
-            { valor: dadosEstatisticas.total_jogos,        rotulo: "Jogos",           cor: "#EEEEF5" },
-            { valor: dadosEstatisticas.jogos_casa,         rotulo: "Casa",            cor: "#EEEEF5" },
-            { valor: dadosEstatisticas.jogos_fora,         rotulo: "Fora",            cor: "#EEEEF5" }
+            { valor: dadosEstatisticas.total_jogos,        rotulo: "Jogos",           cor: "#1A1A2E" },
+            { valor: dadosEstatisticas.jogos_casa,         rotulo: "Casa",            cor: "#1A1A2E" },
+            { valor: dadosEstatisticas.jogos_fora,         rotulo: "Fora",            cor: "#1A1A2E" }
         ];
 
         var html = "";
@@ -374,8 +338,8 @@ async function carregarTendencias() {
             + '</div>'
             + '<div class="col-6 col-md-3">'
             +   '<div class="card-tendencia">'
-            +     '<i class="bi bi-bar-chart tend-icone" style="color:#8888AA;"></i>'
-            +     '<div><div class="tend-titulo">Média pts sofridos</div><div class="tend-valor" style="color:#8888AA;">' + dados.media_pontos_sofridos + '</div></div>'
+            +     '<i class="bi bi-bar-chart tend-icone" style="color:#555570;"></i>'
+            +     '<div><div class="tend-titulo">Média pts sofridos</div><div class="tend-valor" style="color:#555570;">' + dados.media_pontos_sofridos + '</div></div>'
             +   '</div>'
             + '</div>';
 
@@ -440,12 +404,12 @@ function renderizarGraficoPontos(jogos) {
     var container = document.getElementById("grafico-pontos");
     container.innerHTML = "";
 
-    var larguraTotal  = container.offsetWidth || 480;
-    var margemEsq     = 36;
-    var margemDir     = 16;
-    var margemTopo    = 10;
-    var margemBaixo   = 40;
-    var altura        = 200;
+    var larguraTotal = container.offsetWidth || 480;
+    var margemEsq = 36;
+    var margemDir = 16;
+    var margemTopo = 10;
+    var margemBaixo = 40;
+    var altura = 200;
     var larguraBarras = larguraTotal - margemEsq - margemDir;
 
     var svg = d3.select("#grafico-pontos")
@@ -500,7 +464,7 @@ function renderizarGraficoPontos(jogos) {
         .attr("y", function(d) { return escalaY(d.pontos_sofridos || 0); })
         .attr("width", larguraBarra)
         .attr("height", function(d) { return altura - escalaY(d.pontos_sofridos || 0); })
-        .attr("fill", "#252540")
+        .attr("fill", "#CCCCDD")
         .attr("rx", 3);
 
     // Eixo Y — valores de pontos
@@ -508,8 +472,8 @@ function renderizarGraficoPontos(jogos) {
         .call(d3.axisLeft(escalaY).ticks(4).tickSize(-larguraBarras))
         .call(function(axis) {
             axis.select(".domain").remove();
-            axis.selectAll(".tick line").attr("stroke", "#252540");
-            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px");
+            axis.selectAll(".tick line").attr("stroke", "#CCCCDD");
+            axis.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px");
         });
 
     // Eixo X — datas dos jogos
@@ -518,15 +482,15 @@ function renderizarGraficoPontos(jogos) {
         .call(d3.axisBottom(escalaX).tickSize(0))
         .call(function(axis) {
             axis.select(".domain").remove();
-            axis.selectAll(".tick text").attr("fill", "#555570").attr("font-size", "10px").attr("dy", "1.2em");
+            axis.selectAll(".tick text").attr("fill", "#9999B0").attr("font-size", "10px").attr("dy", "1.2em");
         });
 
     // Legenda simples
     var legenda = svg.append("g").attr("transform", "translate(" + margemEsq + "," + (altura + margemTopo + 26) + ")");
     legenda.append("rect").attr("width", 10).attr("height", 10).attr("rx", 2).attr("fill", "#F75C03");
-    legenda.append("text").attr("x", 14).attr("y", 9).attr("fill", "#8888AA").attr("font-size", "10px").text("Feitos");
-    legenda.append("rect").attr("x", 60).attr("width", 10).attr("height", 10).attr("rx", 2).attr("fill", "#252540");
-    legenda.append("text").attr("x", 74).attr("y", 9).attr("fill", "#8888AA").attr("font-size", "10px").text("Sofridos");
+    legenda.append("text").attr("x", 14).attr("y", 9).attr("fill", "#555570").attr("font-size", "10px").text("Feitos");
+    legenda.append("rect").attr("x", 60).attr("width", 10).attr("height", 10).attr("rx", 2).attr("fill", "#CCCCDD");
+    legenda.append("text").attr("x", 74).attr("y", 9).attr("fill", "#555570").attr("font-size", "10px").text("Sofridos");
 
     document.getElementById("grafico-conteudo").style.display = "block";
 }
@@ -539,11 +503,11 @@ function renderizarGaugeAproveitamento(aproveitamento) {
     var container = document.getElementById("grafico-gauge");
     container.innerHTML = "";
 
-    var largura  = 220;
-    var altura   = 130;
-    var raio     = 90;
-    var cx       = largura / 2;
-    var cy       = altura - 10;
+    var largura = 220;
+    var altura = 130;
+    var raio = 90;
+    var cx = largura / 2;
+    var cy = altura - 10;
 
     var svg = d3.select("#grafico-gauge")
         .append("svg")
@@ -561,7 +525,7 @@ function renderizarGaugeAproveitamento(aproveitamento) {
 
     svg.append("path")
         .attr("d", arcFundo())
-        .attr("fill", "#252540")
+        .attr("fill", "#CCCCDD")
         .attr("transform", "translate(" + cx + "," + cy + ")");
 
     // Arco de preenchimento (laranja) — proporcional ao aproveitamento
@@ -586,7 +550,7 @@ function renderizarGaugeAproveitamento(aproveitamento) {
         .attr("x", cx)
         .attr("y", cy - 12)
         .attr("text-anchor", "middle")
-        .attr("fill", "#EEEEF5")
+        .attr("fill", "#1A1A2E")
         .attr("font-family", "Oswald, sans-serif")
         .attr("font-size", "28px")
         .attr("font-weight", "700")
@@ -596,7 +560,7 @@ function renderizarGaugeAproveitamento(aproveitamento) {
         .attr("x", cx)
         .attr("y", cy + 6)
         .attr("text-anchor", "middle")
-        .attr("fill", "#555570")
+        .attr("fill", "#9999B0")
         .attr("font-size", "10px")
         .attr("letter-spacing", "1")
         .text("APROVEITAMENTO");
@@ -625,11 +589,11 @@ function renderizarGraficoCasaFora(dados) {
         { label: "Fora — D", valor: dFora, cor: "#FF3B5C" }
     ];
 
-    var larguraTotal  = container.offsetWidth || 340;
-    var margemEsq     = 80;
-    var margemDir     = 40;
-    var alturaLinha   = 32;
-    var alturaTotal   = itens.length * alturaLinha + 16;
+    var larguraTotal = container.offsetWidth || 340;
+    var margemEsq = 80;
+    var margemDir = 40;
+    var alturaLinha = 32;
+    var alturaTotal = itens.length * alturaLinha + 16;
     var larguraBarras = larguraTotal - margemEsq - margemDir;
 
     var svg = d3.select("#grafico-casa-fora")
@@ -666,7 +630,7 @@ function renderizarGraficoCasaFora(dados) {
         .attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
         .attr("dy", "0.35em")
         .attr("text-anchor", "end")
-        .attr("fill", "#8888AA")
+        .attr("fill", "#555570")
         .attr("font-size", "11px")
         .text(function(d) { return d.label; });
 
@@ -678,7 +642,7 @@ function renderizarGraficoCasaFora(dados) {
         .attr("x", function(d) { return escalaX(d.valor) + 5; })
         .attr("y", function(d) { return escalaY(d.label) + escalaY.bandwidth() / 2; })
         .attr("dy", "0.35em")
-        .attr("fill", "#EEEEF5")
+        .attr("fill", "#1A1A2E")
         .attr("font-size", "11px")
         .attr("font-weight", "600")
         .text(function(d) { return d.valor; });

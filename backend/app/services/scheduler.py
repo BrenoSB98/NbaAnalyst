@@ -17,9 +17,9 @@ def job_gerar_predicoes():
     try:
         for db in get_db():
             total = salvar_predicoes_dia_atual(db=db, season=temporada)
-            logger.info(f"Predições geradas: {total}")
+            logger.info(f"Palpites gerados: {total}")
     except Exception as erro:
-        logger.error(f"Erro no job de predições: {erro}")
+        logger.error(f"Erro no job de palpites: {erro}")
     finally:
         if db:
             db.close()
@@ -33,7 +33,7 @@ def iniciar_scheduler():
         func=job_gerar_predicoes,
         trigger=CronTrigger(hour=8, minute=0),
         id="job_predicoes_diarias",
-        name="Geração Diária de Predições",
+        name="Geração Diária de Palpites",
         replace_existing=True,
         misfire_grace_time=3600,
     )

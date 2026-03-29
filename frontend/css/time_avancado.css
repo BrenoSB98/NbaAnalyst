@@ -1,13 +1,7 @@
-/* ============================================
-   time-avancado.css — Perfil avançado de time
-   ============================================ */
-
-
-/* Cabeçalho com logo e info do time */
 .cabecalho-avancado {
     padding: 32px 0 28px;
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
 }
 
 .time-logo-avancado {
@@ -19,7 +13,7 @@
 .time-logo-placeholder-av {
     width: 72px;
     height: 72px;
-    background-color: #252540;
+    background-color: #D0D0E0;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -35,13 +29,13 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.8rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     margin-bottom: 4px;
 }
 
 .time-meta {
     font-size: 0.82rem;
-    color: #8888AA;
+    color: #555570;
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
@@ -58,28 +52,22 @@
     font-size: 0.75rem;
 }
 
-
-/* Seletor de temporada */
 .barra-temporada {
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     padding: 12px 0;
     position: sticky;
     top: 64px;
     z-index: 100;
 }
 
-
-/* Área de conteúdo */
 .area-conteudo-avancado {
     padding: 28px 0 48px;
 }
 
-
-/* Card de KPI compacto */
 .card-kpi-av {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 18px 16px;
     text-align: center;
@@ -90,7 +78,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.9rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     line-height: 1;
     margin-bottom: 4px;
 }
@@ -100,14 +88,12 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #555570;
+    color: #888899;
 }
 
-
-/* Card de tendência */
 .card-tendencia {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 18px 20px;
     display: flex;
@@ -125,7 +111,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #555570;
+    color: #888899;
     margin-bottom: 2px;
 }
 
@@ -135,15 +121,21 @@
     font-weight: 700;
 }
 
-.tend-melhorando  { color: #00C896; }
-.tend-piorando    { color: #FF3B5C; }
-.tend-estavel     { color: #FFD600; }
+.tend-melhorando {
+    color: #00C896;
+}
 
+.tend-piorando {
+    color: #FF3B5C;
+}
 
-/* Containers dos gráficos D3 */
+.tend-estavel {
+    color: #FFD600;
+}
+
 .grafico-container {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 20px;
     overflow-x: auto;
@@ -155,18 +147,16 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #8888AA;
+    color: #888899;
     margin-bottom: 16px;
 }
 
-
-/* Linha de último jogo */
 .linha-jogo-av {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid #252540;
+    border-bottom: 1px solid #D0D0E0;
 }
 
 .linha-jogo-av:last-child {
@@ -186,30 +176,38 @@
     flex-shrink: 0;
 }
 
-.res-badge.v { background-color: rgba(0, 200, 150, 0.15); color: #00C896; }
-.res-badge.d { background-color: rgba(255, 59, 92, 0.15);  color: #FF3B5C; }
+.res-badge.v {
+    background-color: rgba(0, 200, 150, 0.12);
+    color: #00C896;
+}
+
+.res-badge.d {
+    background-color: rgba(255, 59, 92, 0.12);
+    color: #FF3B5C;
+}
 
 .linha-jogo-av .placar {
     font-family: 'Oswald', sans-serif;
     font-size: 1rem;
     font-weight: 600;
-    color: #EEEEF5;
+    color: #1A1A2E;
     white-space: nowrap;
 }
 
 .linha-jogo-av .local-jogo {
     font-size: 0.72rem;
-    color: #8888AA;
+    color: #555570;
     flex: 1;
 }
 
 .linha-jogo-av .data-jogo {
     font-size: 0.72rem;
-    color: #555570;
+    color: #888899;
     white-space: nowrap;
 }
 
-
 @media (max-width: 767px) {
-    .time-nome-avancado { font-size: 1.4rem; }
+    .time-nome-avancado {
+        font-size: 1.4rem;
+    }
 }

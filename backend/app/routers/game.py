@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
@@ -66,6 +67,23 @@ def listar_jogos(temporada: int = Query(None), time_id: int = Query(None), data_
         "jogos": lista_jogos
         }
 
+@router.get("/contagem-hoje")
+def contar_jogos_hoje(db: Session = Depends(get_db)):
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    agora_sp = datetime.now(fuso_sp)
+    inicio_sp = agora_sp.replace(hour=10, minute=0, second=0, microsecond=0)
+    fim_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1, hours=2)
+ 
+    inicio_utc = inicio_sp.astimezone(timezone.utc)
+    fim_utc = fim_sp.astimezone(timezone.utc)
+ 
+    total = db.query(Game).filter(
+        Game.date_start >= inicio_utc,
+        Game.date_start < fim_utc
+    ).count()
+ 
+    return {"total_jogos": total}
+
 @router.get("/proximos", response_model=ProximosJogosResponse)
 def proximos_jogos(dias: int = Query(7, ge=1, le=30), time_id: int = Query(None), db: Session = Depends(get_db)):
     hoje = datetime.now()
@@ -95,12 +113,22 @@ def proximos_jogos(dias: int = Query(7, ge=1, le=30), time_id: int = Query(None)
         lista_jogos.append({
             "id": jogo.id,
             "data_inicio": jogo.date_start,
-            "time_casa": {"id": jogo.home_team_id, "nome": nome_casa},
-            "time_fora": {"id": jogo.away_team_id, "nome": nome_fora},
+            "time_casa": {
+                "id": jogo.home_team_id,
+                "nome": nome_casa
+            },
+            "time_fora": {
+                "id": jogo.away_team_id,
+                "nome": nome_fora
+            },
             "arena": jogo.arena_name,
         })
 
-    return {"total": len(lista_jogos), "dias": dias, "jogos": lista_jogos}
+    return {
+        "total": len(lista_jogos),
+        "dias": dias,
+        "jogos": lista_jogos
+    }
 
 @router.get("/{jogo_id}", response_model=GameDetalheResponse)
 def obter_jogo(jogo_id: int, db: Session = Depends(get_db)):
@@ -142,7 +170,12 @@ def obter_jogo(jogo_id: int, db: Session = Depends(get_db)):
         info_fora["logo"] = time_fora.logo
 
     for score in scores:
-        parciais = {"q1": score.linescore_q1, "q2": score.linescore_q2, "q3": score.linescore_q3, "q4": score.linescore_q4}
+        parciais = {
+            "q1": score.linescore_q1,
+            "q2": score.linescore_q2,
+            "q3": score.linescore_q3,
+            "q4": score.linescore_q4
+        }
         if score.is_home:
             info_casa["pontos"] = score.points
             info_casa["parciais"] = parciais
@@ -187,15 +220,25 @@ def estatisticas_times_jogo(jogo_id: int, db: Session = Depends(get_db)):
     lista_stats = []
     for stat in stats:
         time = db.query(Team).filter(Team.id == stat.team_id).first()
-        nome_time = time.name if time else None
+
+        if time:
+            nome_time = time.name
+        else:
+            nome_time = None
 
         lista_stats.append({
             "time_id": stat.team_id,
             "nome_time": nome_time,
             "pontos": stat.points,
-            "fgm": stat.fgm, "fga": stat.fga, "fgp": float(stat.fgp) if stat.fgp is not None else None,
-            "ftm": stat.ftm, "fta": stat.fta, "ftp": float(stat.ftp) if stat.ftp is not None else None,
-            "tpm": stat.tpm, "tpa": stat.tpa, "tpp": float(stat.tpp) if stat.tpp is not None else None,
+            "fgm": stat.fgm,
+            "fga": stat.fga,
+            "fgp": float(stat.fgp) if stat.fgp is not None else None,
+            "ftm": stat.ftm,
+            "fta": stat.fta,
+            "ftp": float(stat.ftp) if stat.ftp is not None else None,
+            "tpm": stat.tpm,
+            "tpa": stat.tpa,
+            "tpp": float(stat.tpp) if stat.tpp is not None else None,
             "rebotes_ofensivos": stat.off_reb,
             "rebotes_defensivos": stat.def_reb,
             "rebotes_totais": stat.tot_reb,
@@ -213,7 +256,10 @@ def estatisticas_times_jogo(jogo_id: int, db: Session = Depends(get_db)):
             "maior_sequencia": stat.longest_run,
         })
 
-    return {"jogo_id": jogo_id, "estatisticas_times": lista_stats}
+    return {
+        "jogo_id": jogo_id,
+        "estatisticas_times": lista_stats
+    }
 
 @router.get("/{jogo_id}/estatisticas-jogadores", response_model=EstatisticasJogadoresJogoResponse)
 def estatisticas_jogadores_jogo(jogo_id: int, db: Session = Depends(get_db)):
@@ -244,9 +290,15 @@ def estatisticas_jogadores_jogo(jogo_id: int, db: Session = Depends(get_db)):
             "bloqueios": stat.blocks,
             "turnovers": stat.turnovers,
             "faltas": stat.p_fouls,
-            "fgm": stat.fgm, "fga": stat.fga, "fgp": float(stat.fgp) if stat.fgp is not None else None,
-            "ftm": stat.ftm, "fta": stat.fta, "ftp": float(stat.ftp) if stat.ftp is not None else None,
-            "tpm": stat.tpm, "tpa": stat.tpa, "tpp": float(stat.tpp) if stat.tpp is not None else None,
+            "fgm": stat.fgm,
+            "fga": stat.fga,
+            "fgp": float(stat.fgp) if stat.fgp is not None else None,
+            "ftm": stat.ftm,
+            "fta": stat.fta,
+            "ftp": float(stat.ftp) if stat.ftp is not None else None,
+            "tpm": stat.tpm,
+            "tpa": stat.tpa,
+            "tpp": float(stat.tpp) if stat.tpp is not None else None,
             "plus_minus": stat.plus_minus,
             "comentario": stat.comment,
         })

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Confrontos</title>
+    <title>Confrontos</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -92,7 +92,7 @@
                         </div>
                     </div>
 
-                    <div style="background:#12121C;border:1px solid #252540;border-radius:12px;overflow:hidden;">
+                    <div class="tabela-confronto-wrapper">
                         <table class="tabela-confronto">
                             <thead>
                                 <tr>
@@ -132,7 +132,7 @@ var STATS_EXIBIDAS = [
     { campo: "plus_minus", rotulo: "+/-" },
     { campo: "fg_pct", rotulo: "FG%" },
     { campo: "three_pct", rotulo: "3P%" },
-    { campo: "ft_pct", rotulo: "FT%" },
+    { campo: "ft_pct", rotulo: "FT%" }
 ];
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -146,8 +146,12 @@ async function carregarTimes() {
         var times = dados.times || [];
 
         times.sort(function(a, b) {
-            if (a.nome < b.nome) { return -1; }
-            if (a.nome > b.nome) { return 1; }
+            if (a.nome < b.nome) {
+                return -1;
+            }
+            if (a.nome > b.nome) {
+                return 1;
+            }
             return 0;
         });
 
@@ -204,7 +208,7 @@ async function buscarConfrontos() {
 
     try {
         var qs = construirQueryString({ time_casa_id: timeCasaId, time_fora_id: timeForaId, ultimos_n: ultimosN });
-        var dados = await chamarApi("/confrontos/analise" + qs);
+        var dados = await chamarApiAutenticada("/confrontos/analise" + qs);
 
         esconderTudo();
         renderizarConfronto(dados);
@@ -230,11 +234,16 @@ function renderizarCardTime(elementId, infoTime, corBorda) {
 
     var jogosTexto = "";
     if (infoTime.medias) {
-        jogosTexto = '<div style="font-size:.72rem;color:#555570;margin-top:2px;">Média dos últimos ' + infoTime.medias.jogos_considerados + ' jogos</div>';
+        jogosTexto = '<div class="time-info-jogos">Média dos últimos ' + infoTime.medias.jogos_considerados + ' jogos</div>';
     }
 
     container.style.borderColor = corBorda;
-    container.innerHTML = logoHtml + '<div class="time-info"><div class="time-info-nome">' + infoTime.nome + '</div><div class="time-info-apelido">' + (infoTime.apelido || "") + '</div>' + jogosTexto + '</div>';
+    container.innerHTML = logoHtml
+        + '<div class="time-info">'
+        + '<div class="time-info-nome">' + infoTime.nome + '</div>'
+        + '<div class="time-info-apelido">' + (infoTime.apelido || "") + '</div>'
+        + jogosTexto
+        + '</div>';
 }
 
 function renderizarConfronto(dados) {
@@ -283,7 +292,6 @@ function renderizarTabela(casa, fora, historico) {
     html = html + '<td class="td-stat">Vitórias (' + totalJogos + ' jogos)</td>';
     html = html + '<td class="' + classeVitFora + '">' + vitFora + '</td>';
     html = html + '</tr>';
-
     html = html + '<tr class="tr-separador"><td colspan="3"></td></tr>';
 
     for (var i = 0; i < STATS_EXIBIDAS.length; i++) {
@@ -312,11 +320,19 @@ function renderizarTabela(casa, fora, historico) {
             }
 
             if (menorMelhor) {
-                if (valorCasa < valorFora) { classeCasa = "td-valor-casa td-vantagem"; }
-                if (valorFora < valorCasa) { classeFora = "td-valor-fora td-vantagem"; }
+                if (valorCasa < valorFora) {
+                    classeCasa = "td-valor-casa td-vantagem";
+                }
+                if (valorFora < valorCasa) {
+                    classeFora = "td-valor-fora td-vantagem";
+                }
             } else {
-                if (valorCasa > valorFora) { classeCasa = "td-valor-casa td-vantagem"; }
-                if (valorFora > valorCasa) { classeFora = "td-valor-fora td-vantagem"; }
+                if (valorCasa > valorFora) {
+                    classeCasa = "td-valor-casa td-vantagem";
+                }
+                if (valorFora > valorCasa) {
+                    classeFora = "td-valor-fora td-vantagem";
+                }
             }
         }
 

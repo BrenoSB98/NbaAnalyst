@@ -1,20 +1,12 @@
-/* ============================================
-   predicoes.css — Modelo preditivo do dia
-   ============================================ */
-
-
-/* Cabeçalho */
 .cabecalho-predicoes {
     padding: 40px 0 32px;
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
 }
 
-
-/* Abas de visualização */
 .abas-predicoes {
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     padding: 0;
     position: sticky;
     top: 64px;
@@ -22,7 +14,7 @@
 }
 
 .abas-predicoes .nav-link {
-    color: #8888AA;
+    color: #555570;
     font-size: 0.85rem;
     font-weight: 600;
     padding: 14px 20px;
@@ -35,7 +27,7 @@
 }
 
 .abas-predicoes .nav-link:hover {
-    color: #EEEEF5;
+    color: #1A1A2E;
 }
 
 .abas-predicoes .nav-link.ativo {
@@ -43,30 +35,25 @@
     border-bottom-color: #F75C03;
 }
 
-
-/* Área de conteúdo */
 .area-predicoes {
     padding: 32px 0 48px;
 }
 
-
-/* Card de jogo com predições */
 .card-jogo-predicao {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     margin-bottom: 20px;
     overflow: hidden;
 }
 
-/* Cabeçalho do card de jogo */
 .card-jogo-predicao .jogo-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px;
-    background-color: #12121C;
-    border-bottom: 1px solid #252540;
+    background-color: #EAEAF0;
+    border-bottom: 1px solid #D0D0E0;
     cursor: pointer;
     gap: 12px;
 }
@@ -75,7 +62,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1rem;
     font-weight: 600;
-    color: #EEEEF5;
+    color: #1A1A2E;
 }
 
 .card-jogo-predicao .jogo-badge {
@@ -83,7 +70,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    background-color: rgba(247, 92, 3, 0.12);
+    background-color: rgba(247, 92, 3, 0.10);
     color: #F75C03;
     border-radius: 20px;
     padding: 3px 10px;
@@ -91,7 +78,7 @@
 }
 
 .card-jogo-predicao .jogo-seta {
-    color: #555570;
+    color: #888899;
     font-size: 0.85rem;
     transition: transform 0.2s ease;
     flex-shrink: 0;
@@ -101,7 +88,6 @@
     transform: rotate(180deg);
 }
 
-/* Tabela de jogadores dentro do card */
 .tabela-predicoes {
     width: 100%;
     font-size: 0.85rem;
@@ -113,16 +99,15 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #555570;
+    color: #888899;
     padding: 8px 18px;
-    border-bottom: 1px solid #252540;
-    background-color: #16172A;
+    border-bottom: 1px solid #D0D0E0;
+    background-color: #EAEAF0;
     white-space: nowrap;
 }
 
 .tabela-predicoes tbody tr {
-    border-bottom: 1px solid #252540;
-    transition: background-color 0.15s ease;
+    border-bottom: 1px solid #D0D0E0;
 }
 
 .tabela-predicoes tbody tr:last-child {
@@ -130,12 +115,12 @@
 }
 
 .tabela-predicoes tbody tr:hover {
-    background-color: #1D1E35;
+    background-color: #F0F0F7;
 }
 
 .tabela-predicoes tbody td {
     padding: 10px 18px;
-    color: #EEEEF5;
+    color: #1A1A2E;
     vertical-align: middle;
 }
 
@@ -144,7 +129,7 @@
 }
 
 .tabela-predicoes .td-jogador a {
-    color: #EEEEF5;
+    color: #1A1A2E;
     text-decoration: none;
 }
 
@@ -154,7 +139,7 @@
 
 .tabela-predicoes .td-local {
     font-size: 0.72rem;
-    color: #8888AA;
+    color: #555570;
 }
 
 .tabela-predicoes .td-valor {
@@ -169,23 +154,19 @@
 .tabela-predicoes .td-valor-sec {
     font-family: 'Oswald', sans-serif;
     font-size: 0.9rem;
-    color: #8888AA;
+    color: #555570;
     text-align: right;
     white-space: nowrap;
 }
 
-
-/* Aba ranking — gráfico D3 */
 .grafico-container {
-    background-color: #16172A;
-    border: 1px solid #252540;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 20px;
     overflow-x: auto;
 }
 
-
-/* Resumo do dia no cabeçalho */
 .resumo-dia {
     display: flex;
     gap: 24px;
@@ -201,7 +182,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 1.6rem;
     font-weight: 700;
-    color: #EEEEF5;
+    color: #1A1A2E;
     line-height: 1;
 }
 
@@ -210,6 +191,134 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #555570;
+    color: #888899;
     margin-top: 2px;
+}
+
+.card-jogo-palpite {
+    background: #FFFFFF;
+    border: 1px solid #CCCCDD;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+.jogo-titulo {
+    background: #EEEEF5;
+    border-bottom: 1px solid #CCCCDD;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    cursor: pointer;
+}
+.jogo-titulo:hover {
+    background: #F0F0F8;
+}
+.jogo-titulo .times-nome {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: .02em;
+}
+.jogo-titulo .times-nome span {
+    color: #9999B0;
+    margin: 0 6px;
+}
+.jogo-titulo .jogo-seta {
+    color: #9999B0;
+    transition: transform .2s;
+}
+.jogo-titulo .jogo-seta.aberto {
+    transform: rotate(180deg);
+}
+.jogo-corpo {
+    display: block;
+}
+.times-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+.time-coluna {
+    padding: 16px;
+}
+.time-coluna:first-child {
+    border-right: 1px solid #CCCCDD;
+}
+.time-coluna-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #9999B0;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #CCCCDD;
+}
+.time-coluna-titulo.casa {
+    color: #F75C03;
+    border-color: #F75C03;
+}
+.linha-jogador {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #F5F5FA;
+    gap: 8px;
+}
+.linha-jogador:last-child {
+    border-bottom: none;
+}
+.jogador-nome {
+    font-size: .82rem;
+    color: #1A1A2E;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.jogador-nome a {
+    color: #1A1A2E;
+    text-decoration: none;
+}
+.jogador-nome a:hover {
+    color: #F75C03;
+}
+.stats-inline {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.stat-pill {
+    text-align: center;
+    min-width: 32px;
+}
+.stat-pill .valor {
+    font-family: 'Oswald', sans-serif;
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.stat-pill .rotulo {
+    font-size: .58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9999B0;
+    margin-top: 1px;
+}
+@media (max-width: 576px) {
+    .times-grid {
+        grid-template-columns: 1fr;
+    }
+    .time-coluna:first-child {
+        border-right: none;
+        border-bottom: 1px solid #CCCCDD;
+    }
 }

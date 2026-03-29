@@ -33,3 +33,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    
+class UserUpdateTimeFavorito(BaseModel):
+    favorite_team_id: Optional[int] = None

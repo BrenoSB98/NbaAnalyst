@@ -3,113 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Palpites</title>
+    <title>Palpites do Dia</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/predicoes.css">
-    <style>
-        .card-jogo-palpite {
-            background: #16172A;
-            border: 1px solid #252540;
-            border-radius: 14px;
-            margin-bottom: 24px;
-            overflow: hidden;
-        }
-        .jogo-titulo {
-            background: #12121C;
-            border-bottom: 1px solid #252540;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            cursor: pointer;
-        }
-        .jogo-titulo:hover { background: #1A1B2E; }
-        .jogo-titulo .times-nome {
-            font-family: 'Oswald', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #EEEEF5;
-            letter-spacing: .02em;
-        }
-        .jogo-titulo .times-nome span { color: #555570; margin: 0 6px; }
-        .jogo-titulo .jogo-seta { color: #555570; transition: transform .2s; }
-        .jogo-titulo .jogo-seta.aberto { transform: rotate(180deg); }
-        .jogo-corpo { display: block; }
-        .times-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-        }
-        .time-coluna {
-            padding: 16px;
-        }
-        .time-coluna:first-child {
-            border-right: 1px solid #252540;
-        }
-        .time-coluna-titulo {
-            font-family: 'Oswald', sans-serif;
-            font-size: .72rem;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: #555570;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #252540;
-        }
-        .time-coluna-titulo.casa { color: #F75C03; border-color: #F75C03; }
-        .linha-jogador {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 7px 0;
-            border-bottom: 1px solid #1D1E35;
-            gap: 8px;
-        }
-        .linha-jogador:last-child { border-bottom: none; }
-        .jogador-nome {
-            font-size: .82rem;
-            color: #EEEEF5;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .jogador-nome a { color: #EEEEF5; text-decoration: none; }
-        .jogador-nome a:hover { color: #F75C03; }
-        .stats-inline {
-            display: flex;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .stat-pill {
-            text-align: center;
-            min-width: 32px;
-        }
-        .stat-pill .valor {
-            font-family: 'Oswald', sans-serif;
-            font-size: .9rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-        .stat-pill .rotulo {
-            font-size: .58rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: #555570;
-            margin-top: 1px;
-        }
-        @media (max-width: 576px) {
-            .times-grid { grid-template-columns: 1fr; }
-            .time-coluna:first-child { border-right: none; border-bottom: 1px solid #252540; }
-        }
-    </style>
 </head>
 <body>
 
@@ -182,7 +80,6 @@
 <script>
 verificarAutenticacao();
 
-// Quantos jogadores mostrar por time (os de maior pontuação prevista)
 var MAX_JOGADORES_POR_TIME = 8;
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -192,8 +89,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function esconderTudos() {
     document.getElementById("pagina-carregando").style.display = "none";
-    document.getElementById("pagina-conteudo").style.display   = "none";
-    document.getElementById("pagina-sem-jogos").style.display  = "none";
+    document.getElementById("pagina-conteudo").style.display = "none";
+    document.getElementById("pagina-sem-jogos").style.display = "none";
     document.getElementById("pagina-aguardando").style.display = "none";
 }
 
@@ -203,10 +100,10 @@ async function carregarPalpites() {
 
         esconderTudos();
 
-        document.getElementById("resumo-jogos").textContent    = dados.total_jogos;
+        document.getElementById("resumo-jogos").textContent = dados.total_jogos;
         document.getElementById("resumo-palpites").textContent = dados.total_predicoes;
-        document.getElementById("resumo-data").textContent     = dados.data || "—";
-        document.getElementById("resumo-dia").style.display    = "flex";
+        document.getElementById("resumo-data").textContent = dados.data || "—";
+        document.getElementById("resumo-dia").style.display = "flex";
 
         if (dados.total_jogos === 0) {
             document.getElementById("pagina-sem-jogos").style.display = "block";
@@ -214,7 +111,7 @@ async function carregarPalpites() {
         }
 
         if (!dados.predicoes || dados.predicoes.length === 0) {
-            document.getElementById("desc-n-jogos").textContent        = dados.total_jogos;
+            document.getElementById("desc-n-jogos").textContent = dados.total_jogos;
             document.getElementById("pagina-aguardando").style.display = "block";
             return;
         }
@@ -230,11 +127,9 @@ async function carregarPalpites() {
 
 function renderizarJogos(palpites) {
     var container = document.getElementById("lista-jogos");
-
-    // Agrupa por jogo, separando casa e fora
     var jogos = {};
     for (var i = 0; i < palpites.length; i++) {
-        var p   = palpites[i];
+        var p = palpites[i];
         var gid = p.game_id;
 
         if (!jogos[gid]) {
@@ -259,13 +154,12 @@ function renderizarJogos(palpites) {
     }
 
     var html = "";
-    var ids  = Object.keys(jogos);
+    var ids = Object.keys(jogos);
 
     for (var j = 0; j < ids.length; j++) {
-        var gid  = ids[j];
+        var gid = ids[j];
         var jogo = jogos[gid];
 
-        // Ordena cada time por pontos previstos desc e limita ao máximo definido
         jogo["time_casa"].sort(function(a, b) {
             var pa = parseFloat(a.pontos_previstos) || 0;
             var pb = parseFloat(b.pontos_previstos) || 0;
@@ -295,29 +189,20 @@ function renderizarJogos(palpites) {
         }
 
         html = html + '<div class="card-jogo-palpite">';
-
-        // Cabeçalho clicável
         html = html + '<div class="jogo-titulo" onclick="toggleJogo(this)">';
         html = html + '<div class="times-nome">' + jogo["nome_casa"] + '<span>vs</span>' + jogo["nome_fora"] + '</div>';
         html = html + '<i class="bi bi-chevron-down jogo-seta aberto"></i>';
         html = html + '</div>';
-
-        // Grid dois times lado a lado
         html = html + '<div class="jogo-corpo">';
         html = html + '<div class="times-grid">';
-
-        // Coluna casa
         html = html + '<div class="time-coluna">';
-        html = html + '<div class="time-coluna-titulo casa">' + jogo["nome_casa"] + ' <span style="font-size:.62rem;color:#555570;margin-left:4px;">Casa</span></div>';
+        html = html + '<div class="time-coluna-titulo casa">' + jogo["nome_casa"] + ' <span style="font-size:.62rem;color:#9999B0;margin-left:4px;">Casa</span></div>';
         html = html + renderizarColunaTimes(jogadoresCasa);
         html = html + '</div>';
-
-        // Coluna visitante
         html = html + '<div class="time-coluna">';
-        html = html + '<div class="time-coluna-titulo">' + jogo["nome_fora"] + ' <span style="font-size:.62rem;color:#555570;margin-left:4px;">Fora</span></div>';
+        html = html + '<div class="time-coluna-titulo">' + jogo["nome_fora"] + ' <span style="font-size:.62rem;color:#9999B0;margin-left:4px;">Fora</span></div>';
         html = html + renderizarColunaTimes(jogadoresFora);
         html = html + '</div>';
-
         html = html + '</div>';
         html = html + '</div>';
         html = html + '</div>';
@@ -328,7 +213,7 @@ function renderizarJogos(palpites) {
 
 function renderizarColunaTimes(jogadores) {
     if (jogadores.length === 0) {
-        return '<p style="font-size:.78rem;color:#555570;padding:8px 0;">Sem palpites.</p>';
+        return '<p style="font-size:.78rem;color:#9999B0;padding:8px 0;">Sem palpites.</p>';
     }
 
     var html = "";
@@ -366,7 +251,7 @@ function renderizarColunaTimes(jogadores) {
 
 function toggleJogo(header) {
     var corpo = header.nextElementSibling;
-    var seta  = header.querySelector(".jogo-seta");
+    var seta = header.querySelector(".jogo-seta");
 
     if (corpo.style.display === "none") {
         corpo.style.display = "block";

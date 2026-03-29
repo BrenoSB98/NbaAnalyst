@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Jogador</title>
+    <title>Atletas</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -25,15 +25,12 @@
         </div>
 
         <div id="pagina-conteudo" style="display: none;">
-
-            <!-- Cabeçalho -->
             <div class="cabecalho-jogador">
                 <div class="container">
                     <div class="d-flex align-items-center gap-4 flex-wrap">
                         <div class="jogador-avatar" id="jogador-avatar">?</div>
                         <div style="flex: 1;">
                             <h1 class="jogador-nome" id="jogador-nome">—</h1>
-                            <!-- Posição em português logo abaixo do nome -->
                             <div id="jogador-posicao-pt" style="font-size:0.88rem; font-weight:600; color:#F75C03; margin-bottom:6px;"></div>
                             <div class="jogador-info-basica" id="jogador-info-basica"></div>
                         </div>
@@ -43,21 +40,17 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Dados do Jogador -->
             <div class="secao-dados">
                 <div class="container">
                     <h2 class="titulo-secao mb-3" style="font-size: 1.1rem;">Dados do Jogador</h2>
                     <div class="row g-3" id="dados-fisicos"></div>
                 </div>
             </div>
-
-            <!-- Médias na Temporada — público para todos -->
             <div class="secao-medias">
                 <div class="container">
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <h2 class="titulo-secao mb-0" style="font-size: 1.1rem;">Médias na Temporada</h2>
-                        <span id="medias-jogos-texto" style="font-size:0.82rem; color:#555570;"></span>
+                        <span id="medias-jogos-texto" style="font-size:0.82rem; color:#9999B0;"></span>
                     </div>
 
                     <div id="medias-carregando">
@@ -74,9 +67,7 @@
                     <div id="medias-sem-dados" style="display: none;">
                         <p class="texto-suave" style="font-size: 0.88rem;">Sem dados para a temporada atual.</p>
                     </div>
-
-                    <!-- CTA para perfil avançado — visível para todos -->
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3" style="background:#16172A; border:1px solid #252540; border-radius:12px; padding:16px 20px;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3" style="background:#FFFFFF; border:1px solid #CCCCDD; border-radius:12px; padding:16px 20px;">
                         <p class="mb-0 texto-suave" style="font-size: 0.88rem;">
                             Quer ver gráficos interativos, evolução jogo a jogo e análise de arremessos?
                         </p>
@@ -87,8 +78,6 @@
 
                 </div>
             </div>
-
-            <!-- Histórico de Times -->
             <div class="secao-historico">
                 <div class="container">
                     <h2 class="titulo-secao mb-3" style="font-size: 1.1rem;">Histórico de Times</h2>
@@ -125,15 +114,14 @@
 <script>
 var jogadorId = obterParametroUrl("id");
 
-// Mapeamento de abreviação de posição → nome completo em português
 var POSICOES_PT = {
     "PG": "Armador",
     "SG": "Ala-armador",
     "SF": "Ala",
     "PF": "Ala-pivô",
-    "C":  "Pivô",
-    "G":  "Armador/Ala-armador",
-    "F":  "Ala/Ala-pivô",
+    "C": "Pivô",
+    "G": "Armador/Ala-armador",
+    "F": "Ala/Ala-pivô",
     "GF": "Ala-armador/Ala",
     "FC": "Ala-pivô/Pivô"
 };
@@ -149,7 +137,6 @@ function traduzirPosicao(abreviacao) {
     return abreviacao;
 }
 
-// Calcula idade em anos completos considerando mês e dia
 function calcularIdade(dataNascimentoStr) {
     if (!dataNascimentoStr) {
         return null;
@@ -159,8 +146,8 @@ function calcularIdade(dataNascimentoStr) {
     var idade = hoje.getFullYear() - nascimento.getFullYear();
     var mesAtual = hoje.getMonth();
     var diaAtual = hoje.getDate();
-    var mesNasc  = nascimento.getMonth();
-    var diaNasc  = nascimento.getDate();
+    var mesNasc = nascimento.getMonth();
+    var diaNasc = nascimento.getDate();
 
     if (mesAtual < mesNasc) {
         idade = idade - 1;
@@ -169,7 +156,6 @@ function calcularIdade(dataNascimentoStr) {
     }
     return idade;
 }
-
 
 document.addEventListener("DOMContentLoaded", function() {
     inicializarPagina();
@@ -194,15 +180,11 @@ async function carregarJogador() {
         var iniciais = dados.nome.charAt(0) + dados.sobrenome.charAt(0);
         document.getElementById("jogador-avatar").textContent = iniciais.toUpperCase();
         document.getElementById("jogador-nome").textContent = nomeCompleto;
-
-        // O histórico vem ordenado cronologicamente pelo backend (primeiro jogo mais antigo primeiro).
-        // O time atual é sempre o último da lista — o mais recente por data de estreia.
         var timeAtualObj = null;
         if (dados.historico_times && dados.historico_times.length > 0) {
             timeAtualObj = dados.historico_times[dados.historico_times.length - 1];
         }
 
-        // Posição em português abaixo do nome — usa o time atual
         var posicaoAtual = "";
         if (timeAtualObj) {
             posicaoAtual = timeAtualObj.posicao || "";
@@ -212,13 +194,12 @@ async function carregarJogador() {
             document.getElementById("jogador-posicao-pt").textContent = posicaoPT;
         }
 
-        // Info básica no cabeçalho
         var infoHtml = "";
         if (timeAtualObj) {
             infoHtml = infoHtml
                 + '<span>'
                 + '<i class="bi bi-shield-fill"></i>'
-                + '<a href="time.html?id=' + timeAtualObj.time_id + '" style="color:#8888AA;text-decoration:none;">' + timeAtualObj.nome_time + '</a>'
+                + '<a href="time.html?id=' + timeAtualObj.time_id + '" style="color:#555570;text-decoration:none;">' + timeAtualObj.nome_time + '</a>'
                 + '</span>';
         }
         if (dados.inicio_nba) {
@@ -228,8 +209,6 @@ async function carregarJogador() {
             infoHtml = infoHtml + '<span><i class="bi bi-globe2"></i>' + dados.pais_nascimento + '</span>';
         }
         document.getElementById("jogador-info-basica").innerHTML = infoHtml;
-
-        // Link para perfil avançado — disponível para todos
         document.getElementById("btn-perfil-avancado").href = "jogador_avancado.html?id=" + jogadorId;
 
         renderizarDadosFisicos(dados);
@@ -237,8 +216,6 @@ async function carregarJogador() {
 
         document.getElementById("pagina-carregando").style.display = "none";
         document.getElementById("pagina-conteudo").style.display = "block";
-
-        // Médias: endpoint agora é público, chamarApi sem token
         carregarMedias();
 
     } catch (erro) {
@@ -259,7 +236,6 @@ function renderizarDadosFisicos(dados) {
         itens.push({ icone: "bi-speedometer", valor: dados.peso_kg.toFixed(1) + " kg", rotulo: "Peso" });
     }
 
-    // Idade calculada em vez de data de nascimento
     if (dados.data_nascimento) {
         var idade = calcularIdade(dados.data_nascimento);
         if (idade !== null) {
@@ -311,10 +287,8 @@ function renderizarHistorico(historico) {
     var html = "";
     for (var i = 0; i < historico.length; i++) {
         var item = historico[i];
-        var camisa  = (item.camisa !== null && item.camisa !== undefined) ? "#" + item.camisa : "";
+        var camisa = (item.camisa !== null && item.camisa !== undefined) ? "#" + item.camisa : "";
         var posicao = item.posicao ? traduzirPosicao(item.posicao) : "";
-
-        // Exibe mês/ano de ingresso se disponível; senão exibe apenas a temporada
         var periodoHtml = "";
         if (item.mes_ingresso) {
             periodoHtml = '<div class="time-temporada">' + item.mes_ingresso + '</div>';
@@ -338,7 +312,6 @@ function renderizarHistorico(historico) {
 
 async function carregarMedias() {
     try {
-        // Tenta o ano atual e cai para os 4 anteriores até encontrar dados
         var anos = [2025, 2024, 2023, 2022, 2021];
         var dados = null;
 
@@ -361,15 +334,13 @@ async function carregarMedias() {
             "Temporada " + dados.temporada + " — " + dados.jogos_disputados + " jogos";
 
         var medias = dados.medias;
-
-        // Cards: PTS, AST, REB, STL, BLK, +/- (sem porcentagens conforme requisito)
         var itens = [
-            { valor: medias.pontos,       rotulo: "PTS",  cor: "#F75C03" },
-            { valor: medias.assistencias, rotulo: "AST",  cor: "#3B9EFF" },
-            { valor: medias.rebotes,      rotulo: "REB",  cor: "#00C896" },
-            { valor: medias.roubos,       rotulo: "STL",  cor: "#FFD600" },
-            { valor: medias.bloqueios,    rotulo: "BLK",  cor: "#8888AA" },
-            { valor: medias.plus_minus,   rotulo: "+/-",  cor: "#EEEEF5" }
+            { valor: medias.pontos,rotulo: "PTS", cor: "#F75C03" },
+            { valor: medias.assistencias, rotulo: "AST", cor: "#3B9EFF" },
+            { valor: medias.rebotes,rotulo: "REB", cor: "#00C896" },
+            { valor: medias.roubos, rotulo: "STL", cor: "#FFD600" },
+            { valor: medias.bloqueios,rotulo: "BLK", cor: "#555570" },
+            { valor: medias.plus_minus, rotulo: "+/-", cor: "#1A1A2E" }
         ];
 
         var html = "";

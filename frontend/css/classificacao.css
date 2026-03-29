@@ -1,0 +1,31 @@
+.secao-conferencia {
+    margin-bottom: 48px;
+}
+
+.titulo-conferencia {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #F75C03;
+    display: inline-block;
+}
+
+.credito-sofascore {
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    color: #888899;
+    margin-top: 8px;
+}
+
+.credito-sofascore a {
+    color: #F75C03;
+}
+
+.iframe-wrapper {
+    max-width: 768px;
+}
