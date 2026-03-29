@@ -1,0 +1,2205 @@
+{
+  "info": {
+    "_postman_id": "88b1e4be-0990-49c8-b0d5-10adeeca2152",
+    "name": "Nba Analytics",
+    "description": "Collection completa dos endpoints da plataforma Nba Analytics. Configure a variável de ambiente base_url com o endereço do backend (ex: [http://localhost:8000/api/v1](http://localhost:8000/api/v1)) e token com o JWT obtido no login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "25095621",
+    "_collection_link": "https://go.postman.co/collection/25095621-88b1e4be-0990-49c8-b0d5-10adeeca2152?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Autenticacao",
+      "item": [
+        {
+          "name": "Registrar usuario - sucesso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', function() { pm.response.to.have.status(201); });",
+                  "pm.test('Retorna email', function() { var json = pm.response.json(); pm.expect(json.email).to.eql('teste@nbaanalyst.com'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@nbaanalyst.com\",\n  \"full_name\": \"Usuario Teste\",\n  \"birth_date\": \"1995-06-15\",\n  \"password\": \"senha123\",\n  \"favorite_team_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/autenticacao/registrar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "registrar"
+              ]
+            },
+            "description": "Cria um novo usuario. Retorna 201 com os dados do usuario criado."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - sucesso (salva token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna access_token', function() { pm.expect(json).to.have.property('access_token'); });",
+                  "if (json.access_token) { pm.collectionVariables.set('token', json.access_token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "teste@nbaanalyst.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "senha123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/autenticacao/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "login"
+              ]
+            },
+            "description": "Autentica o usuario e salva o JWT na variavel de ambiente token para uso nas requisicoes seguintes."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - credenciais invalidas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', function() { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "naoexiste@email.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "errada",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/autenticacao/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "login"
+              ]
+            },
+            "description": "Tenta login com credenciais erradas. Retorna 401."
+          },
+          "response": []
+        },
+        {
+          "name": "Perfil do usuario autenticado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna email', function() { var json = pm.response.json(); pm.expect(json).to.have.property('email'); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODY5Mn0.PLc9kM1ikv0GGwUt_istlRD8J7LaDKyG42SgyXp29PI",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/autenticacao/eu",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "eu"
+              ]
+            },
+            "description": "Retorna os dados do usuario logado. Requer token valido."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar time favorito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"favorite_team_id\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/autenticacao/eu/time-favorito",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "eu",
+                "time-favorito"
+              ]
+            },
+            "description": "Atualiza o time favorito do usuario autenticado."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODY5Mn0.PLc9kM1ikv0GGwUt_istlRD8J7LaDKyG42SgyXp29PI",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/autenticacao/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "autenticacao",
+                "logout"
+              ]
+            },
+            "description": "Invalida o token atual adicionando-o a blacklist."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Temporadas e Ligas",
+      "item": [
+        {
+          "name": "Listar temporadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna lista', function() { var json = pm.response.json(); pm.expect(json).to.have.property('temporadas'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/temporadas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "temporadas"
+              ]
+            },
+            "description": "Retorna todas as temporadas disponíveis na base. Endpoint publico."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar ligas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ligas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ligas"
+              ]
+            },
+            "description": "Retorna as ligas cadastradas. Endpoint publico."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Times",
+      "item": [
+        {
+          "name": "Listar times NBA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna lista de times', function() { var json = pm.response.json(); pm.expect(json).to.have.property('times'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times?nba_franchise=true&page_size=30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times"
+              ],
+              "query": [
+                {
+                  "key": "nba_franchise",
+                  "value": "true"
+                },
+                {
+                  "key": "page_size",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Retorna todos os times da NBA. Endpoint publico."
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhe do time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times/{{time_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times",
+                "{{time_id}}"
+              ]
+            },
+            "description": "Retorna os dados detalhados de um time pelo ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Elenco do time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times/{{time_id}}/elenco?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times",
+                "{{time_id}}",
+                "elenco"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna o elenco de jogadores de um time na temporada."
+          },
+          "response": []
+        },
+        {
+          "name": "Estatisticas do time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times/{{time_id}}/estatisticas?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times",
+                "{{time_id}}",
+                "estatisticas"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as estatisticas agregadas do time na temporada."
+          },
+          "response": []
+        },
+        {
+          "name": "Performance do time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times/{{time_id}}/performance?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times",
+                "{{time_id}}",
+                "performance"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna a performance (sequencia de resultados) do time."
+          },
+          "response": []
+        },
+        {
+          "name": "Comparar dois times",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODkxOH0.vK7ZMMzJAuqszUsPpvCJQkRorc4E-Zg9Dviju3v8fKw",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/times/comparar?time1_id=1&time2_id=2&temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "times",
+                "comparar"
+              ],
+              "query": [
+                {
+                  "key": "time1_id",
+                  "value": "1"
+                },
+                {
+                  "key": "time2_id",
+                  "value": "2"
+                },
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Compara estatisticas de dois times. Requer autenticacao."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Jogadores",
+      "item": [
+        {
+          "name": "Detalhe do jogador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogadores/{{jogador_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogadores",
+                "{{jogador_id}}"
+              ]
+            },
+            "description": "Retorna os dados basicos de um jogador pelo ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Estatisticas do jogador na temporada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODkxOH0.vK7ZMMzJAuqszUsPpvCJQkRorc4E-Zg9Dviju3v8fKw",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogadores/124/estatisticas/temporada?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogadores",
+                "124",
+                "estatisticas",
+                "temporada"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as medias do jogador na temporada completa."
+          },
+          "response": []
+        },
+        {
+          "name": "Estatisticas por jogo do jogador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODkxOH0.vK7ZMMzJAuqszUsPpvCJQkRorc4E-Zg9Dviju3v8fKw",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogadores/124/estatisticas/jogos?temporada={{temporada}}&limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogadores",
+                "124",
+                "estatisticas",
+                "jogos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna estatisticas individuais por jogo. Requer autenticacao."
+          },
+          "response": []
+        },
+        {
+          "name": "Ultimos jogos do jogador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0ZUBuYmFhbmFseXN0LmNvbSIsImV4cCI6MTc3NDgxODkxOH0.vK7ZMMzJAuqszUsPpvCJQkRorc4E-Zg9Dviju3v8fKw",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogadores/124/estatisticas/ultimos-jogos?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogadores",
+                "124",
+                "estatisticas",
+                "ultimos-jogos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as estatisticas dos ultimos jogos do jogador."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Jogos",
+      "item": [
+        {
+          "name": "Contagem de jogos hoje",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna total_jogos', function() { var json = pm.response.json(); pm.expect(json).to.have.property('total_jogos'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos/contagem-hoje",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos",
+                "contagem-hoje"
+              ]
+            },
+            "description": "Retorna o total de jogos do dia atual dentro da janela de horario. Endpoint publico."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar jogos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos?temporada={{temporada}}&page_size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista jogos com filtros opcionais por temporada e time."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar jogos por time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos?temporada={{temporada}}&time_id={{time_id}}&page_size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "time_id",
+                  "value": "{{time_id}}"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista jogos filtrados por time."
+          },
+          "response": []
+        },
+        {
+          "name": "Proximos jogos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos/proximos?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos",
+                "proximos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna os proximos jogos agendados."
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhe do jogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos/{{jogo_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos",
+                "{{jogo_id}}"
+              ]
+            },
+            "description": "Retorna os dados completos de um jogo pelo ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Estatisticas dos times no jogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos/{{jogo_id}}/estatisticas-times",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos",
+                "{{jogo_id}}",
+                "estatisticas-times"
+              ]
+            },
+            "description": "Retorna as estatisticas coletivas de cada time no jogo."
+          },
+          "response": []
+        },
+        {
+          "name": "Estatisticas dos jogadores no jogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jogos/{{jogo_id}}/estatisticas-jogadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jogos",
+                "{{jogo_id}}",
+                "estatisticas-jogadores"
+              ]
+            },
+            "description": "Retorna as estatisticas individuais de cada jogador no jogo."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analiticos",
+      "item": [
+        {
+          "name": "Lideres de pontos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna lideres', function() { var json = pm.response.json(); pm.expect(json).to.have.property('lideres'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/lideres?categoria=pontos&temporada={{temporada}}&limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "lideres"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "pontos"
+                },
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna os maiores pontuadores da temporada. Endpoint publico."
+          },
+          "response": []
+        },
+        {
+          "name": "Lideres de assistencias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/lideres?categoria=assistencias&temporada={{temporada}}&limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "lideres"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "assistencias"
+                },
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna os lideres de assistencias da temporada."
+          },
+          "response": []
+        },
+        {
+          "name": "Lideres de rebotes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/lideres?categoria=rebotes&temporada={{temporada}}&limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "lideres"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "rebotes"
+                },
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna os lideres de rebotes da temporada."
+          },
+          "response": []
+        },
+        {
+          "name": "Recordes historicos - todas as temporadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna recordes', function() { var json = pm.response.json(); pm.expect(json).to.have.property('recordes'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/recordes?categoria=pontos&limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "recordes"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "pontos"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna os maiores valores historicos da categoria. Endpoint publico."
+          },
+          "response": []
+        },
+        {
+          "name": "Recordes por temporada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/recordes?categoria=assistencias&temporada={{temporada}}&limite=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "recordes"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "assistencias"
+                },
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "limite",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Retorna os maiores valores da categoria na temporada especificada."
+          },
+          "response": []
+        },
+        {
+          "name": "Maiores pontuadores historicos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/maiores-pontuadores?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "maiores-pontuadores"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna o ranking historico de pontuadores."
+          },
+          "response": []
+        },
+        {
+          "name": "Tendencias do time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/tendencias-time/{{time_id}}?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "tendencias-time",
+                "{{time_id}}"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as tendencias de desempenho do time nos ultimos jogos."
+          },
+          "response": []
+        },
+        {
+          "name": "Medias do jogador na temporada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/jogadores/{{jogador_id}}/medias/temporada?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "jogadores",
+                "{{jogador_id}}",
+                "medias",
+                "temporada"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as medias completas do jogador na temporada."
+          },
+          "response": []
+        },
+        {
+          "name": "Medias do jogador - ultimos jogos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/jogadores/{{jogador_id}}/medias/ultimos-jogos?temporada={{temporada}}&n=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "jogadores",
+                "{{jogador_id}}",
+                "medias",
+                "ultimos-jogos"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "n",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Retorna as medias do jogador nos ultimos N jogos."
+          },
+          "response": []
+        },
+        {
+          "name": "Medias do jogador - casa e fora",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/jogadores/{{jogador_id}}/medias/casa-fora?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "jogadores",
+                "{{jogador_id}}",
+                "medias",
+                "casa-fora"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Compara as medias do jogador jogando em casa vs como visitante."
+          },
+          "response": []
+        },
+        {
+          "name": "Medias do jogador contra adversario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analiticos/jogadores/{{jogador_id}}/medias/contra-time/{{time_id}}?temporada={{temporada}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "analiticos",
+                "jogadores",
+                "{{jogador_id}}",
+                "medias",
+                "contra-time",
+                "{{time_id}}"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                }
+              ]
+            },
+            "description": "Retorna as medias historicas do jogador contra um time especifico."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Palpites",
+      "item": [
+        {
+          "name": "Contagem de palpites hoje - publico",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna total_palpites', function() { var json = pm.response.json(); pm.expect(json).to.have.property('total_palpites'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/contagem-hoje",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "contagem-hoje"
+              ]
+            },
+            "description": "Retorna o total de palpites gerados para os jogos de hoje. Endpoint publico, sem autenticacao."
+          },
+          "response": []
+        },
+        {
+          "name": "Palpites de hoje",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna predicoes', function() { var json = pm.response.json(); pm.expect(json).to.have.property('predicoes'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/hoje",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "hoje"
+              ]
+            },
+            "description": "Retorna todos os palpites gerados para os jogos do dia. Requer autenticacao."
+          },
+          "response": []
+        },
+        {
+          "name": "Palpites por jogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/jogo/{{jogo_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "jogo",
+                "{{jogo_id}}"
+              ]
+            },
+            "description": "Retorna os palpites de todos os jogadores em um jogo especifico."
+          },
+          "response": []
+        },
+        {
+          "name": "Palpites por jogador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/jogador/{{jogador_id}}?limite=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "jogador",
+                "{{jogador_id}}"
+              ],
+              "query": [
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna os ultimos palpites gerados para um jogador."
+          },
+          "response": []
+        },
+        {
+          "name": "Prever estatistica individual",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/prever/jogador/{{jogador_id}}/vs/{{time_id}}?temporada={{temporada}}&estatistica=points&eh_casa=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "prever",
+                "jogador",
+                "{{jogador_id}}",
+                "vs",
+                "{{time_id}}"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "estatistica",
+                  "value": "points"
+                },
+                {
+                  "key": "eh_casa",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gera previsao de uma estatistica especifica do jogador contra um adversario."
+          },
+          "response": []
+        },
+        {
+          "name": "Prever multiplas estatisticas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/prever/jogador/{{jogador_id}}/vs/{{time_id}}/multiplas?temporada={{temporada}}&eh_casa=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "prever",
+                "jogador",
+                "{{jogador_id}}",
+                "vs",
+                "{{time_id}}",
+                "multiplas"
+              ],
+              "query": [
+                {
+                  "key": "temporada",
+                  "value": "{{temporada}}"
+                },
+                {
+                  "key": "eh_casa",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gera previsoes de pontos, assistencias, rebotes, roubos e bloqueios de uma vez."
+          },
+          "response": []
+        },
+        {
+          "name": "Gerar palpites do dia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/predicoes/gerar/hoje",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "predicoes",
+                "gerar",
+                "hoje"
+              ]
+            },
+            "description": "Dispara a geracao de palpites para todos os jogos do dia. Requer autenticacao."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Confrontos",
+      "item": [
+        {
+          "name": "Analise de confronto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna time_casa e time_fora', function() { var json = pm.response.json(); pm.expect(json).to.have.property('time_casa'); pm.expect(json).to.have.property('time_fora'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/confrontos/analise?time_casa_id={{time_id}}&time_fora_id=2&ultimos_n=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "confrontos",
+                "analise"
+              ],
+              "query": [
+                {
+                  "key": "time_casa_id",
+                  "value": "{{time_id}}"
+                },
+                {
+                  "key": "time_fora_id",
+                  "value": "2"
+                },
+                {
+                  "key": "ultimos_n",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Retorna a analise comparativa entre dois times com base nos ultimos jogos. Requer autenticacao."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Desempenho do Modelo",
+      "item": [
+        {
+          "name": "Win rate do modelo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna win_rate_geral', function() { var json = pm.response.json(); pm.expect(json).to.have.property('win_rate_geral'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/win_rate/desempenho",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "win_rate",
+                "desempenho"
+              ]
+            },
+            "description": "Retorna o desempenho do modelo preditivo por estatistica. Endpoint publico."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chatbot - Onerb IA",
+      "item": [
+        {
+          "name": "Limite de mensagens do dia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna campos de limite', function() { var json = pm.response.json(); pm.expect(json).to.have.property('limite_diario'); pm.expect(json).to.have.property('restantes_hoje'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/limite",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "chat",
+                "limite"
+              ]
+            },
+            "description": "Retorna quantas perguntas o usuario ja fez hoje e quantas restam."
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar mensagem ao chatbot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Retorna resposta', function() { var json = pm.response.json(); pm.expect(json).to.have.property('resposta'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pergunta\": \"Qual a media de pontos do LeBron James na temporada 2025?\",\n  \"historico\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/mensagem",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "chat",
+                "mensagem"
+              ]
+            },
+            "description": "Envia uma pergunta ao Onerb IA e recebe a resposta. Requer autenticacao."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "jogador_id",
+      "value": "1"
+    },
+    {
+      "key": "time_id",
+      "value": "1"
+    },
+    {
+      "key": "jogo_id",
+      "value": "1"
+    },
+    {
+      "key": "temporada",
+      "value": "2025"
+    }
+  ]
+}
