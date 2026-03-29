@@ -2,6 +2,7 @@ import numpy as np
 from datetime import datetime
 
 from app.db.models import PlayerGameStats, Game
+from app.services import modelo_service
 from app.services.analytics_service import calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_medias_contra_time, calcular_defesa_adversaria_stat, calcular_dias_descanso
 
 def converter_minutos_para_float(minutos_str):
@@ -139,29 +140,32 @@ def extrair_features_avancadas_jogador(db, player_id, season, stat_name):
     return lista_features, lista_alvos
 
 def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name, em_casa):
-    try:
-        from xgboost import XGBRegressor
-    except ImportError:
+    modelo = modelo_service.carregar_modelo(player_id=player_id, stat_name=stat_name)
+
+    if modelo is None:
         try:
-            from sklearn.ensemble import RandomForestRegressor as XGBRegressor
+            from xgboost import XGBRegressor
         except ImportError:
+            try:
+                from sklearn.ensemble import RandomForestRegressor as XGBRegressor
+            except ImportError:
+                return prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name)
+
+        lista_features, lista_alvos = extrair_features_avancadas_jogador(db, player_id, season, stat_name)
+
+        if lista_features is None or len(lista_features) < 10:
             return prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name)
 
-    lista_features, lista_alvos = extrair_features_avancadas_jogador(db, player_id, season, stat_name)
+        matriz_features = np.array(lista_features)
+        vetor_alvos = np.array(lista_alvos)
 
-    if lista_features is None or len(lista_features) < 10:
-        return prever_performance_jogador_heuristica(db, player_id, opponent_team_id, season, stat_name)
+        try:
+            modelo = XGBRegressor(n_estimators=150, max_depth=6, learning_rate=0.1, subsample=0.8, colsample_bytree=0.8, random_state=42, objective="reg:squarederror")
+        except TypeError:
+            from sklearn.ensemble import RandomForestRegressor
+            modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)
 
-    matriz_features = np.array(lista_features)
-    vetor_alvos = np.array(lista_alvos)
-
-    try:
-        modelo = XGBRegressor(n_estimators=150, max_depth=6, learning_rate=0.1, subsample=0.8, colsample_bytree=0.8, random_state=42, objective='reg:squarederror')
-    except TypeError:
-        from sklearn.ensemble import RandomForestRegressor
-        modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)
-
-    modelo.fit(matriz_features, vetor_alvos)
+        modelo.fit(matriz_features, vetor_alvos)
 
     chave_averages = _traduzir_chave_stat(stat_name)
     media_ultimos_5_obj = calcular_medias_ultimos_n_jogos(db, player_id, n_games=5, season=season)

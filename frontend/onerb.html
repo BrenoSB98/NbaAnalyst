@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NbaAnalyst — Onerb AI NBA</title>
+    <title>Onerb IA</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -17,15 +17,9 @@
     <main id="conteudo-principal" style="padding-top: 64px;">
         <div class="onerb-layout">
             <div class="onerb-sidebar">
-                <p class="modelo-label">Modelo</p>
-                <select class="form-control-nba" id="select-modelo">
-                    <option value="gpt-5" selected>GPT-5</option>
-                    <option value="gpt-5-mini">GPT-5 Mini</option>
-                    <option value="gpt-4.1">GPT-4.1</option>
-                    <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="gpt-4o-mini">GPT-4o Mini</option>
-                </select>
+                <div class="contador-chat" id="contador-chat">
+                    <span id="contador-texto">— / — perguntas hoje</span>
+                </div>
                 <button class="btn-limpar" onclick="limparConversa()">
                     <i class="bi bi-trash3"></i> Limpar conversa
                 </button>
@@ -35,12 +29,6 @@
                 </div>
                 <div class="exemplo-pergunta" onclick="usarExemplo(this)">
                     Quais foram os resultados do Lakers em março de 2025?
-                </div>
-                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
-                    Mostre os maiores pontuadores da temporada 2025.
-                </div>
-                <div class="exemplo-pergunta" onclick="usarExemplo(this)">
-                    Compare o aproveitamento do Warriors e do Celtics em 2025.
                 </div>
                 <div class="exemplo-pergunta" onclick="usarExemplo(this)">
                     Quantos jogos o Stephen Curry jogou na temporada 2025?
@@ -93,6 +81,7 @@ var aguardando = false;
 document.addEventListener("DOMContentLoaded", function() {
     renderizarMenu();
     document.getElementById("campo-pergunta").focus();
+    carregarLimite();
 });
 
 function verificarEnter(evento) {
@@ -126,7 +115,6 @@ async function enviarMensagem() {
         return;
     }
 
-    var modelo = document.getElementById("select-modelo").value;
     adicionarMensagemUsuario(pergunta);
     historico.push({ papel: "usuario", conteudo: pergunta });
 
@@ -140,18 +128,24 @@ async function enviarMensagem() {
     try {
         var corpo = {
             pergunta: pergunta,
-            historico: historico.slice(0, -1),
-            modelo: modelo
+            historico: historico.slice(0, -1)
         };
 
         var resposta = await chamarApiAutenticada("/chat/mensagem", "POST", corpo);
         removerDigitando(idDigitando);
         adicionarMensagemAssistente(resposta.resposta);
         historico.push({ papel: "oraculo", conteudo: resposta.resposta });
+        carregarLimite();
 
     } catch (erro) {
         removerDigitando(idDigitando);
-        adicionarMensagemAssistente("Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.");
+        if (erro.message && erro.message.indexOf("429") !== -1) {
+            adicionarMensagemAssistente("Você atingiu o limite diário de perguntas. Volte amanhã! 🏀");
+            document.getElementById("btn-enviar").disabled = true;
+        } else {
+            adicionarMensagemAssistente("Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.");
+        }
+        carregarLimite();
     }
 
     aguardando = false;
@@ -227,6 +221,20 @@ function limparConversa() {
         }
     }
     document.getElementById("campo-pergunta").focus();
+}
+
+async function carregarLimite() {
+    try {
+        var dados = await chamarApiAutenticada("/chat/limite");
+        var texto = dados.usadas_hoje + " / " + dados.limite_diario + " perguntas hoje";
+        document.getElementById("contador-texto").textContent = texto;
+
+        if (dados.restantes_hoje === 0) {
+            document.getElementById("btn-enviar").disabled = true;
+        }
+    } catch (erro) {
+        document.getElementById("contador-texto").textContent = "— / — perguntas hoje";
+    }
 }
 
 function escaparHtml(texto) {

@@ -1,4 +1,4 @@
-var CHAVE_TOKEN   = "nba_token";
+var CHAVE_TOKEN = "nba_token";
 var CHAVE_USUARIO = "nba_usuario";
 
 function salvarSessao(token, usuario) {
@@ -88,7 +88,7 @@ function obterInicialNome(nomeCompleto) {
     }
 
     var primeiraLetra = partes[0].charAt(0).toUpperCase();
-    var ultimaLetra   = partes[partes.length - 1].charAt(0).toUpperCase();
+    var ultimaLetra = partes[partes.length - 1].charAt(0).toUpperCase();
     return primeiraLetra + ultimaLetra;
 }
 

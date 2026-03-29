@@ -68,6 +68,24 @@ def get_predicao_multiplas(jogador_id: int, time_adversario_id: int, temporada: 
         "previsoes": previsoes,
     }
 
+@router.get("/contagem-hoje")
+def contar_palpites_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db)):
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    agora_sp = datetime.now(fuso_sp)
+    inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
+    fim_sp = inicio_sp + timedelta(days=1, hours=6)
+    inicio_utc = inicio_sp.astimezone(timezone.utc)
+    fim_utc = fim_sp.astimezone(timezone.utc)
+ 
+    jogos_hoje = db.query(Game).filter(Game.season == temporada_alvo, Game.date_start >= inicio_utc, Game.date_start < fim_utc).all() 
+    if not jogos_hoje:
+        return {"total_palpites": 0} 
+    ids_jogos = []
+    for jogo in jogos_hoje:
+        ids_jogos.append(jogo.id) 
+    total = db.query(Prediction).filter(Prediction.game_id.in_(ids_jogos)).count() 
+    return {"total_palpites": total}
+
 @router.get("/hoje")
 def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
     fuso_sp = ZoneInfo("America/Sao_Paulo")
@@ -205,11 +223,11 @@ def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
     try:
         total = salvar_predicoes_dia_atual(db=db, season=temporada_alvo)
     except Exception as erro:
-        logger.error(f"Falha ao gerar predições do dia: {erro}")
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar predições: {str(erro)}")
+        logger.error(f"Falha ao gerar palpites do dia: {erro}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
 
     return {
-        "mensagem": "Predições geradas com sucesso.",
+        "mensagem": "Palpites gerados com sucesso.",
         "temporada": temporada_alvo,
         "total_predicoes_geradas": total,
     }
@@ -219,11 +237,11 @@ def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends
     try:
         total = salvar_predicoes_temporada(db=db, season=temporada)
     except Exception as erro:
-        logger.error(f"Falha ao gerar predicoes da temporada {temporada}: {erro}")
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar predicoes: {str(erro)}")
+        logger.error(f"Falha ao gerar palpites da temporada {temporada}: {erro}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
  
     return {
-        "mensagem": f"Predicoes da temporada {temporada} geradas com sucesso.",
+        "mensagem": f"Palpites da temporada {temporada} geradas com sucesso.",
         "temporada": temporada,
         "total_predicoes_geradas": total,
     }

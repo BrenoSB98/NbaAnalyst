@@ -5,9 +5,9 @@ function renderizarMenu() {
         return;
     }
 
-    var usuarioLogado   = estaLogado();
-    var dadosUsuario    = obterUsuario();
-    var paginaAtual     = window.location.pathname;
+    var usuarioLogado = estaLogado();
+    var dadosUsuario = obterUsuario();
+    var paginaAtual = window.location.pathname;
 
     function classeLinkAtivo(caminhos) {
         for (var i = 0; i < caminhos.length; i++) {
@@ -23,7 +23,7 @@ function renderizarMenu() {
         linksLogados = `
             <li class="nav-item">
                 <a class="nav-link ${classeLinkAtivo(["predicoes"])} d-flex align-items-center gap-2" href="/predicoes.html">
-                    <i class="bi bi-graph-up-arrow"></i> Predições
+                    <i class="bi bi-graph-up-arrow"></i> Palpites
                 </a>
             </li>
             <li class="nav-item">
@@ -33,7 +33,7 @@ function renderizarMenu() {
             </li>
             <li class="nav-item">
                 <a class="nav-link ${classeLinkAtivo(["onerb"])} d-flex align-items-center gap-2" href="/onerb.html">
-                    <i class="bi bi-robot"></i> Onerb IA NBA
+                    <i class="bi bi-robot"></i> Onerb IA
                 </a>
             </li>
         `;
@@ -41,7 +41,7 @@ function renderizarMenu() {
 
     var blocoAuth = "";
     if (usuarioLogado && dadosUsuario) {
-        var iniciais   = obterInicialNome(dadosUsuario.full_name);
+        var iniciais = obterInicialNome(dadosUsuario.full_name);
         var primeiroNome = obterPrimeiroNome(dadosUsuario.full_name);
 
         blocoAuth = `
@@ -54,11 +54,6 @@ function renderizarMenu() {
                     <li>
                         <a class="dropdown-item d-flex align-items-center gap-2" href="/perfil.html">
                             <i class="bi bi-person-circle texto-laranja"></i> Meu Perfil
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center gap-2" href="/predicoes.html">
-                            <i class="bi bi-graph-up-arrow texto-laranja"></i> Predições
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -86,10 +81,11 @@ function renderizarMenu() {
 
             <a class="navbar-brand" href="/index.html">
                 <i class="bi bi-dribbble icone-logo"></i>
-                NbaAnalyst
+                NBA Analytics
             </a>
 
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menuColapsavel" aria-controls="menuColapsavel" aria-expanded="false" aria-label="Abrir menu">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                data-bs-target="#menuColapsavel" aria-controls="menuColapsavel" aria-expanded="false" aria-label="Abrir menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -104,6 +100,11 @@ function renderizarMenu() {
                     <li class="nav-item">
                         <a class="nav-link ${classeLinkAtivo(["estatisticas"])} d-flex align-items-center gap-2" href="/estatisticas.html">
                             <i class="bi bi-bar-chart-fill"></i> Estatísticas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link ${classeLinkAtivo(["classificacao"])} d-flex align-items-center gap-2" href="/classificacao.html">
+                            <i class="bi bi-list-ol"></i> Classificação
                         </a>
                     </li>
                     ${linksLogados}
@@ -121,7 +122,6 @@ function renderizarMenu() {
     elementoNavbar.classList.add("navbar", "navbar-expand-lg", "fixed-top");
 }
 
-
 function renderizarRodape() {
     var elementoRodape = document.getElementById("rodape-principal");
 
@@ -137,15 +137,16 @@ function renderizarRodape() {
                 <div class="col-12 col-md-4">
                     <div class="rodape-logo">
                         <i class="bi bi-dribbble icone-logo"></i>
-                        NbaAnalyst
+                        NBA Analytics
                     </div>
-                    <p class="rodape-tagline">Dados que vencem a banca.</p>
+                    <p class="rodape-tagline">Quem tem dados, domina o jogo.</p>
                 </div>
                 <div class="col-6 col-md-2">
                     <p class="rodape-titulo-coluna">Explorar</p>
                     <a class="rodape-link" href="/times.html">Times</a>
                     <a class="rodape-link" href="/estatisticas.html">Estatísticas</a>
-                    <a class="rodape-link" href="/predicoes.html">Predições</a>
+                    <a class="rodape-link" href="/classificacao.html">Classificação</a>
+                    <a class="rodape-link" href="/predicoes.html">Palpites</a>
                     <a class="rodape-link" href="/confrontos.html">Confrontos</a>
                 </div>
                 <div class="col-6 col-md-2">
@@ -153,13 +154,13 @@ function renderizarRodape() {
                     <a class="rodape-link" href="/login.html">Entrar</a>
                     <a class="rodape-link" href="/cadastro.html">Cadastrar</a>
                     <a class="rodape-link" href="/perfil.html">Meu Perfil</a>
-                    <a class="rodape-link" href="/onerb.html">Onerb IA NBA</a>
-                </div>             
+                    <a class="rodape-link" href="/onerb.html">Onerb IA</a>
+                </div>
             </div>
 
             <div class="rodape-direitos">
                 <span class="texto-fraco">
-                    &copy; ${anoAtual} NbaAnalyst &mdash; Desenvolvido para análise de dados da NBA.
+                    &copy; ${anoAtual} NBA Analytics: &mdash; Análise de dados para fãs e apostadores
                 </span>
             </div>
         </div>
@@ -219,7 +220,7 @@ function exibirEstadoVazio(idElemento, titulo, descricao, icone) {
         return;
     }
 
-    var iconeUsado    = icone || "bi-dribbble";
+    var iconeUsado = icone || "bi-dribbble";
     var descricaoHtml = descricao ? `<p class="desc-vazio">${descricao}</p>` : "";
 
     elemento.innerHTML = `
