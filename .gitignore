@@ -208,5 +208,8 @@ __marimo__/
 
 onerb_db/a838eebd-b477-41da-bc68-5453e3de8731
 onerb_db/chroma.sqlite3
+onerb_db/
+*.sqlite3
+modelos_ml/
 
 *:Zone.Identifier

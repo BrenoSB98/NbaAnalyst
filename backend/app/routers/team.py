@@ -5,7 +5,7 @@ from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
-from app.db.models import Game, GameTeamScore, League, Player, PlayerTeamSeason, Team, TeamLeagueInfo, TeamSeasonStats, PlayerGameStats, GameTeamStats
+from app.db.models import Game, GameTeamScore, League, Player, PlayerTeamSeason, Team, TeamLeagueInfo, PlayerGameStats
 from app.routers.auth import obter_usuario_atual
 from app.schemas.player import ElencoTimeResponse
 from app.schemas.team import ComparacaoTimesResponse, EstatisticasTimeResponse, PerformanceTimeResponse, TeamDetalheResponse, TeamListResponse

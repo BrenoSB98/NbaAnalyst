@@ -1,13 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
 from app.db.models import Game, GameTeamScore, Player, PlayerGameStats, PlayerTeamSeason, Team
 from app.routers.auth import obter_usuario_atual
-from app.schemas.player import EstatisticasCasaForaResponse, EstatisticasJogosResponse, EstatisticasTemporadaResponse, EstatisticasUltimosJogosResponse, PlayerDetalheResponse, PlayerListResponse
+from app.schemas.player import EstatisticasCasaForaResponse, EstatisticasJogosResponse, EstatisticasTemporadaResponse, EstatisticasUltimosJogosResponse, PlayerListResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
