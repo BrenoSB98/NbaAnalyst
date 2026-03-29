@@ -192,15 +192,12 @@ NbaAnalytics/
 
 Desenvolvido por **Breno Braido** como TCC do curso de Sistemas de Informação.
 
-<a href="https://www.linkedin.com/in/bbraido2/" target="_blank">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/linkedin/linkedin-original.svg" width="32" />
-</a>
-&nbsp;
-<a href="https://github.com/BrenoSB98" target="_blank">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" width="32" />
-</a>
-&nbsp;
-📧 **brenosilvabraido1998@gmail.com**
+<div>
+  <a href="https://github.com/BrenoSB98" target="_blank"> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" width="32" /> </a> &nbsp;
+  <a href = "mailto:brenosilvabraido1998@gmail.com"><img src="https://img.shields.io/badge/-Gmail-%23333?style=for-the-badge&logo=gmail&logoColor=white" target="_blank"></a>
+  <a href="https://instagram.com/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-Instagram-%23E4405F?style=for-the-badge&logo=instagram&logoColor=white" target="_blank"></a>  
+  <a href="https://www.linkedin.com/in/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white" target="_blank"></a>  
+</div>
 
 ---
 
