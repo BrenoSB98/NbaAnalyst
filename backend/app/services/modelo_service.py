@@ -77,10 +77,28 @@ def _treinar_modelo_jogador(db, player_id, season, stat_name):
 
     try:
         from xgboost import XGBRegressor
-        modelo = XGBRegressor(n_estimators=150, learning_rate=0.1, subsample=0.8, colsample_bytree=0.8, random_state=42, objective="reg:squarederror")
+        modelo = XGBRegressor(
+            n_estimators=300,
+            max_depth=4,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.7,
+            min_child_weight=5,
+            gamma=0.1,
+            reg_alpha=0.1,
+            reg_lambda=2.0,
+            random_state=42,
+            objective="reg:squarederror"
+        )
     except ImportError:
         from sklearn.ensemble import RandomForestRegressor
-        modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)
+        modelo = RandomForestRegressor(
+            n_estimators=300,
+            max_depth=5,
+            min_samples_split=8,
+            min_samples_leaf=4,
+            random_state=42
+        )
 
     modelo.fit(matriz_features, vetor_alvos)
     return modelo

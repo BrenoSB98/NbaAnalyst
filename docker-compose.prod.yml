@@ -1,0 +1,160 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nba_score_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nba_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: nba_score_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    depends_on:
+      - postgres
+    volumes:
+      - ./chat:/app/chat
+      - modelos_ml:/opt/airflow/modelos_ml
+    networks:
+      - nba_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  frontend:
+    image: nginx:alpine
+    container_name: nba_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - nba_network
+
+  airflow-init:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_init
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "True"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      NBA_SEASON: ${NBA_SEASON}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+    networks:
+      - nba_network
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create
+      --username ${AIRFLOW_ADMIN_USERNAME}
+      --password ${AIRFLOW_ADMIN_PASSWORD}
+      --firstname Admin
+      --lastname NBA
+      --role Admin
+      --email ${AIRFLOW_ADMIN_EMAIL}"
+    restart: on-failure
+
+  airflow-webserver:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_webserver
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "True"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      NBA_SEASON: ${NBA_SEASON}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+    networks:
+      - nba_network
+    command: airflow webserver
+
+  airflow-scheduler:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile.airflow
+    container_name: nba_score_airflow_scheduler
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "True"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      NBA_SEASON: ${NBA_SEASON}
+      AIRFLOW_BACKEND_PATH: /opt/airflow/backend
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+    networks:
+      - nba_network
+    command: airflow scheduler
+
+volumes:
+  postgres_data:
+  airflow_logs:
+  modelos_ml:
+
+networks:
+  nba_network:
+    driver: bridge

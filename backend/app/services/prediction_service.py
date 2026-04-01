@@ -1,5 +1,4 @@
 import numpy as np
-from datetime import datetime
 
 from app.db.models import PlayerGameStats, Game
 from app.services import modelo_service
@@ -22,6 +21,21 @@ def converter_minutos_para_float(minutos_str):
             return float(texto)
     except (ValueError, AttributeError):
         return 0.0
+
+def calcular_media_ponderada_exponencial(valores):
+    if not valores:
+        return 0.0
+
+    n = len(valores)
+    soma_pesos = 0.0
+    soma_ponderada = 0.0
+
+    for i in range(n):
+        peso = i + 1
+        soma_ponderada = soma_ponderada + (valores[i] * peso)
+        soma_pesos = soma_pesos + peso
+
+    return round(soma_ponderada / soma_pesos, 4)
 
 def _traduzir_chave_stat(stat_name):
     if stat_name == "tot_reb":
@@ -83,7 +97,7 @@ def extrair_features_avancadas_jogador(db, player_id, season, stat_name):
                 valor_bruto = 0
             valores_ultimos_5.append(float(valor_bruto))
 
-        media_movel = sum(valores_ultimos_5) / len(valores_ultimos_5)
+        media_movel = calcular_media_ponderada_exponencial(valores_ultimos_5)
 
         jogo_atual = jogos_query[i]
         stat_atual = jogo_atual[0]
@@ -160,10 +174,22 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
         vetor_alvos = np.array(lista_alvos)
 
         try:
-            modelo = XGBRegressor(n_estimators=150, max_depth=6, learning_rate=0.1, subsample=0.8, colsample_bytree=0.8, random_state=42, objective="reg:squarederror")
+            modelo = XGBRegressor(
+                n_estimators=300,
+                max_depth=4,
+                learning_rate=0.05,
+                subsample=0.8,
+                colsample_bytree=0.7,
+                min_child_weight=5,
+                gamma=0.1,
+                reg_alpha=0.1,
+                reg_lambda=2.0,
+                random_state=42,
+                objective="reg:squarederror"
+            )
         except TypeError:
             from sklearn.ensemble import RandomForestRegressor
-            modelo = RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=5, random_state=42)
+            modelo = RandomForestRegressor(n_estimators=300, max_depth=5, min_samples_split=8, min_samples_leaf=4, random_state=42)
 
         modelo.fit(matriz_features, vetor_alvos)
 
@@ -194,7 +220,20 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
                     media_minutos_valor = minutos_bruto
 
     defesa_adversaria = calcular_defesa_adversaria_stat(db, opponent_team_id, season, stat_name)
-    dias_descanso_padrao = 2
+
+    from datetime import datetime, timezone
+    agora = datetime.now(timezone.utc)
+    ultimo_jogo_jogador = db.query(Game).join(PlayerGameStats, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).order_by(Game.date_start.desc()).first()
+
+    if ultimo_jogo_jogador and ultimo_jogo_jogador.date_start:
+        data_ultimo = ultimo_jogo_jogador.date_start
+        if data_ultimo.tzinfo is None:
+            from datetime import timezone as tz_mod
+            data_ultimo = data_ultimo.replace(tzinfo=tz_mod.utc)
+        delta = agora - data_ultimo
+        dias_descanso_real = min(delta.days, 7)
+    else:
+        dias_descanso_real = 2
 
     ultimos_jogos = db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).order_by(Game.date_start.desc()).limit(5).all()
 
@@ -220,7 +259,7 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
             if valor_hist is not None:
                 media_vs_adversario = valor_hist
 
-    vetor_previsao = np.array([[media_ultimos_5_valor, em_casa, defesa_adversaria, dias_descanso_padrao, media_minutos_valor, inclinacao_previsao, media_vs_adversario]])
+    vetor_previsao = np.array([[media_ultimos_5_valor, em_casa, defesa_adversaria, dias_descanso_real, media_minutos_valor, inclinacao_previsao, media_vs_adversario]])
     resultado      = modelo.predict(vetor_previsao)[0]
     return round(float(resultado), 2)
 
