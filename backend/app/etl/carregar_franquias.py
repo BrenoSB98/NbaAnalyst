@@ -43,7 +43,7 @@ def carregar_times():
                 continue
             if not nba_franchise:
                 continue
-            if not all_star:
+            if all_star:
                 continue
 
             time_existente = db.query(Team).filter(Team.id == team_id).first()
