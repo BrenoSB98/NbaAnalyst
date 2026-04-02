@@ -1,7 +1,7 @@
 import logging
 import sys
 
-def configurar_logger(nome: str):
+def configurar_logger(nome):
     logger = logging.getLogger(nome)
 
     if logger.handlers:
@@ -12,11 +12,9 @@ def configurar_logger(nome: str):
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    formatter = logging.Formatter(fmt="%(asctime)s [%(levelname).1s] %(name)s: %(message)s", datefmt="%H:%M:%S")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+    logger.propagate = False
 
     return logger

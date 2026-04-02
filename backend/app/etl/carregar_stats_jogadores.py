@@ -1,28 +1,33 @@
-import logging
 from datetime import datetime, timedelta
 
 from app.services import nba_api_client
 from app.db.models import PlayerGameStats, Game, Player
 from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _normalizar_decimal
+from app.core.logging_config import configurar_logger
 
-logger = logging.getLogger(__name__)
+logger = configurar_logger(__name__)
 
 def carregar_stats_jogador(game_id):
+    logger.info(f"Stats jogadores — jogo={game_id}...")
     estatistica_jogador = nba_api_client.get_player_statistics(game_id=game_id)
 
     if not estatistica_jogador:
-        logger.warning(f"Nenhuma estatística retornada pela API para game_id={game_id}")
+        logger.warning(f"API vazia — jogo={game_id}.")
         return
+
+    logger.info(f"{len(estatistica_jogador)} stats recebidas.")
 
     for db in get_db():
         jogo = db.query(Game).filter(Game.id == game_id).first()
 
         if not jogo:
-            logger.warning(f"Jogo não encontrado no banco —> game_id={game_id}")
+            logger.warning(f"Jogo {game_id} nao encontrado.")
             return
 
         season = jogo.season
+        total_inseridos = 0
+        total_atualizados = 0
 
         for item in estatistica_jogador:
             info_jogador = item.get("player")
@@ -42,13 +47,13 @@ def carregar_stats_jogador(game_id):
                 continue
 
             jogador_existe_no_db = db.query(Player.id).filter(Player.id == id_jogador).first()
-
             if not jogador_existe_no_db:
                 continue
 
             stats_existente = db.query(PlayerGameStats).filter(PlayerGameStats.game_id == game_id, PlayerGameStats.player_id == id_jogador, PlayerGameStats.team_id == id_franquia).first()
 
             if stats_existente:
+                logger.info(f"Atualiza stat jogador={id_jogador} jogo={game_id}.")
                 stats_existente.pos = _normalizar_string(item.get("pos"))
                 stats_existente.minutes = _normalizar_string(item.get("min"))
                 stats_existente.comment = _normalizar_string(item.get("comment"))
@@ -71,8 +76,10 @@ def carregar_stats_jogador(game_id):
                 stats_existente.turnovers = _normalizar_inteiro(item.get("turnovers"))
                 stats_existente.blocks = _normalizar_inteiro(item.get("blocks"))
                 stats_existente.plus_minus = _normalizar_inteiro(item.get("plusMinus"))
+                total_atualizados += 1
                 continue
 
+            logger.info(f"Insere stat jogador={id_jogador} jogo={game_id}.")
             nova_stats = PlayerGameStats(
                 game_id=game_id,
                 season=season,
@@ -102,8 +109,14 @@ def carregar_stats_jogador(game_id):
                 plus_minus=_normalizar_inteiro(item.get("plusMinus")),
             )
             db.add(nova_stats)
+            total_inseridos += 1
+
+        db.commit()
+        logger.info(f"Fim jogo={game_id} — ins={total_inseridos} atu={total_atualizados}.")
 
 def carregar_stats_todos_jogadores(season, team_id=None, data=None):
+    logger.info(f"Stats em massa — temp={season} data={data}...")
+
     for db in get_db():
         consulta = db.query(Game).filter(Game.season == season)
 
@@ -118,10 +131,10 @@ def carregar_stats_todos_jogadores(season, team_id=None, data=None):
         jogos = consulta.all()
 
         if not jogos:
-            logger.warning(f"Nenhum jogo encontrado no banco —> season={season}, team_id={team_id}, data={data}")
+            logger.warning(f"Nenhum jogo — temp={season} data={data}.")
             return
 
-        total_jogos = len(jogos)
+        logger.info(f"{len(jogos)} jogos encontrados.")
         total_erros = 0
 
         for jogo in jogos:
@@ -129,11 +142,13 @@ def carregar_stats_todos_jogadores(season, team_id=None, data=None):
                 carregar_stats_jogador(game_id=jogo.id)
             except Exception as erro:
                 total_erros = total_erros + 1
-                logger.warning(f"Falha ao carregar stats de jogadores do jogo {jogo.id}: {erro}")
+                logger.warning(f"Erro jogo={jogo.id}: {erro}")
                 continue
 
         if total_erros > 0:
-            logger.warning(f"Carga concluída com erros —> season={season}, total_jogos={total_jogos}, erros={total_erros}")
+            logger.warning(f"Fim com erros — erros={total_erros} total={len(jogos)}.")
+        else:
+            logger.info(f"Fim — {len(jogos)} jogos processados.")
 
 if __name__ == "__main__":
     carregar_stats_todos_jogadores(season=2025)

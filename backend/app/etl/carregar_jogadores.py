@@ -1,19 +1,22 @@
-import logging
 from datetime import datetime
 
 from app.services import nba_api_client
 from app.db.models import Player, PlayerTeamSeason
 from app.db.db_utils import get_db
 from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _normalizar_decimal
+from app.core.logging_config import configurar_logger
 
-logger = logging.getLogger(__name__)
+logger = configurar_logger(__name__)
 
 def carregar_jogadores(team_id=None, season=None):
+    logger.info(f"Buscando jogadores — time={team_id} temp={season}...")
     dados_jogadores = nba_api_client.get_players(team_id=team_id, season=season)
 
     if not dados_jogadores:
-        logger.warning(f"Nenhum jogador retornado —> franquia={team_id} | temporada={season}")
+        logger.warning(f"API retornou vazio — time={team_id} temp={season}.")
         return
+
+    logger.info(f"{len(dados_jogadores)} jogadores recebidos.")
 
     for db in get_db():
         total_inseridos = 0
@@ -28,16 +31,15 @@ def carregar_jogadores(team_id=None, season=None):
             lastname = _normalizar_string(item.get("lastname"))
             if not firstname and not lastname:
                 continue
-            
+
             if firstname is None:
                 firstname = lastname
             if lastname is None:
                 lastname = firstname
-                
+
             dados_nba = item.get("nba", {})
             nba_start = _normalizar_inteiro(dados_nba.get("start"))
             nba_pro = _normalizar_inteiro(dados_nba.get("pro"))
-
 
             dados_nascimento = item.get("birth", {})
             data_nascimento_str = dados_nascimento.get("date")
@@ -64,6 +66,7 @@ def carregar_jogadores(team_id=None, season=None):
 
             jogador_existente = db.query(Player).filter(Player.id == player_id).first()
             if jogador_existente:
+                logger.info(f"Atualiza jogador {player_id}.")
                 jogador_existente.firstname = firstname
                 jogador_existente.lastname = lastname
                 jogador_existente.birth_date = data_nascimento_obj
@@ -79,6 +82,7 @@ def carregar_jogadores(team_id=None, season=None):
                 jogador_existente.affiliation = afiliacao
                 total_atualizados += 1
             else:
+                logger.info(f"Insere jogador {player_id} — {firstname} {lastname}.")
                 novo_jogador = Player(
                     id=player_id,
                     firstname=firstname,
@@ -108,21 +112,18 @@ def carregar_jogadores(team_id=None, season=None):
             posicao = _normalizar_string(liga_standard.get("pos"))
             codigo_liga = "standard"
 
-            vinculo_existente = db.query(PlayerTeamSeason).filter(
-                PlayerTeamSeason.player_id == player_id,
-                PlayerTeamSeason.team_id == team_id,
-                PlayerTeamSeason.season == season,
-                PlayerTeamSeason.league_code == codigo_liga,
-            ).first()
+            vinculo_existente = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.league_code == codigo_liga).first()
 
             if vinculo_existente:
+                logger.info(f"Atualiza vinculo {player_id}/time={team_id}.")
                 vinculo_existente.jersey = numero_camisa
                 if isinstance(ativo, bool):
-                    vinculo_existente.active = ativo 
+                    vinculo_existente.active = ativo
                 else:
                     vinculo_existente.active = bool(ativo)
                 vinculo_existente.pos = posicao
             else:
+                logger.info(f"Vincula {player_id}/time={team_id}/temp={season}.")
                 novo_vinculo = PlayerTeamSeason(
                     player_id=player_id,
                     team_id=team_id,
@@ -133,10 +134,14 @@ def carregar_jogadores(team_id=None, season=None):
                     pos=posicao,
                 )
                 db.add(novo_vinculo)
+
         db.commit()
+        logger.info("Commit ok.")
 
         if total_inseridos == 0 and total_atualizados == 0:
-            logger.warning(f"Nenhum jogador inserido ou atualizado —> franquia={team_id}, temporada={season}")
+            logger.warning(f"Nenhum jogador salvo — time={team_id} temp={season}.")
+        else:
+            logger.info(f"Fim — ins={total_inseridos} atu={total_atualizados}")
 
 if __name__ == "__main__":
     carregar_jogadores()
