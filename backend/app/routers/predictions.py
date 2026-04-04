@@ -11,6 +11,7 @@ from app.db.models import Game, Player, Prediction, Team
 from app.routers.auth import obter_usuario_atual
 from app.services.manager_service import salvar_predicoes_dia_atual, salvar_predicoes_temporada
 from app.services.prediction_service import prever_performance_jogador, prever_multiplas_stats_jogador
+from app.services.formatar_palpites import formatar_palpite
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -117,6 +118,12 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         time = db.query(Team).filter(Team.id == pred.team_id).first()
         adversario = db.query(Team).filter(Team.id == pred.opponent_team_id).first()
 
+        palpite_pts = formatar_palpite(pred.predicted_points)
+        palpite_ast = formatar_palpite(pred.predicted_assists)
+        palpite_reb = formatar_palpite(pred.predicted_rebounds)
+        palpite_stl = formatar_palpite(pred.predicted_steals)
+        palpite_blk = formatar_palpite(pred.predicted_blocks)
+
         lista_resultado.append({
             "prediction_id": pred.id,
             "game_id": pred.game_id,
@@ -131,6 +138,11 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
             "rebotes_previstos": pred.predicted_rebounds,
             "roubos_previstos": pred.predicted_steals,
             "bloqueios_previstos": pred.predicted_blocks,
+            "palpite_pontos": palpite_pts,
+            "palpite_assistencias": palpite_ast,
+            "palpite_rebotes": palpite_reb,
+            "palpite_roubos": palpite_stl,
+            "palpite_bloqueios": palpite_blk,
             "criado_em": pred.created_at,
         })
 
@@ -163,6 +175,12 @@ def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuar
         else:
             nome_jogador = "Desconhecido"
 
+        palpite_pts = formatar_palpite(pred.predicted_points)
+        palpite_ast = formatar_palpite(pred.predicted_assists)
+        palpite_reb = formatar_palpite(pred.predicted_rebounds)
+        palpite_stl = formatar_palpite(pred.predicted_steals)
+        palpite_blk = formatar_palpite(pred.predicted_blocks)
+
         lista_resultado.append({
             "prediction_id": pred.id,
             "player_id": pred.player_id,
@@ -174,6 +192,11 @@ def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuar
             "rebotes_previstos": pred.predicted_rebounds,
             "roubos_previstos": pred.predicted_steals,
             "bloqueios_previstos": pred.predicted_blocks,
+            "palpite_pontos": palpite_pts,
+            "palpite_assistencias": palpite_ast,
+            "palpite_rebotes": palpite_reb,
+            "palpite_roubos": palpite_stl,
+            "palpite_bloqueios": palpite_blk,
             "criado_em": pred.created_at,
         })
 
@@ -196,6 +219,12 @@ def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(
         jogo = db.query(Game).filter(Game.id == pred.game_id).first()
         adversario = db.query(Team).filter(Team.id == pred.opponent_team_id).first()
 
+        palpite_pts = formatar_palpite(pred.predicted_points)
+        palpite_ast = formatar_palpite(pred.predicted_assists)
+        palpite_reb = formatar_palpite(pred.predicted_rebounds)
+        palpite_stl = formatar_palpite(pred.predicted_steals)
+        palpite_blk = formatar_palpite(pred.predicted_blocks)
+
         lista_resultado.append({
             "prediction_id": pred.id,
             "game_id": pred.game_id,
@@ -207,6 +236,11 @@ def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(
             "rebotes_previstos": pred.predicted_rebounds,
             "roubos_previstos": pred.predicted_steals,
             "bloqueios_previstos": pred.predicted_blocks,
+            "palpite_pontos": palpite_pts,
+            "palpite_assistencias": palpite_ast,
+            "palpite_rebotes": palpite_reb,
+            "palpite_roubos": palpite_stl,
+            "palpite_bloqueios": palpite_blk,
             "criado_em": pred.created_at,
         })
 

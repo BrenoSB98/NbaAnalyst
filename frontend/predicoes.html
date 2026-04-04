@@ -222,26 +222,48 @@ function renderizarColunaTimes(jogadores) {
         var p = jogadores[i];
 
         var pts = "—";
-        if (p.pontos_previstos !== null && p.pontos_previstos !== undefined) {
+        if (p.palpite_pontos && p.palpite_pontos.label) {
+            pts = p.palpite_pontos.label;
+        } else if (p.pontos_previstos !== null && p.pontos_previstos !== undefined) {
             pts = parseFloat(p.pontos_previstos).toFixed(1);
         }
 
         var ast = "—";
-        if (p.assistencias_previstas !== null && p.assistencias_previstas !== undefined) {
+        if (p.palpite_assistencias && p.palpite_assistencias.label) {
+            ast = p.palpite_assistencias.label;
+        } else if (p.assistencias_previstas !== null && p.assistencias_previstas !== undefined) {
             ast = parseFloat(p.assistencias_previstas).toFixed(1);
         }
 
         var reb = "—";
-        if (p.rebotes_previstos !== null && p.rebotes_previstos !== undefined && parseFloat(p.rebotes_previstos) > 0) {
+        if (p.palpite_rebotes && p.palpite_rebotes.label) {
+            reb = p.palpite_rebotes.label;
+        } else if (p.rebotes_previstos !== null && p.rebotes_previstos !== undefined && parseFloat(p.rebotes_previstos) > 0) {
             reb = parseFloat(p.rebotes_previstos).toFixed(1);
+        }
+
+        var stl = "—";
+        if (p.palpite_roubos && p.palpite_roubos.label) {
+            stl = p.palpite_roubos.label;
+        } else if (p.roubos_previstos !== null && p.roubos_previstos !== undefined) {
+            stl = parseFloat(p.roubos_previstos).toFixed(1);
+        }
+
+        var blk = "—";
+        if (p.palpite_bloqueios && p.palpite_bloqueios.label) {
+            blk = p.palpite_bloqueios.label;
+        } else if (p.bloqueios_previstos !== null && p.bloqueios_previstos !== undefined) {
+            blk = parseFloat(p.bloqueios_previstos).toFixed(1);
         }
 
         html = html + '<div class="linha-jogador">';
         html = html + '<div class="jogador-nome"><a href="jogador.html?id=' + p.player_id + '">' + p.nome_jogador + '</a></div>';
         html = html + '<div class="stats-inline">';
-        html = html + '<div class="stat-pill"><div class="valor" style="color:#F75C03;">' + pts + '</div><div class="rotulo">PTS</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor" style="color:#3B9EFF;">' + ast + '</div><div class="rotulo">AST</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor" style="color:#00C896;">' + reb + '</div><div class="rotulo">REB</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + pts + '</div><div class="rotulo">PTS</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + ast + '</div><div class="rotulo">AST</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + reb + '</div><div class="rotulo">REB</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + stl + '</div><div class="rotulo">STL</div></div>';
+        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + blk + '</div><div class="rotulo">BLK</div></div>';
         html = html + '</div>';
         html = html + '</div>';
     }

@@ -2,6 +2,7 @@ import logging
 
 from app.config import config
 from app.db.models import Game, PlayerGameStats, Prediction
+from app.services.formatar_palpites import verificar_acerto_linha
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def _jogador_teve_minutos(stat_real):
             return False
     return True
 
-def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, margem):
+def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real):
     total = 0
     acertos = 0
     soma_erros = 0.0
@@ -43,16 +44,16 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, margem)
         if valor_previsto is None or valor_real is None:
             continue
 
-        valor_previsto_float = float(valor_previsto)
-        valor_real_float = float(valor_real)
-        erro = abs(valor_previsto_float - valor_real_float)
-        soma_erros = soma_erros + erro
         total = total + 1
+        erro = abs(float(valor_previsto) - float(valor_real))
+        soma_erros = soma_erros + erro
 
-        if erro <= margem:
+        acertou = verificar_acerto_linha(valor_previsto, valor_real)
+        if acertou:
             acertos = acertos + 1
+
     if ignorados_sem_minutos > 0:
-        logger.warning(f"Palpites ignoradas por falta de minutos em quadra —> total={ignorados_sem_minutos}, campo={campo_real}")
+        logger.warning(f"Palpites ignorados por falta de minutos —> total={ignorados_sem_minutos}, campo={campo_real}")
 
     if total == 0:
         resultado = {}
@@ -60,7 +61,6 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, margem)
         resultado["total_acertos"] = 0
         resultado["win_rate"] = 0.0
         resultado["mae_medio"] = None
-        resultado["margem_tolerancia"] = margem
         return resultado
 
     win_rate = round((acertos / total) * 100, 2)
@@ -71,7 +71,6 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, margem)
     resultado["total_acertos"] = acertos
     resultado["win_rate"] = win_rate
     resultado["mae_medio"] = mae
-    resultado["margem_tolerancia"] = margem
     return resultado
 
 def calcular_win_rate(db, temporada):
@@ -82,11 +81,11 @@ def calcular_win_rate(db, temporada):
         logger.warning(f"Nenhuma palpite avaliavel encontrada —> temporada={temporada}")
         return None
 
-    desempenho_pontos = _calcular_win_rate_stat(palpites_com_real, "predicted_points", "points", MARGEM_PONTOS)
-    desempenho_assistencias = _calcular_win_rate_stat(palpites_com_real, "predicted_assists", "assists", MARGEM_ASSISTENCIAS)
-    desempenho_rebotes = _calcular_win_rate_stat(palpites_com_real, "predicted_rebounds", "tot_reb", MARGEM_REBOTES)
-    desempenho_roubos = _calcular_win_rate_stat(palpites_com_real, "predicted_steals", "steals", MARGEM_ROUBOS)
-    desempenho_bloqueios = _calcular_win_rate_stat(palpites_com_real, "predicted_blocks", "blocks", MARGEM_BLOQUEIOS)
+    desempenho_pontos = _calcular_win_rate_stat(palpites_com_real, "predicted_points", "points")
+    desempenho_assistencias = _calcular_win_rate_stat(palpites_com_real, "predicted_assists", "assists")
+    desempenho_rebotes = _calcular_win_rate_stat(palpites_com_real, "predicted_rebounds", "tot_reb")
+    desempenho_roubos = _calcular_win_rate_stat(palpites_com_real, "predicted_steals", "steals")
+    desempenho_bloqueios = _calcular_win_rate_stat(palpites_com_real, "predicted_blocks", "blocks")
 
     lista_desempenhos = [desempenho_pontos, desempenho_assistencias, desempenho_rebotes, desempenho_roubos, desempenho_bloqueios]
 

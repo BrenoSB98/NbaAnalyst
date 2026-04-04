@@ -313,6 +313,16 @@
     color: #9999B0;
     margin-top: 1px;
 }
+
+.stat-pill.stat-label-pill {
+    min-width: 80px;
+}
+
+.stat-label {
+    font-size: .75rem;
+    white-space: nowrap;
+}
+
 @media (max-width: 576px) {
     .times-grid {
         grid-template-columns: 1fr;
