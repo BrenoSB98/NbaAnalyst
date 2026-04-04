@@ -344,9 +344,29 @@ async function carregarPredicoesDia() {
         var html = '<div class="row g-3">';
         for (var i = 0; i < predicoes.length; i++) {
             var pred = predicoes[i];
-            var pts = pred.pontos_previstos !== null ? parseFloat(pred.pontos_previstos).toFixed(1) : "—";
             var adversario = pred.nome_adversario || "—";
             var time = pred.nome_time || "";
+
+            var pts = "—";
+            if (pred.palpite_pontos && pred.palpite_pontos.label) {
+                pts = pred.palpite_pontos.label;
+            } else if (pred.pontos_previstos !== null && pred.pontos_previstos !== undefined) {
+                pts = parseFloat(pred.pontos_previstos).toFixed(1);
+            }
+
+            var ast = "—";
+            if (pred.palpite_assistencias && pred.palpite_assistencias.label) {
+                ast = pred.palpite_assistencias.label;
+            } else if (pred.assistencias_previstas !== null && pred.assistencias_previstas !== undefined) {
+                ast = parseFloat(pred.assistencias_previstas).toFixed(1);
+            }
+
+            var reb = "—";
+            if (pred.palpite_rebotes && pred.palpite_rebotes.label) {
+                reb = pred.palpite_rebotes.label;
+            } else if (pred.rebotes_previstos !== null && pred.rebotes_previstos !== undefined) {
+                reb = parseFloat(pred.rebotes_previstos).toFixed(1);
+            }
 
             html = html
                 + '<div class="col-12 col-md-6 col-xl-4">'
@@ -354,10 +374,11 @@ async function carregarPredicoesDia() {
                 +     '<div style="min-width:0; flex:1;">'
                 +       '<div class="pred-jogador">' + pred.nome_jogador + '</div>'
                 +       '<div class="pred-adversario">' + time + ' vs ' + adversario + '</div>'
-                +     '</div>'
-                +     '<div>'
-                +       '<div class="pred-pts">' + pts + '</div>'
-                +       '<div class="pred-rotulo">pts prev.</div>'
+                +       '<div class="pred-stats-inline" style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">'
+                +         '<div><div class="pred-pts" style="font-size:.85rem; color:#000000;">' + pts + '</div><div class="pred-rotulo">PTS</div></div>'
+                +         '<div><div class="pred-pts" style="font-size:.85rem; color:#000000;">' + ast + '</div><div class="pred-rotulo">AST</div></div>'
+                +         '<div><div class="pred-pts" style="font-size:.85rem; color:#000000;">' + reb + '</div><div class="pred-rotulo">REB</div></div>'
+                +       '</div>'
                 +     '</div>'
                 +   '</div>'
                 + '</div>';

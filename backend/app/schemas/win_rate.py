@@ -6,7 +6,6 @@ class WinRate(BaseModel):
     total_acertos: int
     win_rate: float
     mae_medio: Optional[float] = None
-    margem_tolerancia: float
 
 class WinRateResponse(BaseModel):
     temporada: int
