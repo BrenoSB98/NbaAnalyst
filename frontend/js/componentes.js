@@ -56,6 +56,11 @@ function renderizarMenu() {
                             <i class="bi bi-person-circle texto-laranja"></i> Meu Perfil
                         </a>
                     </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="/alterar_senha.html">
+                            <i class="bi bi-lock-fill texto-laranja"></i> Alterar Senha
+                        </a>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <button class="dropdown-item d-flex align-items-center gap-2 texto-perigo" onclick="encerrarSessao()">

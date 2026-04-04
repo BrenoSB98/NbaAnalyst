@@ -160,7 +160,16 @@ async function fazerCadastro() {
 
     try {
         await chamarApi("/autenticacao/registrar", "POST", dadosCadastro);
-        await realizarLogin(email, senha, null);
+
+        document.getElementById("area-alerta").innerHTML =
+            '<div class="alerta-nba sucesso mb-3">'
+            + '<i class="bi bi-envelope-check-fill"></i>'
+            + '<span>Conta criada! Enviamos um e-mail para <strong>' + email + '</strong>. Clique no link para ativar sua conta.</span>'
+            + '</div>';
+
+        botao.disabled = true;
+        botao.innerHTML = '<i class="bi bi-check-circle me-2"></i>Cadastro realizado';
+
     } catch (erro) {
         document.getElementById("area-alerta").innerHTML =
             '<div class="alerta-nba erro mb-3">'

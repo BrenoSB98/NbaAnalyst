@@ -37,6 +37,31 @@
             <button type="button" class="btn-nba btn-nba w-100" id="btn-entrar" onclick="fazerLogin()">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
             </button>
+
+            <div style="text-align: center; margin-top: 14px;">
+                <button type="button" onclick="mostrarPainelRecuperacao()" style="background: none; border: none; color: #F75C03; font-size: 0.85rem; font-weight: 600; cursor: pointer; padding: 0;">
+                    Esqueceu sua senha?
+                </button>
+            </div>
+        </div>
+
+        <div id="painel-recuperacao" style="display: none;">
+            <hr class="login-divisor" style="margin-top: 0;">
+            <p style="font-size: 0.88rem; color: #555570; margin-bottom: 16px;">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
+            <div id="area-alerta-recuperacao"></div>
+            <div class="mb-3">
+                <label class="form-label-nba" for="campo-email-recuperacao">E-mail</label>
+                <input type="email" class="form-control-nba" id="campo-email-recuperacao" placeholder="seu@email.com">
+                <div class="mensagem-erro-campo" id="erro-email-recuperacao"></div>
+            </div>
+            <button type="button" class="btn-nba btn-nba w-100" id="btn-recuperar" onclick="solicitarReset()">
+                <i class="bi bi-envelope me-2"></i>Enviar link de redefinição
+            </button>
+            <div style="text-align: center; margin-top: 14px;">
+                <button type="button" onclick="mostrarPainelLogin()" style="background: none; border: none; color: #888899; font-size: 0.85rem; cursor: pointer; padding: 0;">
+                    Voltar ao login
+                </button>
+            </div>
         </div>
         <div class="login-rodape">
             Não tem conta? <a href="/cadastro.html">Criar conta grátis</a>
@@ -95,6 +120,65 @@ function validarFormulario() {
     }
 
     return tudo_ok;
+}
+
+function mostrarPainelRecuperacao() {
+    document.getElementById("area-alerta").innerHTML = "";
+    document.getElementById("area-sessao-expirada").innerHTML = "";
+    document.querySelector("div:has(#btn-entrar)").style.display = "none";
+    document.getElementById("painel-recuperacao").style.display = "block";
+    document.getElementById("campo-email-recuperacao").focus();
+}
+
+function mostrarPainelLogin() {
+    document.getElementById("painel-recuperacao").style.display = "none";
+    document.getElementById("area-alerta-recuperacao").innerHTML = "";
+    document.getElementById("erro-email-recuperacao").textContent = "";
+    document.getElementById("campo-email-recuperacao").value = "";
+    document.querySelector("div:has(#btn-entrar)").style.display = "block";
+}
+
+async function solicitarReset() {
+    var email = document.getElementById("campo-email-recuperacao").value.trim();
+    var erroEl = document.getElementById("erro-email-recuperacao");
+    var alertaEl = document.getElementById("area-alerta-recuperacao");
+    var botao = document.getElementById("btn-recuperar");
+
+    erroEl.textContent = "";
+    alertaEl.innerHTML = "";
+
+    if (email === "") {
+        erroEl.textContent = "Informe o seu e-mail.";
+        document.getElementById("campo-email-recuperacao").classList.add("erro");
+        return;
+    }
+
+    document.getElementById("campo-email-recuperacao").classList.remove("erro");
+    botao.disabled = true;
+    botao.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Enviando...';
+
+    try {
+        await chamarApi("/autenticacao/solicitar-reset-senha", "POST", { email: email });
+
+        alertaEl.innerHTML =
+            '<div class="alerta-nba sucesso mb-3">'
+            + '<i class="bi bi-envelope-check-fill"></i>'
+            + '<span>Se o e-mail estiver cadastrado, você receberá as instruções em breve. Verifique sua caixa de entrada.</span>'
+            + '</div>';
+
+        botao.disabled = true;
+        botao.innerHTML = '<i class="bi bi-check-circle me-2"></i>E-mail enviado';
+
+    } catch (erro) {
+        alertaEl.innerHTML =
+            '<div class="alerta-nba erro mb-3">'
+            + '<i class="bi bi-exclamation-triangle-fill"></i>'
+            + '<span>Erro ao processar a solicitação. Tente novamente.</span>'
+            + '</div>';
+
+        botao.disabled = false;
+        botao.innerHTML = '<i class="bi bi-envelope me-2"></i>Enviar link de redefinição';
+    }
 }
 
 async function fazerLogin() {

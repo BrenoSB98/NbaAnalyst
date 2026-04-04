@@ -307,7 +307,11 @@ class User(Base):
     birth_date = Column(Date, nullable=False)
     favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, nullable=False, default=True)
+    is_active = Column(Boolean, nullable=False, default=False)
+    email_confirmed = Column(Boolean, nullable=False, default=False)
+    confirmation_token = Column(String, nullable=True)
+    reset_token = Column(String, nullable=True)
+    reset_token_expira = Column(TIMESTAMP(timezone=True), nullable=True)
     role = Column(String, nullable=False, default="user")
     created_at = Column(TIMESTAMP(timezone=True), nullable=False)
 

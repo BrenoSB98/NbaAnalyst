@@ -45,6 +45,12 @@
                                 <option value="2023">2023</option>
                                 <option value="2022">2022</option>
                                 <option value="2021">2021</option>
+                                <option value="2020">2020</option>
+                                <option value="2019">2019</option>
+                                <option value="2018">2018</option>
+                                <option value="2017">2017</option>
+                                <option value="2016">2016</option>
+                                <option value="2015">2015</option>
                             </select>
                         </div>
 
@@ -111,7 +117,6 @@
                             </div>
                         </div>
 
-                        <!-- Tabela de jogos (req 3.5) -->
                         <div class="acento"></div>
                         <div class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <span>Histórico de Jogos</span>
@@ -199,6 +204,7 @@ function moveTT(event) {
 function hideTT() { tt.style.opacity = 0; }
 
 document.addEventListener("DOMContentLoaded", function() {
+    verificarAutenticacao();
     inicializarPagina();
     if (!jogadorId) {
         document.getElementById("pg-loading").style.display = "none";
@@ -345,15 +351,12 @@ function renderCards() {
     document.getElementById("grid-cards").innerHTML = html;
 }
 
-
-// ── GRÁFICO LINHA
 var seriesVisiveis = { pontos: true, assistencias: true, rebotes: true, roubos: true };
-
 var SERIES_DEF = [
-    { campo: "pontos",       label: "PTS", cor: "#F75C03" },
-    { campo: "assistencias", label: "AST", cor: "#3B9EFF" },
-    { campo: "rebotes",      label: "REB", cor: "#00C896" },
-    { campo: "roubos",       label: "STL", cor: "#FFD600" }
+    {campo: "pontos", label: "PTS", cor: "#F75C03"},
+    {campo: "assistencias", label: "AST", cor: "#3B9EFF"},
+    {campo: "rebotes", label: "REB", cor: "#00C896"},
+    {campo: "roubos", label: "STL", cor: "#FFD600"}
 ];
 
 function renderBotoesLinha() {

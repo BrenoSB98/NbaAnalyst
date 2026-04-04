@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmação de E-mail</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body>
+
+<div class="pagina-cadastro">
+    <div class="card-cadastro">
+        <div class="cadastro-logo">
+            <i class="bi bi-dribbble"></i>
+            Nba Analytics
+        </div>
+
+        <div id="estado-carregando" style="text-align: center; padding: 24px 0;">
+            <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+            <p style="color: #555570; font-size: 0.9rem; margin-top: 12px;">Confirmando seu e-mail...</p>
+        </div>
+
+        <div id="estado-sucesso" style="display: none; text-align: center; padding: 16px 0;">
+            <i class="bi bi-check-circle-fill" style="font-size: 2.5rem; color: #00A878;"></i>
+            <h2 style="font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: #1A1A2E; margin: 16px 0 8px;">E-mail confirmado!</h2>
+            <p style="color: #555570; font-size: 0.9rem; margin-bottom: 24px;">Sua conta está ativa. Faça login para acessar a plataforma.</p>
+            <a href="login.html" class="btn-nba btn-nba-primary" style="display: inline-block; text-decoration: none;">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Entrar na conta
+            </a>
+        </div>
+
+        <div id="estado-erro" style="display: none; text-align: center; padding: 16px 0;">
+            <i class="bi bi-x-circle-fill" style="font-size: 2.5rem; color: #FF3B5C;"></i>
+            <h2 style="font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: #1A1A2E; margin: 16px 0 8px;">Link inválido</h2>
+            <p id="msg-erro" style="color: #555570; font-size: 0.9rem; margin-bottom: 24px;">O link de confirmação é inválido ou já foi utilizado.</p>
+            <a href="cadastro.html" class="btn-nba btn-nba-outline" style="display: inline-block; text-decoration: none;">
+                <i class="bi bi-person-plus me-2"></i>Criar nova conta
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+
+<script>
+var token = obterParametroUrl("token");
+
+document.addEventListener("DOMContentLoaded", function() {
+    if (!token) {
+        mostrarErro("Nenhum token de confirmação encontrado na URL.");
+        return;
+    }
+
+    confirmarEmail();
+});
+
+async function confirmarEmail() {
+    try {
+        await chamarApi("/autenticacao/confirmacao_conta/" + token, "GET");
+
+        document.getElementById("estado-carregando").style.display = "none";
+        document.getElementById("estado-sucesso").style.display = "block";
+
+    } catch (erro) {
+        var mensagem = "O link de confirmação é inválido ou já foi utilizado.";
+
+        if (erro && erro.detail) {
+            mensagem = erro.detail;
+        }
+
+        mostrarErro(mensagem);
+    }
+}
+
+function mostrarErro(mensagem) {
+    document.getElementById("estado-carregando").style.display = "none";
+    document.getElementById("msg-erro").textContent = mensagem;
+    document.getElementById("estado-erro").style.display = "block";
+}
+</script>
+
+</body>
+</html>

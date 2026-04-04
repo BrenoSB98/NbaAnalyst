@@ -39,5 +39,10 @@ class Config:
     
     PASTA_MODELOS = os.getenv("PASTA_MODELOS", "/opt/airflow/modelos_ml")
     
-    
+    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USUARIO = os.getenv("SMTP_USUARIO", "")
+    SMTP_SENHA = os.getenv("SMTP_SENHA", "")
+    SMTP_REMETENTE = os.getenv("SMTP_REMETENTE", "NbaAnalytics <noreply@nbaanalytics.com.br>")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 config = Config()

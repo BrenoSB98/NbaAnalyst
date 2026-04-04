@@ -36,3 +36,13 @@ class TokenData(BaseModel):
     
 class UserUpdateTimeFavorito(BaseModel):
     favorite_team_id: Optional[int] = None
+
+class UserUpdateSenha(BaseModel):
+    senha_atual: str
+    nova_senha: str
+
+    @field_validator("nova_senha")
+    def nova_senha_minima(cls, v):
+        if len(v) < 6:
+            raise ValueError("A nova senha deve ter no mínimo 6 caracteres.")
+        return v
