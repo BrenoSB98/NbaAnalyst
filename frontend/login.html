@@ -21,7 +21,7 @@
         <hr class="login-divisor">
         <div id="area-alerta"></div>
         <div id="area-sessao-expirada"></div>
-        <div>
+        <div id="painel-login">
             <div class="mb-3">
                 <label class="form-label-nba" for="campo-email">E-mail</label>
                 <input type="email" class="form-control-nba" id="campo-email" placeholder="seu@email.com">
@@ -125,7 +125,7 @@ function validarFormulario() {
 function mostrarPainelRecuperacao() {
     document.getElementById("area-alerta").innerHTML = "";
     document.getElementById("area-sessao-expirada").innerHTML = "";
-    document.querySelector("div:has(#btn-entrar)").style.display = "none";
+    document.getElementById("painel-login").style.display = "none";
     document.getElementById("painel-recuperacao").style.display = "block";
     document.getElementById("campo-email-recuperacao").focus();
 }
@@ -135,7 +135,7 @@ function mostrarPainelLogin() {
     document.getElementById("area-alerta-recuperacao").innerHTML = "";
     document.getElementById("erro-email-recuperacao").textContent = "";
     document.getElementById("campo-email-recuperacao").value = "";
-    document.querySelector("div:has(#btn-entrar)").style.display = "block";
+    document.getElementById("painel-login").style.display = "block";
 }
 
 async function solicitarReset() {

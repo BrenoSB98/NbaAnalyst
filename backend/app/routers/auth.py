@@ -166,11 +166,7 @@ def solicitar_reset_senha(dados: dict, db: Session = Depends(get_db)):
     db.commit()
 
     try:
-        enviar_email_reset_senha(
-            destinatario=usuario.email,
-            nome=usuario.full_name,
-            token=token_reset,
-        )
+        enviar_email_reset_senha(destinatario=usuario.email, nome=usuario.full_name, token=token_reset)
     except Exception:
         pass
 
