@@ -1,15 +1,11 @@
 import os
 import sys
 import logging
-
 sys.path.insert(0, os.environ.get("AIRFLOW_BACKEND_PATH", "/opt/airflow/backend"))
-
 from datetime import datetime, timedelta
-
 from airflow.decorators import dag, task
 from airflow.models.param import Param
 from airflow.operators.python import get_current_context
-
 from app.config import config
 from app.etl.carregar_ligas import carregar_ligas
 from app.etl.carregar_temporadas import carregar_temporadas
@@ -25,8 +21,8 @@ logger = logging.getLogger("nba_backfill_historico_dag")
 args_padrao = {
     "owner": "nba_score",
     "depends_on_past": False,
-    "retries": 2,
-    "retry_delay": timedelta(minutes=10),
+    "retries": 3,
+    "retry_delay": timedelta(minutes=5),
     "email_on_failure": False,
     "email_on_retry": False,
 }
@@ -67,17 +63,15 @@ args_padrao = {
     },
 )
 def nba_backfill_historico():
+
     @task()
     def obter_temporadas():
         contexto = get_current_context()
-        params   = contexto["params"]
-
+        params = contexto["params"]
         inicio = int(params["temporada_inicio"])
-        fim    = int(params["temporada_fim"])
-
+        fim = int(params["temporada_fim"])
         if inicio > fim:
             raise ValueError(f"temporada_inicio ({inicio}) nao pode ser maior que temporada_fim ({fim}).")
-
         temporadas = list(range(inicio, fim + 1))
         logger.warning(f"Backfill configurado para temporadas: {temporadas}")
         return temporadas
@@ -114,7 +108,6 @@ def nba_backfill_historico():
         if not contexto["params"]["carregar_jogadores"]:
             logger.warning("Pulando carga de jogadores (desabilitado nos parametros).")
             return
-
         for temporada in temporadas:
             logger.warning(f"Carregando elencos —> temporada={temporada}")
             try:
@@ -135,7 +128,7 @@ def nba_backfill_historico():
                 logger.error(f"Erro ao carregar partidas —> temporada={temporada}: {erro}")
                 continue
 
-    @task()
+    @task(execution_timeout=timedelta(hours=6))
     def carregar_stats_jogadores_task(temporadas):
         for temporada in temporadas:
             logger.warning(f"Carregando stats de jogadores —> temporada={temporada}")
@@ -146,7 +139,7 @@ def nba_backfill_historico():
                 logger.error(f"Erro ao carregar stats de jogadores —> temporada={temporada}: {erro}")
                 continue
 
-    @task()
+    @task(execution_timeout=timedelta(hours=6))
     def carregar_stats_times_task(temporadas):
         for temporada in temporadas:
             logger.warning(f"Carregando stats de times —> temporada={temporada}")
@@ -157,40 +150,35 @@ def nba_backfill_historico():
                 logger.error(f"Erro ao carregar stats de times —> temporada={temporada}: {erro}")
                 continue
 
-    @task()
+    @task(execution_timeout=timedelta(hours=2))
     def reprocessar_stats_pendentes_task(temporadas):
         from app.db.db_utils import get_db
         from app.db.models import Game, GameTeamStats, PlayerGameStats
-
         for db in get_db():
             for temporada in temporadas:
                 jogos_finalizados = db.query(Game).filter(Game.season == temporada, Game.status_short == 3).all()
-
-                ids_sem_stats_times     = []
+                ids_sem_stats_times = []
                 ids_sem_stats_jogadores = []
                 for jogo in jogos_finalizados:
                     tem_stats_time = db.query(GameTeamStats.game_id).filter(GameTeamStats.game_id == jogo.id).first()
-
                     if not tem_stats_time:
                         ids_sem_stats_times.append(jogo.id)
-
                     tem_stats_jogador = db.query(PlayerGameStats.game_id).filter(PlayerGameStats.game_id == jogo.id).first()
                     if not tem_stats_jogador:
                         ids_sem_stats_jogadores.append(jogo.id)
 
-                total_times     = len(ids_sem_stats_times)
+                total_times = len(ids_sem_stats_times)
                 total_jogadores = len(ids_sem_stats_jogadores)
+
                 if total_times == 0 and total_jogadores == 0:
                     logger.warning(f"Nenhum jogo pendente —> temporada={temporada}")
                     continue
 
-                logger.warning(
-                    f"Jogos pendentes detectados —> temporada={temporada}, "
-                    f"sem_stats_times={total_times}, sem_stats_jogadores={total_jogadores}"
-                )
+                logger.warning(f"Jogos pendentes detectados —> temporada={temporada}, sem_stats_times={total_times}, sem_stats_jogadores={total_jogadores}")
 
-                erros_times     = 0
+                erros_times = 0
                 erros_jogadores = 0
+
                 for game_id in ids_sem_stats_times:
                     try:
                         carregar_stats_times_jogo(game_id=game_id)
@@ -207,11 +195,7 @@ def nba_backfill_historico():
                         logger.error(f"Erro ao reprocessar stats de jogadores —> game_id={game_id}: {erro}")
                         continue
 
-                logger.warning(
-                    f"Reprocessamento concluido —> temporada={temporada}, "
-                    f"times_ok={total_times - erros_times}, times_erro={erros_times}, "
-                    f"jogadores_ok={total_jogadores - erros_jogadores}, jogadores_erro={erros_jogadores}"
-                )
+                logger.warning(f"Reprocessamento concluido —> temporada={temporada}, times_ok={total_times - erros_times}, times_erro={erros_times}, jogadores_ok={total_jogadores - erros_jogadores}, jogadores_erro={erros_jogadores}")
 
     temporadas = obter_temporadas()
     op_ligas = carregar_ligas_task(temporadas)
@@ -222,6 +206,7 @@ def nba_backfill_historico():
     op_stats_jog = carregar_stats_jogadores_task(temporadas)
     op_stats_times = carregar_stats_times_task(temporadas)
     op_pendentes = reprocessar_stats_pendentes_task(temporadas)
+
     temporadas >> op_ligas >> op_temporadas >> op_times >> op_jogadores >> op_partidas >> op_stats_jog >> op_stats_times >> op_pendentes
 
 dag_instance = nba_backfill_historico()

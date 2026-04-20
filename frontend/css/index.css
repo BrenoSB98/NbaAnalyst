@@ -50,12 +50,6 @@
     flex-wrap: wrap;
 }
 
-@media (max-width: 767px) {
-    .hero-titulo {
-        font-size: 2.4rem;
-    }
-}
-
 .faixa-kpis {
     background-color: #EAEAF0;
     border-bottom: 1px solid #D0D0E0;
@@ -103,18 +97,6 @@
     background-color: #D0D0E0;
     border-radius: 4px;
     vertical-align: middle;
-}
-
-@media (max-width: 767px) {
-    .kpi-item {
-        padding: 8px 12px;
-        border-right: none;
-        border-bottom: 1px solid #D0D0E0;
-    }
-
-    .kpi-item:last-child {
-        border-bottom: none;
-    }
 }
 
 .secao-modelo {
@@ -314,6 +296,17 @@
 }
 
 @media (max-width: 767px) {
+    .hero-titulo {
+        font-size: 2.4rem;
+    }
+    .kpi-item {
+        padding: 8px 12px;
+        border-right: none;
+        border-bottom: 1px solid #D0D0E0;
+    }
+    .kpi-item:last-child {
+        border-bottom: none;
+    }
     .secao-cta .cta-titulo {
         font-size: 1.8rem;
     }

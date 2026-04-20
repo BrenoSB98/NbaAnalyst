@@ -60,9 +60,7 @@ class TeamLeagueInfo(Base):
     conference = Column(Text)
     division = Column(Text)
 
-    __table_args__ = (
-        UniqueConstraint("team_id", "league_id", name="uq_team_league"),
-    )
+    __table_args__ = (UniqueConstraint("team_id", "league_id", name="uq_team_league"), )
 
     team = relationship("Team", back_populates="leagues_info")
     league = relationship("League", back_populates="teams_info")
@@ -92,9 +90,7 @@ class Game(Base):
     home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
 
-    __table_args__ = (
-        CheckConstraint("home_team_id <> away_team_id", name="chk_game_teams_different"),
-    )
+    __table_args__ = (CheckConstraint("home_team_id <> away_team_id", name="chk_game_teams_different"), )
 
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_games")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_games")
@@ -119,10 +115,7 @@ class GameTeamScore(Base):
     linescore_q3 = Column(Integer)
     linescore_q4 = Column(Integer)
 
-    __table_args__ = (
-        UniqueConstraint("game_id", "is_home", name="uq_game_side"),
-    )
-
+    __table_args__ = (UniqueConstraint("game_id", "is_home", name="uq_game_side"), )
     game = relationship("Game", back_populates="scores")
     team = relationship("Team", back_populates="game_scores")
 
@@ -229,9 +222,7 @@ class PlayerTeamSeason(Base):
     active = Column(Boolean, nullable=False)
     pos = Column(String)
 
-    __table_args__ = (
-        UniqueConstraint("player_id", "team_id", "season", "league_code", name="uq_player_team_season_league"),
-    )
+    __table_args__ = (UniqueConstraint("player_id", "team_id", "season", "league_code", name="uq_player_team_season_league"),)
 
     player = relationship("Player", back_populates="team_seasons")
     team = relationship("Team", back_populates="player_team_seasons")
@@ -289,9 +280,7 @@ class Prediction(Base):
     predicted_blocks = Column(Numeric(6, 2))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        UniqueConstraint("player_id", "game_id", name="uq_prediction_player_game"),
-    )
+    __table_args__ = (UniqueConstraint("player_id", "game_id", name="uq_prediction_player_game"),)
 
     player = relationship("Player", back_populates="predictions")
     game = relationship("Game", back_populates="predictions")

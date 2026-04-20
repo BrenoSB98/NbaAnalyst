@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time
 
 from app.services import nba_api_client
 from app.db.models import PlayerGameStats, Game, Player
@@ -114,6 +115,7 @@ def carregar_stats_jogador(game_id):
         db.commit()
         logger.info(f"Fim jogo={game_id} — ins={total_inseridos} atu={total_atualizados}.")
 
+
 def carregar_stats_todos_jogadores(season, team_id=None, data=None):
     logger.info(f"Stats em massa — temp={season} data={data}...")
 
@@ -134,21 +136,28 @@ def carregar_stats_todos_jogadores(season, team_id=None, data=None):
             logger.warning(f"Nenhum jogo — temp={season} data={data}.")
             return
 
-        logger.info(f"{len(jogos)} jogos encontrados.")
+        total_jogos = len(jogos)
+        logger.info(f"{total_jogos} jogos encontrados — temp={season}.")
         total_erros = 0
 
-        for jogo in jogos:
+        for idx, jogo in enumerate(jogos, start=1):
+            logger.info(f"[{idx}/{total_jogos}] Stats jogadores jogo={jogo.id}...")
             try:
                 carregar_stats_jogador(game_id=jogo.id)
+                time.sleep(1)
             except Exception as erro:
                 total_erros = total_erros + 1
-                logger.warning(f"Erro jogo={jogo.id}: {erro}")
+                logger.warning(f"[{idx}/{total_jogos}] Erro jogo={jogo.id}: {erro}")
                 continue
 
+            if idx % 50 == 0:
+                logger.info(f"Progresso: {idx}/{total_jogos} jogos processados ({round(idx/total_jogos*100)}%).")
+
         if total_erros > 0:
-            logger.warning(f"Fim com erros — erros={total_erros} total={len(jogos)}.")
+            logger.warning(f"Fim com erros — erros={total_erros} total={total_jogos}.")
         else:
-            logger.info(f"Fim — {len(jogos)} jogos processados.")
+            logger.info(f"Fim — {total_jogos} jogos processados sem erros.")
+
 
 if __name__ == "__main__":
     carregar_stats_todos_jogadores(season=2025)

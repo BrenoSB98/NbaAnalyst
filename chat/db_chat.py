@@ -101,7 +101,7 @@ def buscar_jogador_por_nome(nome):
     try:
         with engine.connect() as conn:
             linhas = conn.execute(text("""
-                SELECT firstname, lastname, birth_country, nba_start, height, weight
+                SELECT firstname, lastname, birth_country, nba_start, height_meters, weight_kilograms
                 FROM players
                 WHERE firstname ILIKE :termo OR lastname ILIKE :termo
                 LIMIT 5
@@ -110,7 +110,7 @@ def buscar_jogador_por_nome(nome):
             return ""
         saida = []
         for l in linhas:
-            saida.append(f"- {l.firstname} {l.lastname} | País: {l.birth_country} | Início NBA: {l.nba_start} | Altura: {l.height} | Peso: {l.weight}")
+            saida.append(f"- {l.firstname} {l.lastname} | País: {l.birth_country} | Início NBA: {l.nba_start} | Altura: {l.height_meters}m | Peso: {l.weight_kilograms}kg")
         return "\n".join(saida)
     except Exception as e:
         print(f"Erro em buscar_jogador_por_nome: {e}")

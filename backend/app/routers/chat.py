@@ -16,7 +16,7 @@ CHAT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__
 if CHAT_DIR not in sys.path:
     sys.path.insert(0, CHAT_DIR)
 
-MODELO_CHAT = "gpt-5-mini"
+MODELO = "gpt-5-nano"
 
 _contagem_diaria = {}
 def _obter_contagem(user_id):
@@ -71,12 +71,12 @@ def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_a
     historico_convertido = []
     for entrada in (dados.historico or []):
         historico_convertido.append({"papel": entrada.papel, "conteudo": entrada.conteudo})
-
+ 
     try:
-        resposta = perguntar_ao_oraculo(pergunta=dados.pergunta, historico=historico_convertido, modelo=MODELO_CHAT)
+        resposta = perguntar_ao_oraculo(pergunta=dados.pergunta, historico=historico_convertido, modelo=MODELO)
     except Exception as erro:
         logger.error(f"Erro ao consultar o LLM: {erro}")
         raise HTTPException(status_code=500, detail="Erro ao consultar o modelo de linguagem. Tente novamente.")
-
+ 
     _incrementar_contagem(usuario_atual.id)
     return {"resposta": resposta}

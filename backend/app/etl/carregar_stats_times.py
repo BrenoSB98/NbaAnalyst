@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time
 
 from sqlalchemy import or_
 
@@ -48,6 +49,7 @@ def carregar_stats_times_jogo(game_id):
                 estatisticas = estatisticas[0]
             elif not isinstance(estatisticas, dict):
                 continue
+
             stats_existente = db.query(GameTeamStats).filter(GameTeamStats.game_id == game_id, GameTeamStats.team_id == id_time).first()
 
             if stats_existente:
@@ -137,22 +139,27 @@ def carregar_stats_todos_times(season, team_id=None, data=None):
             logger.warning(f"Nenhum jogo — temp={season} data={data}.")
             return
 
-        logger.info(f"{len(jogos)} jogos encontrados.")
+        total_jogos = len(jogos)
+        logger.info(f"{total_jogos} jogos encontrados — temp={season}.")
         total_erros = 0
 
-        for jogo in jogos:
+        for idx, jogo in enumerate(jogos, start=1):
+            logger.info(f"[{idx}/{total_jogos}] Stats times jogo={jogo.id}...")
             try:
                 carregar_stats_times_jogo(game_id=jogo.id)
+                time.sleep(1)
             except Exception as erro:
                 total_erros += 1
-                logger.warning(f"Erro jogo={jogo.id}: {erro}")
+                logger.warning(f"[{idx}/{total_jogos}] Erro jogo={jogo.id}: {erro}")
                 continue
 
-        if total_erros > 0:
-            logger.warning(f"Fim com erros — erros={total_erros} total={len(jogos)}.")
-        else:
-            logger.info(f"Fim — {len(jogos)} jogos processados.")
+            if idx % 50 == 0:
+                logger.info(f"Progresso: {idx}/{total_jogos} jogos processados ({round(idx/total_jogos*100)}%).")
 
+        if total_erros > 0:
+            logger.warning(f"Fim com erros — erros={total_erros} total={total_jogos}.")
+        else:
+            logger.info(f"Fim — {total_jogos} jogos processados sem erros.")
 
 def carregar_stats_temporada_time(team_id, season):
     logger.info(f"Stats temporada time={team_id} temp={season}...")
@@ -255,7 +262,6 @@ def carregar_stats_temporada_time(team_id, season):
 
         db.commit()
         logger.info(f"Fim stats temporada time={team_id}.")
-
 
 def carregar_stats_temporada_todos_times(season):
     logger.info(f"Stats temporada todos times — temp={season}...")

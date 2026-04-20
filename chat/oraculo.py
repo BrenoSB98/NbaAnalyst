@@ -2,10 +2,12 @@ import os
 import logging
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_community.tools.tavily_search import TavilySearchResults
 
 from prompts import PROMPT_SISTEMA, MENSAGEM_ERRO_BANCO
 from db_chat import buscar_contexto_geral
+from base import buscar_na_base_conhecimento
 
 logger = logging.getLogger(__name__)
 
@@ -15,19 +17,12 @@ if chave_openai:
 else:
     logger.warning("OPENAI_API_KEY nao encontrada nas variaveis de ambiente.")
 
-MODELOS_SEM_TEMPERATURE = ["gpt-5", "gpt-5-mini", "o1", "o1-mini", "o3", "o3-mini", "o4-mini"]
+MODELO_FIXO = "gpt-5-nano"
 
-MODELOS_DISPONIVEIS = [
-    "gpt-5",
-    "gpt-5-mini",
-    "gpt-4.1",
-    "gpt-4.1-mini",
-    "gpt-4o",
-    "gpt-4o-mini",
-]
+_ferramenta_busca = TavilySearchResults(max_results=3, name="buscar_na_internet")
 
-def montar_historico_mensagens(historico, contexto, pergunta):
-    prompt_sistema_formatado = PROMPT_SISTEMA.format(contexto=contexto)
+def montar_historico_mensagens(historico, contexto_banco, contexto_conhecimento, pergunta):
+    prompt_sistema_formatado = PROMPT_SISTEMA.format(contexto=contexto_banco, contexto_conhecimento=contexto_conhecimento )
     mensagens = [SystemMessage(content=prompt_sistema_formatado)]
 
     for entrada in historico:
@@ -37,28 +32,57 @@ def montar_historico_mensagens(historico, contexto, pergunta):
             mensagens.append(HumanMessage(content=conteudo))
         else:
             mensagens.append(AIMessage(content=conteudo))
+
     mensagens.append(HumanMessage(content=pergunta))
     return mensagens
 
 def perguntar_ao_oraculo(pergunta, historico, modelo):
     try:
-        contexto = buscar_contexto_geral(pergunta)
+        contexto_banco = buscar_contexto_geral(pergunta)
     except Exception as erro:
         logger.error(f"Erro ao buscar contexto no banco: {erro}")
         return MENSAGEM_ERRO_BANCO
 
-    if not contexto:
-        contexto = ""
+    if not contexto_banco:
+        contexto_banco = ""
 
-    mensagens = montar_historico_mensagens(historico, contexto, pergunta)
     try:
-        if modelo in MODELOS_SEM_TEMPERATURE:
-            llm = ChatOpenAI(model=modelo, temperature=1)
-        else:
-            llm = ChatOpenAI(model=modelo)
+        contexto_conhecimento = buscar_na_base_conhecimento(pergunta, n_resultados=3)
+    except Exception as erro:
+        logger.error(f"Erro ao buscar na base de conhecimento: {erro}")
+        contexto_conhecimento = ""
 
-        resposta = llm.invoke(mensagens)
-        return resposta.content
+    if not contexto_conhecimento:
+        contexto_conhecimento = ""
+
+    mensagens = montar_historico_mensagens(historico, contexto_banco, contexto_conhecimento, pergunta)
+
+    try:
+        llm = ChatOpenAI(model=MODELO_FIXO, temperature=1)
+        llm_com_ferramentas = llm.bind_tools([_ferramenta_busca])
+        resposta_inicial = llm_com_ferramentas.invoke(mensagens)
+
+        if not resposta_inicial.tool_calls:
+            return resposta_inicial.content
+
+        mensagens.append(resposta_inicial)
+
+        for chamada in resposta_inicial.tool_calls:
+            query = chamada["args"].get("query", "")
+            logger.info(f"Buscando na internet: {query}")
+
+            try:
+                resultado_busca = _ferramenta_busca.invoke(query)
+            except Exception as erro:
+                logger.warning(f"Erro na busca: {erro}")
+                resultado_busca = "Não foi possível buscar na internet no momento."
+
+            mensagem_tool = ToolMessage(content=resultado_busca, tool_call_id=chamada["id"] )
+            mensagens.append(mensagem_tool)
+
+        resposta_final = llm.invoke(mensagens)
+        return resposta_final.content
+
     except Exception as erro:
         logger.error(f"Erro ao chamar o LLM —> modelo={modelo}: {erro}")
         return "Ocorreu um erro ao consultar a LLM. Tente novamente."

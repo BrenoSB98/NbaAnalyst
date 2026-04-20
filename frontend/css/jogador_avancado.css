@@ -221,20 +221,6 @@
     margin-bottom: 14px;
 }
 
-@media (max-width: 767px) {
-    .jav-nome {
-        font-size: 1.35rem;
-    }
-
-    .abas-jav {
-        overflow-x: auto;
-    }
-
-    .abas-jav .d-flex {
-        flex-wrap: nowrap;
-    }
-}
-
 .btn-stat {
     background: #F0F0F7;
     border: 1px solid #D0D0E0;
@@ -353,4 +339,16 @@
 
 .linha-dest {
     background: #EAF0F8 !important;
+}
+
+@media (max-width: 767px) {
+    .jav-nome {
+        font-size: 1.35rem;
+    }
+    .abas-jav {
+        overflow-x: auto;
+    }
+    .abas-jav .d-flex {
+        flex-wrap: nowrap;
+    }
 }
