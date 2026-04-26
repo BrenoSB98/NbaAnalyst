@@ -39,6 +39,7 @@ class Config:
     MIN_MINUTOS_PALPITE = float(os.getenv("MIN_MINUTOS_PALPITE", "15.0"))
     
     PASTA_MODELOS = os.getenv("PASTA_MODELOS", "/opt/airflow/modelos_ml")
+    PASTA_RELATORIOS = os.getenv("PASTA_RELATORIOS", "/opt/airflow/relatorios_ml")
     
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

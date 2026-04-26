@@ -3,11 +3,12 @@ from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import obter_temporada
 from app.db.db_utils import get_db
-from app.db.models import Game, Player, Prediction, Team
+from app.db.models import Game, Player, PlayerGameStats, Prediction, Team
 from app.routers.auth import obter_usuario_atual
 from app.services.manager_service import salvar_predicoes_dia_atual, salvar_predicoes_temporada
 from app.services.prediction_service import prever_performance_jogador, prever_multiplas_stats_jogador
@@ -107,11 +108,38 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
 
     predicoes = db.query(Prediction).filter(Prediction.game_id.in_(ids_jogos_hoje)).all()
 
+    # Busca jogos na temporada de cada jogador em batch para evitar N+1
+    ids_players = []
+    for pred in predicoes:
+        ids_players.append(pred.player_id)
+
+    contagem_jogos_map = {}
+    rows_contagem = (
+        db.query(PlayerGameStats.player_id, func.count(PlayerGameStats.game_id).label("total"))
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .filter(PlayerGameStats.player_id.in_(ids_players), Game.season == temporada_alvo, Game.status_short == 3, Game.stage != 1)
+        .group_by(PlayerGameStats.player_id)
+        .all()
+    )
+    for row in rows_contagem:
+        contagem_jogos_map[row[0]] = row[1]
+
+    medias_map = {}
+    rows_medias = db.query(PlayerGameStats.player_id, func.avg(PlayerGameStats.points).label("avg_pts"), func.avg(PlayerGameStats.assists).label("avg_ast"), func.avg(PlayerGameStats.tot_reb).label("avg_reb"), func.avg(PlayerGameStats.steals).label("avg_stl"), func.avg(PlayerGameStats.blocks).label("avg_blk")).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id.in_(ids_players), Game.season == temporada_alvo, Game.status_short == 3, Game.stage != 1).group_by(PlayerGameStats.player_id).all()
+
+    for row in rows_medias:
+        medias_map[row[0]] = {}
+        medias_map[row[0]]["pontos"] = round(float(row.avg_pts or 0), 2)
+        medias_map[row[0]]["assistencias"] = round(float(row.avg_ast or 0), 2)
+        medias_map[row[0]]["rebotes"] = round(float(row.avg_reb or 0), 2)
+        medias_map[row[0]]["roubos"] = round(float(row.avg_stl or 0), 2)
+        medias_map[row[0]]["bloqueios"] = round(float(row.avg_blk or 0), 2)
+
     lista_resultado = []
     for pred in predicoes:
         jogador = db.query(Player).filter(Player.id == pred.player_id).first()
         if jogador:
-            nome_jogador = f"{jogador.firstname} {jogador.lastname}" 
+            nome_jogador = f"{jogador.firstname} {jogador.lastname}"
         else:
             nome_jogador = "Desconhecido"
 
@@ -124,27 +152,36 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         palpite_stl = formatar_palpite(pred.predicted_steals)
         palpite_blk = formatar_palpite(pred.predicted_blocks)
 
-        lista_resultado.append({
-            "prediction_id": pred.id,
-            "game_id": pred.game_id,
-            "player_id": pred.player_id,
-            "nome_jogador": nome_jogador,
-            "nome_time": time.name if time else "Desconhecido",
-            "nome_adversario": adversario.name if adversario else "Desconhecido",
-            "eh_casa": pred.is_home,
-            "temporada": pred.season,
-            "pontos_previstos": pred.predicted_points,
-            "assistencias_previstas": pred.predicted_assists,
-            "rebotes_previstos": pred.predicted_rebounds,
-            "roubos_previstos": pred.predicted_steals,
-            "bloqueios_previstos": pred.predicted_blocks,
-            "palpite_pontos": palpite_pts,
-            "palpite_assistencias": palpite_ast,
-            "palpite_rebotes": palpite_reb,
-            "palpite_roubos": palpite_stl,
-            "palpite_bloqueios": palpite_blk,
-            "criado_em": pred.created_at,
-        })
+        jogos_na_temporada = contagem_jogos_map.get(pred.player_id, 0)
+        medias_jogador = medias_map.get(pred.player_id, {})
+
+        item_resultado = {}
+        item_resultado["prediction_id"] = pred.id
+        item_resultado["game_id"] = pred.game_id
+        item_resultado["player_id"] = pred.player_id
+        item_resultado["nome_jogador"] = nome_jogador
+        item_resultado["nome_time"] = time.name if time else "Desconhecido"
+        item_resultado["nome_adversario"] = adversario.name if adversario else "Desconhecido"
+        item_resultado["eh_casa"] = pred.is_home
+        item_resultado["temporada"] = pred.season
+        item_resultado["pontos_previstos"] = pred.predicted_points
+        item_resultado["assistencias_previstas"] = pred.predicted_assists
+        item_resultado["rebotes_previstos"] = pred.predicted_rebounds
+        item_resultado["roubos_previstos"] = pred.predicted_steals
+        item_resultado["bloqueios_previstos"] = pred.predicted_blocks
+        item_resultado["media_pontos"] = medias_jogador.get("pontos", 0.0)
+        item_resultado["media_assistencias"] = medias_jogador.get("assistencias", 0.0)
+        item_resultado["media_rebotes"] = medias_jogador.get("rebotes", 0.0)
+        item_resultado["media_roubos"] = medias_jogador.get("roubos", 0.0)
+        item_resultado["media_bloqueios"] = medias_jogador.get("bloqueios", 0.0)
+        item_resultado["palpite_pontos"] = palpite_pts
+        item_resultado["palpite_assistencias"] = palpite_ast
+        item_resultado["palpite_rebotes"] = palpite_reb
+        item_resultado["palpite_roubos"] = palpite_stl
+        item_resultado["palpite_bloqueios"] = palpite_blk
+        item_resultado["jogos_na_temporada"] = jogos_na_temporada
+        item_resultado["criado_em"] = pred.created_at
+        lista_resultado.append(item_resultado)
 
     return {
         "temporada": temporada_alvo,
@@ -278,4 +315,23 @@ def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends
         "mensagem": f"Palpites da temporada {temporada} geradas com sucesso.",
         "temporada": temporada,
         "total_predicoes_geradas": total,
+    }
+
+@router.post("/retroativo")
+def gerar_predicoes_retroativo(db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+    from app.services.manager_service import deletar_todas_predicoes, gerar_predicoes_retroativas
+    from app.config import config
+
+    season = config.NBA_SEASON
+    try:
+        deletar_todas_predicoes(db=db, season=season)
+        total = gerar_predicoes_retroativas(db=db, season=season)
+    except Exception as erro:
+        logger.error(f"Falha ao gerar predicoes retroativas: {erro}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar predicoes retroativas: {str(erro)}")
+
+    return {
+        "mensagem": "Predicoes retroativas geradas com sucesso.",
+        "temporada": season,
+        "total": total,
     }

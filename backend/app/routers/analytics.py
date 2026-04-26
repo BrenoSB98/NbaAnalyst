@@ -5,7 +5,7 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
-from app.db.models import Game, GameTeamScore, Player, PlayerGameStats, Team
+from app.db.models import Game, GameTeamScore, Player, PlayerGameStats, PlayerTeamSeason, Team
 from app.routers.auth import obter_usuario_atual
 from app.schemas.analytics import LideresResponse, MaioresPontuadoresResponse, MediasCasaForaResponse, MediasContraTimeResponse, MediasTemporadaResponse, MediasUltimosJogosResponse, TendenciasTimeResponse
 from app.services.analytics_service import (
@@ -247,13 +247,13 @@ def maiores_pontuadores(temporada: int = Query(2025), limite: int = Query(10, ge
 
     lista = []
     for r in resultados:
-        lista.append({
-            "jogador_id": r.id,
-            "nome_jogador": f"{r.firstname} {r.lastname}",
-            "jogos_disputados": r.jogos,
-            "total_pontos": r.total_pontos,
-            "media_pontos": round(float(r.media_pontos), 2),
-        })
+        item_pont = {}
+        item_pont["jogador_id"] = r.id
+        item_pont["nome_jogador"] = f"{r.firstname} {r.lastname}"
+        item_pont["jogos_disputados"] = r.jogos
+        item_pont["total_pontos"] = r.total_pontos
+        item_pont["media_pontos"] = round(float(r.media_pontos), 2)
+        lista.append(item_pont)
 
     return {"temporada": temporada, "total": len(lista), "maiores_pontuadores": lista}
 
@@ -343,38 +343,71 @@ def tendencias_time(time_id: int, temporada: int = Query(2025), ultimos_n_jogos:
     }
 
 @router.get("/lideres")
-def lideres_publico(categoria: str = Query("pontos"), temporada: int = Query(None), limite: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
+def lideres_publico(categoria: str = Query("pontos"), temporada: int = Query(None), limite: int = Query(10, ge=1, le=500), db: Session = Depends(get_db)):
     stat_field = CATEGORIAS.get(categoria)
     if stat_field is None:
         raise HTTPException(status_code=400, detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}")
- 
-    query = (db.query(PlayerGameStats.player_id, func.sum(stat_field).label("total"), func.count(PlayerGameStats.game_id).label("jogos")).join(Game, PlayerGameStats.game_id == Game.id).filter(Game.status_short == 3))
- 
+
+    query = (
+        db.query(PlayerGameStats.player_id, func.sum(stat_field).label("total"), func.count(PlayerGameStats.game_id).label("jogos"))
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .filter(Game.status_short == 3)
+    )
+
     if temporada is not None:
         query = query.filter(Game.season == temporada)
- 
+
     resultados = query.group_by(PlayerGameStats.player_id).order_by(desc("total")).limit(limite).all()
- 
+
+    if not resultados:
+        return {"categoria": categoria, "temporada": temporada, "total": 0, "lideres": []}
+
+    # Busca todos os jogadores e posições em queries únicas (evita N+1)
+    ids_jogadores = [row[0] for row in resultados]
+
+    jogadores_map = {}
+    jogadores_db = db.query(Player).filter(Player.id.in_(ids_jogadores)).all()
+    for jogador in jogadores_db:
+        jogadores_map[jogador.id] = f"{jogador.firstname} {jogador.lastname}"
+
+    posicao_map = {}
+    if temporada is not None:
+        vinculos = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.player_id.in_(ids_jogadores), PlayerTeamSeason.season == temporada).all()
+    else:
+        vinculos = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.player_id.in_(ids_jogadores)).order_by(PlayerTeamSeason.season.desc()).all()
+
+    for vinculo in vinculos:
+        if vinculo.player_id not in posicao_map:
+            if vinculo.pos is not None:
+                posicao_map[vinculo.player_id] = vinculo.pos
+
     lideres = []
     for row in resultados:
-        jogador = db.query(Player).filter(Player.id == row[0]).first()
-        if jogador:
-            nome_jogador = f"{jogador.firstname} {jogador.lastname}"     
-        else:
-            nome_jogador = "Desconhecido"
         if row[1] is not None:
-            total = row[1] 
+            total = row[1]
         else:
             total = 0
+
         if row[2] > 0:
-            jogos = row[2]     
+            jogos = row[2]
         else:
             jogos = 1
+
         media = round(total / jogos, 2)
-        lideres.append({"player_id": row[0], "player_name": nome_jogador, "games_played": row[2], "avg": media})
- 
+
+        nome_jogador = jogadores_map.get(row[0], "Desconhecido")
+        posicao = posicao_map.get(row[0], None)
+
+        item_lider = {}
+        item_lider["player_id"] = row[0]
+        item_lider["player_name"] = nome_jogador
+        item_lider["games_played"] = row[2]
+        item_lider["avg"] = media
+        item_lider["pos"] = posicao
+        lideres.append(item_lider)
+
     return {"categoria": categoria, "temporada": temporada, "total": len(lideres), "lideres": lideres}
-  
+
 @router.get("/recordes")
 def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(None), limite: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
     stat_field = CATEGORIAS.get(categoria)
@@ -391,13 +424,13 @@ def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(No
  
     recordes = []
     for row in resultados:
-        player_id  = row[0]
-        game_id    = row[1]
-        valor      = row[2]
-        data_jogo  = row[3]
-        home_id    = row[4]
-        away_id    = row[5]
-        team_id    = row[6]
+        player_id = row[0]
+        game_id = row[1]
+        valor = row[2]
+        data_jogo = row[3]
+        home_id = row[4]
+        away_id = row[5]
+        team_id = row[6]
  
         jogador = db.query(Player).filter(Player.id == player_id).first()
         if jogador is not None:
@@ -425,14 +458,96 @@ def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(No
         else:
             data_fmt = "—"
  
-        recordes.append({
-            "player_id": player_id,
-            "player_name": nome_jogador,
-            "game_id": game_id,
-            "valor": valor,
-            "data": data_fmt,
-            "adversario": nome_adversario,
-            "logo_adversario": logo_adversario,
-        })
+        item_recorde = {}
+        item_recorde["player_id"] = player_id
+        item_recorde["player_name"] = nome_jogador
+        item_recorde["game_id"] = game_id
+        item_recorde["valor"] = valor
+        item_recorde["data"] = data_fmt
+        item_recorde["adversario"] = nome_adversario
+        item_recorde["logo_adversario"] = logo_adversario
+        recordes.append(item_recorde)
  
     return {"categoria": categoria, "temporada": temporada, "total": len(recordes), "recordes": recordes}
+
+@router.get("/evolucao-medias")
+def evolucao_medias(categoria: str = Query("pontos"), temporada: int = Query(None), db: Session = Depends(get_db)):
+    stat_field = CATEGORIAS.get(categoria)
+    if stat_field is None:
+        raise HTTPException(status_code=400, detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}")
+
+    query = (
+        db.query(
+            PlayerGameStats.player_id,
+            stat_field.label("valor"),
+            Game.date_start,
+        )
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .filter(Game.status_short == 3, Game.stage != 1, stat_field.isnot(None))
+    )
+
+    if temporada is not None:
+        query = query.filter(Game.season == temporada)
+
+    resultados = query.order_by(Game.date_start).all()
+
+    jogos_por_jogador = {}
+    for row in resultados:
+        pid = row[0]
+        valor = float(row[1] or 0)
+        if pid not in jogos_por_jogador:
+            jogos_por_jogador[pid] = []
+        jogos_por_jogador[pid].append(valor)
+
+    if not jogos_por_jogador:
+        return {"categoria": categoria, "temporada": temporada, "jogadores": []}
+
+    medias_acumuladas = {}
+    for pid in jogos_por_jogador:
+        lista = jogos_por_jogador[pid]
+        medias = []
+        soma = 0.0
+        for i in range(len(lista)):
+            soma = soma + lista[i]
+            medias.append(round(soma / (i + 1), 2))
+        medias_acumuladas[pid] = medias
+
+    jogador_cache = {}
+    resultado_jogadores = []
+    for pid in medias_acumuladas:
+        if pid not in jogador_cache:
+            jogador = db.query(Player).filter(Player.id == pid).first()
+            if jogador is not None:
+                jogador_cache[pid] = f"{jogador.firstname} {jogador.lastname}"
+            else:
+                jogador_cache[pid] = "Desconhecido"
+
+        if medias_acumuladas[pid]:
+            media_final = medias_acumuladas[pid][-1]
+        else:
+            media_final = 0.0
+
+        item_jogador = {}
+        item_jogador["player_id"] = pid
+        item_jogador["player_name"] = jogador_cache[pid]
+        item_jogador["media_final"] = media_final
+        item_jogador["total_jogos"] = len(medias_acumuladas[pid])
+        item_jogador["series"] = medias_acumuladas[pid]
+        resultado_jogadores.append(item_jogador)
+
+    def chave_media_final(x):
+        return x["media_final"]
+    resultado_jogadores.sort(key=chave_media_final, reverse=True)
+
+    total_rodadas = 0
+    if medias_acumuladas:
+        for v in medias_acumuladas.values():
+            if len(v) > total_rodadas:
+                total_rodadas = len(v)
+
+    return {
+        "categoria": categoria,
+        "temporada": temporada,
+        "total_rodadas": total_rodadas,
+        "jogadores": resultado_jogadores,
+    }

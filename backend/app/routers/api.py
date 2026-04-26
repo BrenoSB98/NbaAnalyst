@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
-from app.routers import analytics, auth, player, game, league, win_rate, predictions, season, team, chat, confronto
+from app.routers import admin, analytics, auth, player, game, league, win_rate, predictions, season, team, chat, confronto
 
 router = APIRouter()
 
+router.include_router(admin.router, prefix="/admin", tags=["Admin"])
 router.include_router(season.router, prefix="/temporadas", tags=["Temporadas"])
 router.include_router(league.router, prefix="/ligas", tags=["Ligas"])
 router.include_router(team.router, prefix="/times", tags=["Times"])

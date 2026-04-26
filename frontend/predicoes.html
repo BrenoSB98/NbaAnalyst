@@ -18,7 +18,8 @@
         <div class="cabecalho-predicoes">
             <div class="container">
                 <div class="linha-acento mb-2"></div>
-                <h1 class="titulo-secao mb-2">Palpites do Dia</h1>
+                <h1 class="titulo-secao mb-3">Palpites do Dia</h1>
+
                 <div class="resumo-dia" id="resumo-dia" style="display:none;">
                     <div class="resumo-item">
                         <span class="resumo-valor" id="resumo-jogos">—</span>
@@ -33,20 +34,36 @@
                         <span class="resumo-rotulo">Data</span>
                     </div>
                 </div>
+
+                <div id="painel-modelo" class="painel-modelo mt-3" style="display:none;">
+                    <div class="modelo-titulo"><i class="bi bi-cpu me-1"></i> Desempenho do Modelo</div>
+                    <div class="modelo-stats" id="modelo-stats"></div>
+                </div>
+
             </div>
         </div>
 
         <div class="area-predicoes">
-            <div class="container" style="padding-top:28px;padding-bottom:48px;">
+            <div class="container">
 
-                <div id="pagina-carregando">
-                    <div class="spinner-nba">
-                        <div class="bola-animada"></div>
-                        <span>Carregando palpites...</span>
-                    </div>
+                <div id="pagina-carregando" class="spinner-center py-5">
+                    <div class="spinner-nba"><div class="bola-animada"></div><span>Carregando palpites...</span></div>
                 </div>
 
                 <div id="pagina-conteudo" style="display:none;">
+                    <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+                        <span class="form-label-nba mb-0">Filtrar por confiança:</span>
+                        <button class="btn-filtro-conf ativo" id="filtro-todos" onclick="filtrarConfianca('TODOS')">Todos</button>
+                        <button class="btn-filtro-conf" id="filtro-alta" onclick="filtrarConfianca('ALTA')">
+                            <span class="conf-dot conf-alta"></span> Alta
+                        </button>
+                        <button class="btn-filtro-conf" id="filtro-media" onclick="filtrarConfianca('MEDIA')">
+                            <span class="conf-dot conf-media"></span> Média
+                        </button>
+                        <button class="btn-filtro-conf" id="filtro-baixa" onclick="filtrarConfianca('BAIXA')">
+                            <span class="conf-dot conf-baixa"></span> Baixa
+                        </button>
+                    </div>
                     <div id="lista-jogos"></div>
                 </div>
 
@@ -68,6 +85,7 @@
 
             </div>
         </div>
+
     </main>
     <footer id="rodape-principal"></footer>
 </div>
@@ -76,213 +94,6 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
-
-<script>
-verificarAutenticacao();
-
-var MAX_JOGADORES_POR_TIME = 8;
-
-document.addEventListener("DOMContentLoaded", function() {
-    inicializarPagina();
-    carregarPalpites();
-});
-
-function esconderTudos() {
-    document.getElementById("pagina-carregando").style.display = "none";
-    document.getElementById("pagina-conteudo").style.display = "none";
-    document.getElementById("pagina-sem-jogos").style.display = "none";
-    document.getElementById("pagina-aguardando").style.display = "none";
-}
-
-async function carregarPalpites() {
-    try {
-        var dados = await chamarApiAutenticada("/predicoes/hoje");
-
-        esconderTudos();
-
-        document.getElementById("resumo-jogos").textContent = dados.total_jogos;
-        document.getElementById("resumo-palpites").textContent = dados.total_predicoes;
-        document.getElementById("resumo-data").textContent = dados.data || "—";
-        document.getElementById("resumo-dia").style.display = "flex";
-
-        if (dados.total_jogos === 0) {
-            document.getElementById("pagina-sem-jogos").style.display = "block";
-            return;
-        }
-
-        if (!dados.predicoes || dados.predicoes.length === 0) {
-            document.getElementById("desc-n-jogos").textContent = dados.total_jogos;
-            document.getElementById("pagina-aguardando").style.display = "block";
-            return;
-        }
-
-        renderizarJogos(dados.predicoes);
-        document.getElementById("pagina-conteudo").style.display = "block";
-
-    } catch (erro) {
-        esconderTudos();
-        document.getElementById("pagina-sem-jogos").style.display = "block";
-    }
-}
-
-function renderizarJogos(palpites) {
-    var container = document.getElementById("lista-jogos");
-    var jogos = {};
-    for (var i = 0; i < palpites.length; i++) {
-        var p = palpites[i];
-        var gid = p.game_id;
-
-        if (!jogos[gid]) {
-            jogos[gid] = {};
-            jogos[gid]["nome_casa"]  = "";
-            jogos[gid]["nome_fora"]  = "";
-            jogos[gid]["time_casa"]  = [];
-            jogos[gid]["time_fora"]  = [];
-        }
-
-        if (p.eh_casa === 1 || p.eh_casa === true) {
-            if (!jogos[gid]["nome_casa"]) {
-                jogos[gid]["nome_casa"] = p.nome_time || "";
-            }
-            jogos[gid]["time_casa"].push(p);
-        } else {
-            if (!jogos[gid]["nome_fora"]) {
-                jogos[gid]["nome_fora"] = p.nome_time || "";
-            }
-            jogos[gid]["time_fora"].push(p);
-        }
-    }
-
-    var html = "";
-    var ids = Object.keys(jogos);
-
-    for (var j = 0; j < ids.length; j++) {
-        var gid = ids[j];
-        var jogo = jogos[gid];
-
-        jogo["time_casa"].sort(function(a, b) {
-            var pa = parseFloat(a.pontos_previstos) || 0;
-            var pb = parseFloat(b.pontos_previstos) || 0;
-            if (pb > pa) { return 1; }
-            if (pb < pa) { return -1; }
-            return 0;
-        });
-
-        jogo["time_fora"].sort(function(a, b) {
-            var pa = parseFloat(a.pontos_previstos) || 0;
-            var pb = parseFloat(b.pontos_previstos) || 0;
-            if (pb > pa) { return 1; }
-            if (pb < pa) { return -1; }
-            return 0;
-        });
-
-        var jogadoresCasa = [];
-        for (var k = 0; k < jogo["time_casa"].length; k++) {
-            if (k >= MAX_JOGADORES_POR_TIME) { break; }
-            jogadoresCasa.push(jogo["time_casa"][k]);
-        }
-
-        var jogadoresFora = [];
-        for (var k = 0; k < jogo["time_fora"].length; k++) {
-            if (k >= MAX_JOGADORES_POR_TIME) { break; }
-            jogadoresFora.push(jogo["time_fora"][k]);
-        }
-
-        html = html + '<div class="card-jogo-palpite">';
-        html = html + '<div class="jogo-titulo" onclick="toggleJogo(this)">';
-        html = html + '<div class="times-nome">' + jogo["nome_casa"] + '<span>vs</span>' + jogo["nome_fora"] + '</div>';
-        html = html + '<i class="bi bi-chevron-down jogo-seta aberto"></i>';
-        html = html + '</div>';
-        html = html + '<div class="jogo-corpo">';
-        html = html + '<div class="times-grid">';
-        html = html + '<div class="time-coluna">';
-        html = html + '<div class="time-coluna-titulo casa">' + jogo["nome_casa"] + ' <span style="font-size:.62rem;color:#9999B0;margin-left:4px;">Casa</span></div>';
-        html = html + renderizarColunaTimes(jogadoresCasa);
-        html = html + '</div>';
-        html = html + '<div class="time-coluna">';
-        html = html + '<div class="time-coluna-titulo">' + jogo["nome_fora"] + ' <span style="font-size:.62rem;color:#9999B0;margin-left:4px;">Fora</span></div>';
-        html = html + renderizarColunaTimes(jogadoresFora);
-        html = html + '</div>';
-        html = html + '</div>';
-        html = html + '</div>';
-        html = html + '</div>';
-    }
-
-    container.innerHTML = html;
-}
-
-function renderizarColunaTimes(jogadores) {
-    if (jogadores.length === 0) {
-        return '<p style="font-size:.78rem;color:#9999B0;padding:8px 0;">Sem palpites.</p>';
-    }
-
-    var html = "";
-
-    for (var i = 0; i < jogadores.length; i++) {
-        var p = jogadores[i];
-
-        var pts = "—";
-        if (p.palpite_pontos && p.palpite_pontos.label) {
-            pts = p.palpite_pontos.label;
-        } else if (p.pontos_previstos !== null && p.pontos_previstos !== undefined) {
-            pts = parseFloat(p.pontos_previstos).toFixed(1);
-        }
-
-        var ast = "—";
-        if (p.palpite_assistencias && p.palpite_assistencias.label) {
-            ast = p.palpite_assistencias.label;
-        } else if (p.assistencias_previstas !== null && p.assistencias_previstas !== undefined) {
-            ast = parseFloat(p.assistencias_previstas).toFixed(1);
-        }
-
-        var reb = "—";
-        if (p.palpite_rebotes && p.palpite_rebotes.label) {
-            reb = p.palpite_rebotes.label;
-        } else if (p.rebotes_previstos !== null && p.rebotes_previstos !== undefined && parseFloat(p.rebotes_previstos) > 0) {
-            reb = parseFloat(p.rebotes_previstos).toFixed(1);
-        }
-
-        var stl = "—";
-        if (p.palpite_roubos && p.palpite_roubos.label) {
-            stl = p.palpite_roubos.label;
-        } else if (p.roubos_previstos !== null && p.roubos_previstos !== undefined) {
-            stl = parseFloat(p.roubos_previstos).toFixed(1);
-        }
-
-        var blk = "—";
-        if (p.palpite_bloqueios && p.palpite_bloqueios.label) {
-            blk = p.palpite_bloqueios.label;
-        } else if (p.bloqueios_previstos !== null && p.bloqueios_previstos !== undefined) {
-            blk = parseFloat(p.bloqueios_previstos).toFixed(1);
-        }
-
-        html = html + '<div class="linha-jogador">';
-        html = html + '<div class="jogador-nome"><a href="jogador.html?id=' + p.player_id + '">' + p.nome_jogador + '</a></div>';
-        html = html + '<div class="stats-inline">';
-        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + pts + '</div><div class="rotulo">PTS</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + ast + '</div><div class="rotulo">AST</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + reb + '</div><div class="rotulo">REB</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + stl + '</div><div class="rotulo">STL</div></div>';
-        html = html + '<div class="stat-pill"><div class="valor stat-label" style="color:#000000;">' + blk + '</div><div class="rotulo">BLK</div></div>';
-        html = html + '</div>';
-        html = html + '</div>';
-    }
-
-    return html;
-}
-
-function toggleJogo(header) {
-    var corpo = header.nextElementSibling;
-    var seta = header.querySelector(".jogo-seta");
-
-    if (corpo.style.display === "none") {
-        corpo.style.display = "block";
-        seta.classList.add("aberto");
-    } else {
-        corpo.style.display = "none";
-        seta.classList.remove("aberto");
-    }
-}
-</script>
+<script src="js/predicoes.js"></script>
 </body>
 </html>

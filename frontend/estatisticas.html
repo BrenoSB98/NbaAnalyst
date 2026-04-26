@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estatísticas</title>
+    <title>Estatísticas NBA</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -21,93 +21,143 @@
             <div class="container">
                 <div class="linha-acento mb-2"></div>
                 <h1 class="titulo-secao mb-1">Estatísticas</h1>
+                <p class="cabecalho-sub">Rankings, perfis de jogadores e recordes da temporada.</p>
+            </div>
+        </div>
+
+        <div class="barra-controles">
+            <div class="container">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada" style="max-width:185px;" onchange="aoTrocarTemporada()"></select>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="abas-estatisticas">
             <div class="container">
                 <div class="d-flex">
-                    <button class="aba-btn ativo" id="aba-btn-medias" onclick="trocarAba('medias')">Médias por Jogo</button>
-                    <button class="aba-btn" id="aba-btn-recordes" onclick="trocarAba('recordes')">Recordes</button>
+                    <button class="aba-btn ativo" id="aba-btn-lideres" onclick="trocarAba('lideres')"><i class="bi bi-trophy me-1"></i>Líderes</button>
+                    <button class="aba-btn" id="aba-btn-analise" onclick="trocarAba('analise')"><i class="bi bi-graph-up me-1"></i>Análise</button>
+                    <button class="aba-btn" id="aba-btn-recordes" onclick="trocarAba('recordes')"><i class="bi bi-lightning me-1"></i>Recordes</button>
                 </div>
             </div>
         </div>
 
-        <div class="barra-controles" id="barra-medias">
+        <!-- ABA: LÍDERES -->
+        <div class="conteudo-aba" id="aba-lideres">
             <div class="container">
-                <div class="d-flex align-items-center gap-3 flex-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Temporada</label>
-                        <select class="form-control-nba" id="select-temporada-medias" style="max-width:185px;" onchange="carregarMedias()"></select>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Jogadores</label>
-                        <select class="form-control-nba" id="select-limite-medias" style="max-width:105px;" onchange="carregarMedias()">
-                            <option value="5">Top 5</option>
-                            <option value="10" selected>Top 10</option>
-                            <option value="20">Top 20</option>
-                            <option value="50">Top 50</option>
-                        </select>
+                <div id="lideres-carregando" class="spinner-center">
+                    <div class="spinner-nba"><div class="bola-animada"></div><span>Carregando líderes...</span></div>
+                </div>
+                <div id="lideres-conteudo" style="display:none;">
+                    <div id="area-insights" class="insights-box mb-4" style="display:none;"></div>
+                    <div class="row g-3 mb-4" id="cards-lideres"></div>
+                    <div class="grafico-container mb-4">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                            <div>
+                                <p class="secao-titulo-grafico mb-1">Evolução da Média Acumulada</p>
+                                <p class="grafico-subtitulo mb-0">Top 10 jogadores por média acumulada ao longo das rodadas</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label-nba mb-0">Estatística</label>
+                                <select class="form-control-nba" id="select-cat-evolucao" style="max-width:180px;" onchange="carregarEvolucao()">
+                                    <option value="pontos">Pontos</option>
+                                    <option value="assistencias">Assistências</option>
+                                    <option value="rebotes">Rebotes</option>
+                                    <option value="roubos">Roubos</option>
+                                    <option value="bloqueios">Bloqueios</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="evolucao-carregando" class="spinner-center" style="display:none;">
+                            <div class="spinner-nba" style="padding:20px;"><div class="bola-animada"></div><span>Calculando...</span></div>
+                        </div>
+                        <div id="evolucao-slider-area" style="display:none;">
+                            <div class="slider-area mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="form-label-nba mb-0">Intervalo de rodadas</span>
+                                    <span id="slider-label" class="slider-label-valor"></span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <button id="btn-player" class="btn-player" onclick="togglePlayer()" title="Reproduzir"><i class="bi bi-play-fill"></i></button>
+                                    <span class="slider-tick">1</span>
+                                    <div class="slider-duplo-wrap flex-grow-1">
+                                        <input type="range" id="slider-inicio" class="slider-range" min="1" max="82" value="1" oninput="aoMoverSlider()">
+                                        <input type="range" id="slider-fim" class="slider-range" min="1" max="82" value="82" oninput="aoMoverSlider()">
+                                        <div id="slider-track-fill" class="slider-track-fill"></div>
+                                    </div>
+                                    <span class="slider-tick" id="slider-max-label">82</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="grafico-evolucao"></div>
+                        <div id="legenda-evolucao" class="legenda-linhas mt-3"></div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="barra-controles" id="barra-recordes" style="display:none;">
-            <div class="container">
-                <div class="d-flex align-items-center gap-3 flex-wrap">
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Temporada</label>
-                        <select class="form-control-nba" id="select-temporada-recordes" style="max-width:185px;" onchange="carregarRecordes()">
-                            <option value="">Todas as temporadas</option>
-                        </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="form-label-nba mb-0" style="font-size:0.82rem;white-space:nowrap;">Jogadores</label>
-                        <select class="form-control-nba" id="select-limite-recordes" style="max-width:105px;" onchange="carregarRecordes()">
-                            <option value="5">Top 5</option>
-                            <option value="10" selected>Top 10</option>
-                            <option value="20">Top 20</option>
-                            <option value="50">Top 50</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="area-ranking" id="conteudo-medias">
-            <div class="container">
-                <div id="medias-carregando">
-                    <div class="spinner-nba">
-                        <div class="bola-animada"></div>
-                        <span>Carregando...</span>
-                    </div>
-                </div>
-                <div id="medias-graficos"></div>
-                <div id="medias-vazio" style="display:none;">
+                <div id="lideres-vazio" style="display:none;">
                     <div class="estado-vazio">
-                        <i class="bi bi-bar-chart icone-vazio"></i>
-                        <p class="titulo-vazio">Sem dados para esta seleção</p>
-                        <p class="desc-vazio">Tente outra temporada ou quantidade.</p>
+                        <i class="bi bi-trophy icone-vazio"></i>
+                        <p class="titulo-vazio">Sem dados</p>
+                        <p class="desc-vazio">Nenhuma estatística encontrada para essa temporada.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="area-ranking" id="conteudo-recordes" style="display:none;">
+        <!-- ABA: ANÁLISE -->
+        <div class="conteudo-aba" id="aba-analise" style="display:none;">
             <div class="container">
-                <div id="recordes-carregando">
-                    <div class="spinner-nba">
-                        <div class="bola-animada"></div>
-                        <span>Carregando...</span>
+                <div id="analise-carregando" class="spinner-center">
+                    <div class="spinner-nba"><div class="bola-animada"></div><span>Carregando análise...</span></div>
+                </div>
+                <div id="analise-conteudo" style="display:none;">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-4" id="filtro-posicao-area" style="display:none;">
+                        <span class="form-label-nba mb-0">Posição:</span>
+                        <div id="filtro-posicao-botoes" class="d-flex gap-2 flex-wrap"></div>
+                        <button class="btn-filtro-pos ativo" id="btn-pos-todos" onclick="filtrarPorPosicao('TODOS')">Todas</button>
+                    </div>
+                    <div class="secao-analise mb-4">
+                        <p class="secao-titulo-grafico mb-3">Pontuadores × Distribuidores</p>
+                        <div class="grafico-container" id="wrap-scatter-pts-ast"><div id="scatter-pts-ast"></div></div>
+                    </div>
+                    <div class="secao-analise mb-4">
+                        <p class="secao-titulo-grafico mb-3">Presença no Garrafão</p>
+                        <div class="grafico-container" id="wrap-scatter-reb-blk"><div id="scatter-reb-blk"></div></div>
                     </div>
                 </div>
-                <div id="recordes-graficos"></div>
+                <div id="analise-vazio" style="display:none;">
+                    <div class="estado-vazio">
+                        <i class="bi bi-graph-up icone-vazio"></i>
+                        <p class="titulo-vazio">Dados insuficientes</p>
+                        <p class="desc-vazio">Não há dados suficientes para gerar a análise dessa temporada.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: RECORDES -->
+        <div class="conteudo-aba" id="aba-recordes" style="display:none;">
+            <div class="container">
+                <div class="d-flex align-items-center gap-3 flex-wrap py-3 mb-3" style="border-bottom:1px solid #D0D0E0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label-nba mb-0">Temporada</label>
+                        <select class="form-control-nba" id="select-temporada-recordes" style="max-width:185px;" onchange="carregarRecordes()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="recordes-carregando" class="spinner-center">
+                    <div class="spinner-nba"><div class="bola-animada"></div><span>Carregando recordes...</span></div>
+                </div>
+                <div id="recordes-conteudo" style="display:none;"></div>
                 <div id="recordes-vazio" style="display:none;">
                     <div class="estado-vazio">
-                        <i class="bi bi-bar-chart icone-vazio"></i>
-                        <p class="titulo-vazio">Sem dados para esta seleção</p>
-                        <p class="desc-vazio">Tente outra temporada ou quantidade.</p>
+                        <i class="bi bi-lightning icone-vazio"></i>
+                        <p class="titulo-vazio">Sem recordes</p>
+                        <p class="desc-vazio">Nenhum recorde encontrado para essa seleção.</p>
                     </div>
                 </div>
             </div>
@@ -122,333 +172,6 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/componentes.js"></script>
-
-<script>
-var abaAtiva = "medias";
-
-var categorias = [
-    { id: "pontos", label: "Pontos", cor: "#C8102E" },
-    { id: "assistencias", label: "Assistências", cor: "#1D428A" },
-    { id: "rebotes", label: "Rebotes", cor: "#007A33" },
-    { id: "roubos", label: "Roubos", cor: "#F9A01B" },
-    { id: "bloqueios", label: "Bloqueios", cor: "#552583" },
-    { id: "turnovers", label: "Turnovers", cor: "#00838A" },
-    { id: "arremessos-campo", label: "FGM", cor: "#006BB6" },
-    { id: "arremessos-tres", label: "3P Made", cor: "#E56020" },
-    { id: "lances-livres", label: "FTM", cor: "#008348" },
-    { id: "plus-minus", label: "Plus/Minus", cor: "#860038" }
-];
-
-var tt = document.getElementById("tt");
-
-function showTT(evento, html) {
-    tt.innerHTML = html;
-    tt.style.opacity = 1;
-    moveTT(evento);
-}
-
-function moveTT(evento) {
-    var x = evento.clientX + 14;
-    var y = evento.clientY - 36;
-    if (x + 230 > window.innerWidth) {
-        x = evento.clientX - 230;
-    }
-    tt.style.left = x + "px";
-    tt.style.top = y + "px";
-}
-
-function hideTT() {
-    tt.style.opacity = 0;
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-    inicializarPagina();
-    carregarTemporadas();
-});
-
-async function carregarTemporadas() {
-    try {
-        var resposta = await chamarApi("/temporadas");
-        var lista = resposta.temporadas || [];
-
-        var selectMedias = document.getElementById("select-temporada-medias");
-        var selectRecordes = document.getElementById("select-temporada-recordes");
-
-        for (var i = 0; i < lista.length; i++) {
-            var ano = lista[i].season;
-
-            var opcaoM = document.createElement("option");
-            opcaoM.value = ano;
-            opcaoM.textContent = ano;
-            if (i === 0) {
-                opcaoM.selected = true;
-            }
-            selectMedias.appendChild(opcaoM);
-
-            var opcaoR = document.createElement("option");
-            opcaoR.value = ano;
-            opcaoR.textContent = ano;
-            selectRecordes.appendChild(opcaoR);
-        }
-
-        carregarMedias();
-    } catch (erro) {
-        document.getElementById("medias-carregando").style.display = "none";
-        document.getElementById("medias-vazio").style.display = "block";
-    }
-}
-
-function trocarAba(aba) {
-    abaAtiva = aba;
-
-    document.getElementById("aba-btn-medias").classList.remove("ativo");
-    document.getElementById("aba-btn-recordes").classList.remove("ativo");
-    document.getElementById("aba-btn-" + aba).classList.add("ativo");
-
-    document.getElementById("conteudo-medias").style.display = "none";
-    document.getElementById("conteudo-recordes").style.display = "none";
-    document.getElementById("barra-medias").style.display = "none";
-    document.getElementById("barra-recordes").style.display = "none";
-
-    if (aba === "medias") {
-        document.getElementById("conteudo-medias").style.display = "block";
-        document.getElementById("barra-medias").style.display = "block";
-        if (document.getElementById("medias-graficos").innerHTML === "") {
-            carregarMedias();
-        }
-    } else {
-        document.getElementById("conteudo-recordes").style.display = "block";
-        document.getElementById("barra-recordes").style.display = "block";
-        if (document.getElementById("recordes-graficos").innerHTML === "") {
-            carregarRecordes();
-        }
-    }
-}
-
-async function carregarMedias() {
-    var temporada = document.getElementById("select-temporada-medias").value;
-    var limite = document.getElementById("select-limite-medias").value;
-
-    document.getElementById("medias-graficos").innerHTML = "";
-    document.getElementById("medias-vazio").style.display = "none";
-    document.getElementById("medias-carregando").style.display = "block";
-
-    var temAlgumDado = false;
-
-    for (var i = 0; i < categorias.length; i++) {
-        var cat = categorias[i];
-        try {
-            var url = "/analiticos/lideres?categoria=" + cat.id + "&temporada=" + temporada + "&limite=" + limite;
-            var resposta = await chamarApi(url);
-
-            if (resposta && resposta.lideres && resposta.lideres.length > 0) {
-                temAlgumDado = true;
-                adicionarGrafico("medias-graficos", "grafico-media-" + cat.id, cat.label);
-
-                (function(idG, dados, cor, label) {
-                    requestAnimationFrame(function() {
-                        renderizarBarrasH(idG, dados, cor, label);
-                    });
-                }("grafico-media-" + cat.id, resposta.lideres, cat.cor, cat.label));
-            }
-        } catch (erro) {
-        }
-    }
-
-    document.getElementById("medias-carregando").style.display = "none";
-
-    if (!temAlgumDado) {
-        document.getElementById("medias-vazio").style.display = "block";
-    }
-}
-
-async function carregarRecordes() {
-    var temporada = document.getElementById("select-temporada-recordes").value;
-    var limite = document.getElementById("select-limite-recordes").value;
-
-    document.getElementById("recordes-graficos").innerHTML = "";
-    document.getElementById("recordes-vazio").style.display = "none";
-    document.getElementById("recordes-carregando").style.display = "block";
-
-    var temAlgumDado = false;
-
-    for (var i = 0; i < categorias.length; i++) {
-        var cat = categorias[i];
-        try {
-            var paramTemp = temporada !== "" ? "&temporada=" + temporada : "";
-            var url = "/analiticos/recordes?categoria=" + cat.id + paramTemp + "&limite=" + limite;
-            var resposta = await chamarApi(url);
-
-            if (resposta && resposta.recordes && resposta.recordes.length > 0) {
-                temAlgumDado = true;
-                adicionarGrafico("recordes-graficos", "grafico-recorde-" + cat.id, cat.label);
-
-                (function(idG, dados, cor, label) {
-                    requestAnimationFrame(function() {
-                        renderizarBarrasRecorde(idG, dados, cor, label);
-                    });
-                }("grafico-recorde-" + cat.id, resposta.recordes, cat.cor, cat.label));
-            }
-        } catch (erro) {
-        }
-    }
-
-    document.getElementById("recordes-carregando").style.display = "none";
-
-    if (!temAlgumDado) {
-        document.getElementById("recordes-vazio").style.display = "block";
-    }
-}
-
-function adicionarGrafico(idPai, idGrafico, titulo) {
-    var wrapper = document.createElement("div");
-    wrapper.className = "grafico-container mb-4";
-    wrapper.innerHTML = '<p class="secao-titulo-grafico">' + titulo + '</p><div id="' + idGrafico + '"></div>';
-    document.getElementById(idPai).appendChild(wrapper);
-}
-
-function renderizarBarrasH(idContainer, lideres, cor, labelCat) {
-    var container = document.getElementById(idContainer);
-    if (!container) {
-        return;
-    }
-    container.innerHTML = "";
-
-    var dados = lideres.slice().sort(function(a, b) { return b.avg - a.avg; });
-
-    var margem = { topo: 24, dir: 16, baixo: 72, esq: 40 };
-    var largTotal = container.offsetWidth || 700;
-    var altColunas = 260;
-    var altTotal = altColunas + margem.topo + margem.baixo;
-    var largDisp = largTotal - margem.esq - margem.dir;
-
-    var svg = d3.select("#" + idContainer).append("svg").attr("width", largTotal).attr("height", altTotal);
-    var g = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
-
-    var maiorMedia = d3.max(dados, function(d) { return d.avg || 0; }) || 1;
-    var escX = d3.scaleBand().domain(dados.map(function(d) { return d.player_name; })).range([0, largDisp]).padding(0.25);
-    var escY = d3.scaleLinear().domain([0, maiorMedia * 1.2]).range([altColunas, 0]);
-
-    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-largDisp))
-        .call(function(gr) {
-            gr.select(".domain").remove();
-            gr.selectAll(".tick line").attr("stroke", "#D0D0E0").attr("stroke-dasharray", "3,3");
-            gr.selectAll(".tick text").attr("fill", "#888899").attr("font-size", "10px");
-        });
-
-    g.selectAll(".col").data(dados).enter().append("rect").attr("class", "col")
-        .attr("x", function(d) { return escX(d.player_name); })
-        .attr("y", function(d) { return escY(d.avg || 0); })
-        .attr("width", escX.bandwidth())
-        .attr("height", function(d) { return altColunas - escY(d.avg || 0); })
-        .attr("fill", cor)
-        .attr("rx", 4)
-        .style("cursor", "pointer")
-        .on("mouseover", function(evento, d) {
-            showTT(evento, "<strong>" + d.player_name + "</strong><br>" + labelCat + ": <strong>" + d.avg + "</strong> por jogo<br>" + d.games_played + " jogos");
-        })
-        .on("mousemove", moveTT)
-        .on("mouseout", function() { hideTT(); });
-
-    g.selectAll(".val-col").data(dados).enter().append("text").attr("class", "val-col")
-        .attr("x", function(d) { return escX(d.player_name) + escX.bandwidth() / 2; })
-        .attr("y", function(d) { return escY(d.avg || 0) - 5; })
-        .attr("text-anchor", "middle")
-        .attr("fill", "#1A1A2E")
-        .attr("font-size", "10px")
-        .attr("font-weight", "600")
-        .text(function(d) { return d.avg; });
-
-    g.selectAll(".nome-col").data(dados).enter().append("text").attr("class", "nome-col")
-        .attr("x", function(d) { return escX(d.player_name) + escX.bandwidth() / 2; })
-        .attr("y", altColunas + 10)
-        .attr("text-anchor", "end")
-        .attr("transform", function(d) {
-            var cx = escX(d.player_name) + escX.bandwidth() / 2;
-            return "rotate(-40," + cx + "," + (altColunas + 10) + ")";
-        })
-        .attr("fill", "#555570")
-        .attr("font-size", "10px")
-        .text(function(d) {
-            var partes = d.player_name.split(" ");
-            if (partes.length >= 2) {
-                return partes[partes.length - 1] + ", " + partes[0].charAt(0) + ".";
-            }
-            return d.player_name;
-        });
-}
-
-function renderizarBarrasRecorde(idContainer, recordes, cor, labelCat) {
-    var container = document.getElementById(idContainer);
-    if (!container) {
-        return;
-    }
-    container.innerHTML = "";
-
-    var dados = recordes.slice().sort(function(a, b) { return b.valor - a.valor; });
-
-    var margem = { topo: 24, dir: 16, baixo: 72, esq: 40 };
-    var largTotal = container.offsetWidth || 700;
-    var altColunas = 260;
-    var altTotal = altColunas + margem.topo + margem.baixo;
-    var largDisp = largTotal - margem.esq - margem.dir;
-
-    var svg = d3.select("#" + idContainer).append("svg").attr("width", largTotal).attr("height", altTotal);
-    var g = svg.append("g").attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
-
-    var maiorValor = d3.max(dados, function(d) { return d.valor || 0; }) || 1;
-    var escX = d3.scaleBand().domain(dados.map(function(d, i) { return i; })).range([0, largDisp]).padding(0.25);
-    var escY = d3.scaleLinear().domain([0, maiorValor * 1.2]).range([altColunas, 0]);
-
-    g.append("g").call(d3.axisLeft(escY).ticks(4).tickSize(-largDisp))
-        .call(function(gr) {
-            gr.select(".domain").remove();
-            gr.selectAll(".tick line").attr("stroke", "#D0D0E0").attr("stroke-dasharray", "3,3");
-            gr.selectAll(".tick text").attr("fill", "#888899").attr("font-size", "10px");
-        });
-
-    g.selectAll(".col-r").data(dados).enter().append("rect").attr("class", "col-r")
-        .attr("x", function(d, i) { return escX(i); })
-        .attr("y", function(d) { return escY(d.valor || 0); })
-        .attr("width", escX.bandwidth())
-        .attr("height", function(d) { return altColunas - escY(d.valor || 0); })
-        .attr("fill", cor)
-        .attr("rx", 4)
-        .style("cursor", "pointer")
-        .on("mouseover", function(evento, d) {
-            showTT(evento, "<strong>" + d.valor + " " + labelCat + "</strong><br>" + d.player_name + "<br>vs " + d.adversario + "<br>" + d.data);
-        })
-        .on("mousemove", moveTT)
-        .on("mouseout", function() { hideTT(); });
-
-    g.selectAll(".val-r").data(dados).enter().append("text").attr("class", "val-r")
-        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
-        .attr("y", function(d) { return escY(d.valor || 0) - 5; })
-        .attr("text-anchor", "middle")
-        .attr("fill", "#1A1A2E")
-        .attr("font-size", "10px")
-        .attr("font-weight", "600")
-        .text(function(d) { return d.valor; });
-
-    g.selectAll(".nome-r").data(dados).enter().append("text").attr("class", "nome-r")
-        .attr("x", function(d, i) { return escX(i) + escX.bandwidth() / 2; })
-        .attr("y", altColunas + 10)
-        .attr("text-anchor", "end")
-        .attr("transform", function(d, i) {
-            var cx = escX(i) + escX.bandwidth() / 2;
-            return "rotate(-40," + cx + "," + (altColunas + 10) + ")";
-        })
-        .attr("fill", "#555570")
-        .attr("font-size", "10px")
-        .text(function(d) {
-            var partes = d.player_name.split(" ");
-            if (partes.length >= 2) {
-                return partes[partes.length - 1] + ", " + partes[0].charAt(0) + ".";
-            }
-            return d.player_name;
-        });
-}
-</script>
-
+<script src="js/estatisticas.js"></script>
 </body>
 </html>
