@@ -13,7 +13,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(13, 13, 20, 0.90) 55%, rgba(13, 13, 20, 0.35) 100%);
+    background: linear-gradient(to right, rgba(13,13,20,0.92) 55%, rgba(13,13,20,0.4) 100%);
 }
 
 .hero-eyebrow {
@@ -29,7 +29,7 @@
     font-family: 'Oswald', sans-serif;
     font-size: 3.4rem;
     font-weight: 700;
-    color: #FFFFFF;
+    color: #EEEEF5;
     line-height: 1.08;
     margin-bottom: 16px;
 }
@@ -51,7 +51,7 @@
 }
 
 .faixa-kpis {
-    background-color: #EAEAF0;
+    background-color: #FFFFFF;
     border-bottom: 1px solid #D0D0E0;
     padding: 24px 0;
 }
@@ -87,14 +87,14 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #888899;
+    color: #555570;
 }
 
 .kpi-carregando {
     display: inline-block;
     width: 60px;
     height: 28px;
-    background-color: #D0D0E0;
+    background-color: #EAEAF0;
     border-radius: 4px;
     vertical-align: middle;
 }
@@ -143,6 +143,12 @@
     padding: 18px 16px;
     text-align: center;
     height: 100%;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-stat-modelo:hover {
+    border-color: rgba(247, 92, 3, 0.4);
+    transform: translateY(-2px);
 }
 
 .card-stat-modelo .stat-valor {
@@ -170,7 +176,7 @@
 
 .barra-progresso {
     height: 5px;
-    background-color: #D0D0E0;
+    background-color: #EAEAF0;
     border-radius: 3px;
     overflow: hidden;
 }
@@ -181,65 +187,24 @@
     transition: width 1s ease;
 }
 
-.secao-predicoes {
-    padding: 60px 0;
-    background-color: #F5F5F8;
-    border-bottom: 1px solid #D0D0E0;
-}
-
-.card-predicao {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.card-predicao .pred-jogador {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #1A1A2E;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-predicao .pred-adversario {
-    font-size: 0.78rem;
-    color: #555570;
-}
-
-.card-predicao .pred-pts {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #F75C03;
-    white-space: nowrap;
-}
-
-.card-predicao .pred-rotulo {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888899;
-    text-align: right;
-}
-
 .secao-funcionalidades {
     padding: 60px 0;
-    background-color: #EAEAF0;
+    background-color: #FFFFFF;
     border-bottom: 1px solid #D0D0E0;
 }
 
 .card-funcionalidade {
-    background-color: #FFFFFF;
+    background-color: #F5F5F8;
     border: 1px solid #D0D0E0;
     border-radius: 12px;
     padding: 28px 22px;
     height: 100%;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-funcionalidade:hover {
+    border-color: rgba(247, 92, 3, 0.4);
+    transform: translateY(-3px);
 }
 
 .card-funcionalidade .func-titulo {
@@ -254,29 +219,28 @@
     font-size: 0.85rem;
     color: #555570;
     line-height: 1.65;
-    margin-bottom: 18px;
+    margin-bottom: 0;
 }
 
 .badge-logado {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.65rem;
+    font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #D94E00;
-    background-color: rgba(247, 92, 3, 0.10);
+    color: #C17800;
+    background-color: rgba(193, 120, 0, 0.1);
     border-radius: 20px;
-    padding: 2px 8px;
-    margin-left: 6px;
-    vertical-align: middle;
+    padding: 3px 10px;
+    margin-bottom: 12px;
 }
 
 .secao-cta {
     padding: 72px 0;
     text-align: center;
-    background-color: #F5F5F8;
+    background-color: #EAEAF0;
     border-bottom: 1px solid #D0D0E0;
 }
 
@@ -299,14 +263,17 @@
     .hero-titulo {
         font-size: 2.4rem;
     }
+
     .kpi-item {
         padding: 8px 12px;
         border-right: none;
         border-bottom: 1px solid #D0D0E0;
     }
+
     .kpi-item:last-child {
         border-bottom: none;
     }
+
     .secao-cta .cta-titulo {
         font-size: 1.8rem;
     }
