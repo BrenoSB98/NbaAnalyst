@@ -2,7 +2,7 @@ import logging
 import numpy as np
 
 from datetime import datetime, timezone
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from app.db.models import Game, PlayerGameStats, PlayerTeamSeason
 from app.services import modelo_service
@@ -38,7 +38,6 @@ def converter_minutos_para_float(minutos_str):
     except (ValueError, AttributeError):
         return 0.0
 
-
 def calcular_ema_ponderada(valores):
     if not valores:
         return 0.0
@@ -50,22 +49,15 @@ def calcular_ema_ponderada(valores):
         soma_pesos = soma_pesos + peso
     return round(soma_ponderada / soma_pesos, 4)
 
-
 def calcular_media_multi_janela(valores_3, valores_10, media_temporada):
     ema_3 = calcular_ema_ponderada(valores_3)
     ema_10 = calcular_ema_ponderada(valores_10)
     resultado = (ema_3 * 0.40) + (ema_10 * 0.35) + (media_temporada * 0.25)
     return round(resultado, 4)
 
-
-def _traduzir_chave_stat(stat_name):
-    if stat_name == "tot_reb":
-        return "rebounds"
-    return stat_name
-
-
 def _obter_posicao_jogador(db, player_id, season):
-    vinculo = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.season == season).first()
+    stmt = select(PlayerTeamSeason).where(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.season == season)
+    vinculo = db.execute(stmt).scalar_one_or_none()
     if vinculo is None:
         return None
     if not vinculo.pos:
@@ -73,14 +65,13 @@ def _obter_posicao_jogador(db, player_id, season):
     pos_normalizada = vinculo.pos.split("-")[0]
     return pos_normalizada
 
-
 def _calcular_medias_temporada_por_stat(db, player_id, season, data_corte=None):
-    query = db.query(func.avg(PlayerGameStats.points).label("points"), func.avg(PlayerGameStats.assists).label("assists"), func.avg(PlayerGameStats.tot_reb).label("tot_reb"), func.avg(PlayerGameStats.steals).label("steals"), func.avg(PlayerGameStats.blocks).label("blocks")).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.stage != 1)
+    stmt = select(func.avg(PlayerGameStats.points).label("points"), func.avg(PlayerGameStats.assists).label("assists"), func.avg(PlayerGameStats.tot_reb).label("tot_reb"), func.avg(PlayerGameStats.steals).label("steals"), func.avg(PlayerGameStats.blocks).label("blocks")).join(Game, PlayerGameStats.game_id == Game.id).where(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.stage != 1)
 
     if data_corte is not None:
-        query = query.filter(Game.date_start < data_corte)
+        stmt = stmt.where(Game.date_start < data_corte)
 
-    resultado = query.first()
+    resultado = db.execute(stmt).first()
 
     medias = {}
     if resultado:
@@ -97,7 +88,6 @@ def _calcular_medias_temporada_por_stat(db, player_id, season, data_corte=None):
         medias["blocks"] = 0.0
 
     return medias
-
 
 def _stats_relevantes_para_jogador(pos_normalizada, medias_por_stat):
     if pos_normalizada is not None:
@@ -116,24 +106,23 @@ def _stats_relevantes_para_jogador(pos_normalizada, medias_por_stat):
 
     return stats_incluidas
 
-
 def _carregar_historico_jogador(db, player_id, season, data_corte=None):
-    query = db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.stage != 1)
+    stmt = select(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).where(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.stage != 1)
 
     if data_corte is not None:
-        query = query.filter(Game.date_start < data_corte)
+        stmt = stmt.where(Game.date_start < data_corte)
 
-    resultados = query.order_by(Game.date_start.asc()).all()
+    stmt = stmt.order_by(Game.date_start.asc())
+    resultados = db.execute(stmt).all()
     return resultados
 
-
 def _calcular_defesa_adversaria(db, opponent_team_id, season, stat_name, data_corte=None):
-    query = db.query(PlayerGameStats).join(Game, PlayerGameStats.game_id == Game.id).filter(Game.season == season, Game.status_short == 3, Game.stage != 1, PlayerGameStats.team_id != opponent_team_id, (Game.home_team_id == opponent_team_id) | (Game.away_team_id == opponent_team_id))
+    stmt = select(PlayerGameStats).join(Game, PlayerGameStats.game_id == Game.id).where(Game.season == season, Game.status_short == 3, Game.stage != 1, PlayerGameStats.team_id != opponent_team_id, (Game.home_team_id == opponent_team_id) | (Game.away_team_id == opponent_team_id))
 
     if data_corte is not None:
-        query = query.filter(Game.date_start < data_corte)
+        stmt = stmt.where(Game.date_start < data_corte)
 
-    stats_sofridas = query.all()
+    stats_sofridas = db.execute(stmt).scalars().all()
     if not stats_sofridas:
         return 0.0
 
@@ -141,15 +130,14 @@ def _calcular_defesa_adversaria(db, opponent_team_id, season, stat_name, data_co
     for s in stats_sofridas:
         total_stat = total_stat + float(getattr(s, stat_name, 0) or 0)
 
-    query_jogos = db.query(Game).filter(Game.season == season, Game.status_short == 3, Game.stage != 1, (Game.home_team_id == opponent_team_id) | (Game.away_team_id == opponent_team_id))
+    stmt_jogos = select(func.count(Game.id)).where(Game.season == season, Game.status_short == 3, Game.stage != 1, (Game.home_team_id == opponent_team_id) | (Game.away_team_id == opponent_team_id))
     if data_corte is not None:
-        query_jogos = query_jogos.filter(Game.date_start < data_corte)
+        stmt_jogos = stmt_jogos.where(Game.date_start < data_corte)
 
-    num_jogos = query_jogos.count()
+    num_jogos = db.execute(stmt_jogos).scalar()
     if num_jogos > 0:
         return round(total_stat / num_jogos, 2)
     return 0.0
-
 
 def _calcular_media_vs_adversario(historico_jogador, opponent_team_id, stat_name):
     stats_vs = []
@@ -169,7 +157,6 @@ def _calcular_media_vs_adversario(historico_jogador, opponent_team_id, stat_name
     for v in stats_vs:
         soma = soma + v
     return soma / len(stats_vs)
-
 
 def extrair_features_avancadas_jogador(db, player_id, season, stat_name, data_corte=None):
     jogos_com_data = _carregar_historico_jogador(db, player_id, season, data_corte)
@@ -257,7 +244,6 @@ def extrair_features_avancadas_jogador(db, player_id, season, stat_name, data_co
 
     return lista_features, lista_alvos
 
-
 def _montar_vetor_previsao(db, player_id, opponent_team_id, season, stat_name, em_casa, media_temporada, data_corte=None):
     limiar = LIMIARES_MINIMOS.get(stat_name, 0.0)
     if media_temporada < limiar:
@@ -335,7 +321,6 @@ def _montar_vetor_previsao(db, player_id, opponent_team_id, season, stat_name, e
     vetor = [ema_ponderada, em_casa, defesa_adversaria, dias_descanso, media_minutos, inclinacao, media_vs_adversario, variancia, back_to_back, media_temporada, media_10]
     return np.array([vetor])
 
-
 def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_name, em_casa, media_temporada, data_corte=None):
     from xgboost import XGBRegressor
 
@@ -344,7 +329,7 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
     if modelo is None:
         lista_features, lista_alvos = extrair_features_avancadas_jogador(db, player_id, season, stat_name, data_corte)
         if lista_features is None or len(lista_features) < 5:
-            logger.debug(f"Dados insuficientes para previsão: player_id={player_id}, stat={stat_name}")
+            logger.debug(f"Dados insuficientes para previsao: player_id={player_id}, stat={stat_name}")
             return None
 
         modelo = XGBRegressor(n_estimators=150, max_depth=4, learning_rate=0.05, subsample=0.8, colsample_bytree=0.7, min_child_weight=5, gamma=0.1, reg_alpha=0.1, reg_lambda=2.0, random_state=42, objective="reg:squarederror", n_jobs=-1)
@@ -354,12 +339,11 @@ def prever_performance_jogador_ml(db, player_id, opponent_team_id, season, stat_
     vetor_previsao = _montar_vetor_previsao(db, player_id, opponent_team_id, season, stat_name, em_casa, media_temporada, data_corte)
 
     if vetor_previsao is None:
-        logger.debug(f"Previsão ignorada (abaixo do limiar): player_id={player_id}, stat={stat_name}")
+        logger.debug(f"Previsao ignorada (abaixo do limiar): player_id={player_id}, stat={stat_name}")
         return None
 
     resultado = modelo.predict(vetor_previsao)[0]
     return round(float(resultado), 2)
-
 
 def prever_multiplas_stats_jogador(db, player_id, opponent_team_id, season, is_home, data_corte=None):
     pos_normalizada = _obter_posicao_jogador(db, player_id, season)
@@ -385,7 +369,6 @@ def prever_multiplas_stats_jogador(db, player_id, opponent_team_id, season, is_h
             previsoes[stat_name] = previsao
 
     return previsoes
-
 
 def prever_performance_jogador(db, player_id, opponent_team_id, season, stat_name, em_casa):
     medias = _calcular_medias_temporada_por_stat(db, player_id, season)

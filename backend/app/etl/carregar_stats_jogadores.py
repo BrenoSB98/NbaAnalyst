@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import time
 
+from sqlalchemy import select
+
 from app.services import nba_api_client
 from app.db.models import PlayerGameStats, Game, Player
 from app.db.db_utils import get_db
@@ -10,17 +12,17 @@ from app.core.logging_config import configurar_logger
 logger = configurar_logger(__name__)
 
 def carregar_stats_jogador(game_id):
-    logger.info(f"Stats jogadores — jogo={game_id}...")
+    logger.info(f"Stats jogadores: jogo={game_id}...")
     estatistica_jogador = nba_api_client.get_player_statistics(game_id=game_id)
 
     if not estatistica_jogador:
-        logger.warning(f"API vazia — jogo={game_id}.")
+        logger.warning(f"API vazia: jogo={game_id}.")
         return
 
     logger.info(f"{len(estatistica_jogador)} stats recebidas.")
 
     for db in get_db():
-        jogo = db.query(Game).filter(Game.id == game_id).first()
+        jogo = db.execute(select(Game).where(Game.id == game_id)).scalar_one_or_none()
 
         if not jogo:
             logger.warning(f"Jogo {game_id} nao encontrado.")
@@ -47,11 +49,11 @@ def carregar_stats_jogador(game_id):
             if not id_jogador or not id_franquia:
                 continue
 
-            jogador_existe_no_db = db.query(Player.id).filter(Player.id == id_jogador).first()
+            jogador_existe_no_db = db.execute(select(Player.id).where(Player.id == id_jogador)).first()
             if not jogador_existe_no_db:
                 continue
 
-            stats_existente = db.query(PlayerGameStats).filter(PlayerGameStats.game_id == game_id, PlayerGameStats.player_id == id_jogador, PlayerGameStats.team_id == id_franquia).first()
+            stats_existente = db.execute(select(PlayerGameStats).where(PlayerGameStats.game_id == game_id, PlayerGameStats.player_id == id_jogador, PlayerGameStats.team_id == id_franquia)).scalar_one_or_none()
 
             if stats_existente:
                 logger.info(f"Atualiza stat jogador={id_jogador} jogo={game_id}.")
@@ -77,67 +79,40 @@ def carregar_stats_jogador(game_id):
                 stats_existente.turnovers = _normalizar_inteiro(item.get("turnovers"))
                 stats_existente.blocks = _normalizar_inteiro(item.get("blocks"))
                 stats_existente.plus_minus = _normalizar_inteiro(item.get("plusMinus"))
-                total_atualizados += 1
+                total_atualizados = total_atualizados + 1
                 continue
 
             logger.info(f"Insere stat jogador={id_jogador} jogo={game_id}.")
-            nova_stats = PlayerGameStats(
-                game_id=game_id,
-                season=season,
-                player_id=id_jogador,
-                team_id=id_franquia,
-                pos=_normalizar_string(item.get("pos")),
-                minutes=_normalizar_string(item.get("min")),
-                comment=_normalizar_string(item.get("comment")),
-                points=_normalizar_inteiro(item.get("points")),
-                fgm=_normalizar_inteiro(item.get("fgm")),
-                fga=_normalizar_inteiro(item.get("fga")),
-                fgp=_normalizar_decimal(item.get("fgp")),
-                ftm=_normalizar_inteiro(item.get("ftm")),
-                fta=_normalizar_inteiro(item.get("fta")),
-                ftp=_normalizar_decimal(item.get("ftp")),
-                tpm=_normalizar_inteiro(item.get("tpm")),
-                tpa=_normalizar_inteiro(item.get("tpa")),
-                tpp=_normalizar_decimal(item.get("tpp")),
-                off_reb=_normalizar_inteiro(item.get("offReb")),
-                def_reb=_normalizar_inteiro(item.get("defReb")),
-                tot_reb=_normalizar_inteiro(item.get("totReb")),
-                assists=_normalizar_inteiro(item.get("assists")),
-                p_fouls=_normalizar_inteiro(item.get("pFouls")),
-                steals=_normalizar_inteiro(item.get("steals")),
-                turnovers=_normalizar_inteiro(item.get("turnovers")),
-                blocks=_normalizar_inteiro(item.get("blocks")),
-                plus_minus=_normalizar_inteiro(item.get("plusMinus")),
-            )
+            nova_stats = PlayerGameStats(game_id=game_id, season=season, player_id=id_jogador, team_id=id_franquia, pos=_normalizar_string(item.get("pos")), minutes=_normalizar_string(item.get("min")), comment=_normalizar_string(item.get("comment")), points=_normalizar_inteiro(item.get("points")), fgm=_normalizar_inteiro(item.get("fgm")), fga=_normalizar_inteiro(item.get("fga")), fgp=_normalizar_decimal(item.get("fgp")), ftm=_normalizar_inteiro(item.get("ftm")), fta=_normalizar_inteiro(item.get("fta")), ftp=_normalizar_decimal(item.get("ftp")), tpm=_normalizar_inteiro(item.get("tpm")), tpa=_normalizar_inteiro(item.get("tpa")), tpp=_normalizar_decimal(item.get("tpp")), off_reb=_normalizar_inteiro(item.get("offReb")), def_reb=_normalizar_inteiro(item.get("defReb")), tot_reb=_normalizar_inteiro(item.get("totReb")), assists=_normalizar_inteiro(item.get("assists")), p_fouls=_normalizar_inteiro(item.get("pFouls")), steals=_normalizar_inteiro(item.get("steals")), turnovers=_normalizar_inteiro(item.get("turnovers")), blocks=_normalizar_inteiro(item.get("blocks")), plus_minus=_normalizar_inteiro(item.get("plusMinus")))
             db.add(nova_stats)
-            total_inseridos += 1
+            total_inseridos = total_inseridos + 1
 
         db.commit()
-        logger.info(f"Fim jogo={game_id} — ins={total_inseridos} atu={total_atualizados}.")
+        logger.info(f"Fim jogo={game_id}: ins={total_inseridos} atu={total_atualizados}.")
 
 
 def carregar_stats_todos_jogadores(season, team_id=None, data=None):
-    logger.info(f"Stats em massa — temp={season} data={data}...")
+    logger.info(f"Stats em massa: temp={season} data={data}...")
 
     for db in get_db():
-        consulta = db.query(Game).filter(Game.season == season)
+        stmt = select(Game).where(Game.season == season)
 
         if team_id:
-            consulta = consulta.filter((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
+            stmt = stmt.where((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
 
         if data:
             data_inicio = datetime.strptime(data, "%Y-%m-%d")
             data_fim = data_inicio + timedelta(days=1)
-            consulta = consulta.filter(Game.date_start >= data_inicio, Game.date_start < data_fim)
+            stmt = stmt.where(Game.date_start >= data_inicio, Game.date_start < data_fim)
 
-        jogos = consulta.all()
+        jogos = db.execute(stmt).scalars().all()
 
         if not jogos:
-            logger.warning(f"Nenhum jogo — temp={season} data={data}.")
+            logger.warning(f"Nenhum jogo: temp={season} data={data}.")
             return
 
         total_jogos = len(jogos)
-        logger.info(f"{total_jogos} jogos encontrados — temp={season}.")
+        logger.info(f"{total_jogos} jogos encontrados: temp={season}.")
         total_erros = 0
 
         for idx, jogo in enumerate(jogos, start=1):
@@ -151,13 +126,12 @@ def carregar_stats_todos_jogadores(season, team_id=None, data=None):
                 continue
 
             if idx % 50 == 0:
-                logger.info(f"Progresso: {idx}/{total_jogos} jogos processados ({round(idx/total_jogos*100)}%).")
+                logger.info(f"Progresso: {idx}/{total_jogos} jogos ({round(idx/total_jogos*100)}%).")
 
         if total_erros > 0:
-            logger.warning(f"Fim com erros — erros={total_erros} total={total_jogos}.")
+            logger.warning(f"Fim com erros: erros={total_erros} total={total_jogos}.")
         else:
-            logger.info(f"Fim — {total_jogos} jogos processados sem erros.")
-
+            logger.info(f"Fim: {total_jogos} jogos sem erros.")
 
 if __name__ == "__main__":
     carregar_stats_todos_jogadores(season=2025)

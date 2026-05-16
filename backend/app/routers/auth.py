@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.auth import hash_password, verify_password, create_access_token, decode_access_token
@@ -24,7 +25,7 @@ def obter_usuario_atual(token: str = Depends(oauth2_scheme), db: Session = Depen
     if email is None:
         raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
 
-    usuario = db.query(User).filter(User.email == email).first()
+    usuario = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if usuario is None:
         raise HTTPException(status_code=401, detail="Usuário não encontrado.")
 
@@ -39,12 +40,12 @@ def obter_usuario_admin(usuario_atual: User = Depends(obter_usuario_atual)):
 
 @router.post("/registrar", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def registrar_usuario(dados: UserCreate, db: Session = Depends(get_db)):
-    usuario_existente = db.query(User).filter(User.email == dados.email).first()
+    usuario_existente = db.execute(select(User).where(User.email == dados.email)).scalar_one_or_none()
     if usuario_existente:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="E-mail já cadastrado.")
 
     if dados.favorite_team_id is not None:
-        time_existe = db.query(Team).filter(Team.id == dados.favorite_team_id).first()
+        time_existe = db.execute(select(Team).where(Team.id == dados.favorite_team_id)).scalar_one_or_none()
         if not time_existe:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time favorito não encontrado.")
 
@@ -68,11 +69,7 @@ def registrar_usuario(dados: UserCreate, db: Session = Depends(get_db)):
     db.refresh(novo_usuario)
 
     try:
-        enviar_email_confirmacao(
-            destinatario=dados.email,
-            nome=dados.full_name,
-            token=token_confirmacao,
-        )
+        enviar_email_confirmacao(destinatario=dados.email, nome=dados.full_name, token=token_confirmacao)
     except Exception:
         pass
 
@@ -80,7 +77,7 @@ def registrar_usuario(dados: UserCreate, db: Session = Depends(get_db)):
 
 @router.get("/confirmacao_conta/{token}", status_code=status.HTTP_200_OK)
 def confirmar_email(token: str, db: Session = Depends(get_db)):
-    usuario = db.query(User).filter(User.confirmation_token == token).first()
+    usuario = db.execute(select(User).where(User.confirmation_token == token)).scalar_one_or_none()
 
     if not usuario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Token de confirmação inválido ou já utilizado.")
@@ -97,7 +94,7 @@ def confirmar_email(token: str, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    usuario = db.query(User).filter(User.email == form_data.username).first()
+    usuario = db.execute(select(User).where(User.email == form_data.username)).scalar_one_or_none()
 
     if not usuario:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="E-mail ou senha inválidos.")
@@ -108,7 +105,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not usuario.is_active:
         raise HTTPException(status_code=403, detail="Conta não confirmada. Verifique seu e-mail e clique no link de ativação.")
 
-    token = create_access_token(data={"sub": usuario.email},expires_delta=timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES))
+    token = create_access_token(data={"sub": usuario.email}, expires_delta=timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
@@ -123,10 +120,10 @@ def meu_perfil(usuario_atual: User = Depends(obter_usuario_atual)):
 @router.patch("/eu/time-favorito", response_model=UserResponse)
 def atualizar_time_favorito(dados: UserUpdateTimeFavorito, db: Session = Depends(get_db), usuario_atual: User = Depends(obter_usuario_atual)):
     if dados.favorite_team_id is not None:
-        time_existe = db.query(Team).filter(Team.id == dados.favorite_team_id).first()
+        time_existe = db.execute(select(Team).where(Team.id == dados.favorite_team_id)).scalar_one_or_none()
         if not time_existe:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time favorito não encontrado.")
- 
+
     usuario_atual.favorite_team_id = dados.favorite_team_id
     db.commit()
     db.refresh(usuario_atual)
@@ -153,7 +150,7 @@ def solicitar_reset_senha(dados: dict, db: Session = Depends(get_db)):
     if not email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Informe o e-mail.")
 
-    usuario = db.query(User).filter(User.email == email).first()
+    usuario = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
     if not usuario:
         return {"message": "Se o e-mail estiver cadastrado, você receberá as instruções em breve."}
@@ -172,7 +169,6 @@ def solicitar_reset_senha(dados: dict, db: Session = Depends(get_db)):
 
     return {"message": "Se o e-mail estiver cadastrado, você receberá as instruções em breve."}
 
-
 @router.post("/redefinir-senha", status_code=status.HTTP_200_OK)
 def redefinir_senha(dados: dict, db: Session = Depends(get_db)):
     token = dados.get("token", "").strip()
@@ -184,7 +180,7 @@ def redefinir_senha(dados: dict, db: Session = Depends(get_db)):
     if len(nova_senha) < 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A nova senha deve ter no mínimo 6 caracteres.")
 
-    usuario = db.query(User).filter(User.reset_token == token).first()
+    usuario = db.execute(select(User).where(User.reset_token == token)).scalar_one_or_none()
 
     if not usuario:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido ou já utilizado.")

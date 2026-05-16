@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.services import nba_api_client
 from app.db.models import League
 from app.db.db_utils import get_db
@@ -40,10 +42,10 @@ def carregar_ligas():
             nome_liga = dados["nome"]
 
             if not codigo_liga or not nome_liga:
-                logger.info("Pulando — sem codigo/nome.")
+                logger.info("Pulando: sem codigo/nome.")
                 continue
 
-            liga_existente = db.query(League).filter(League.code == codigo_liga).first()
+            liga_existente = db.execute(select(League).where(League.code == codigo_liga)).scalar_one_or_none()
             if liga_existente:
                 if liga_existente.description != nome_liga:
                     logger.info(f"Atualiza liga '{codigo_liga}'.")
@@ -54,7 +56,7 @@ def carregar_ligas():
             logger.info(f"Insere liga '{codigo_liga}'.")
             nova_liga = League(code=codigo_liga, description=nome_liga)
             db.add(nova_liga)
-            total_inseridas += 1
+            total_inseridas = total_inseridas + 1
 
         db.commit()
         logger.info("Commit ok.")
@@ -62,7 +64,7 @@ def carregar_ligas():
         if total_inseridas == 0 and total_atualizadas == 0:
             logger.warning("Nenhuma liga nova.")
         else:
-            logger.info(f"Fim — ins={total_inseridas} atu={total_atualizadas}")
+            logger.info(f"Fim: ins={total_inseridas} atu={total_atualizadas}")
 
 if __name__ == "__main__":
     carregar_ligas()

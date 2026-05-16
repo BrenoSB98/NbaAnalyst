@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.services import nba_api_client
 from app.db.models import Season
 from app.db.db_utils import get_db
@@ -25,7 +27,7 @@ def carregar_temporadas():
             if ano_normalizado is None:
                 continue
 
-            temporada_existente = db.query(Season).filter(Season.season == ano_normalizado).first()
+            temporada_existente = db.execute(select(Season).where(Season.season == ano_normalizado)).scalar_one_or_none()
             if temporada_existente:
                 logger.info(f"Temporada {ano_normalizado} ja existe.")
                 continue
@@ -33,7 +35,7 @@ def carregar_temporadas():
             logger.info(f"Insere temporada {ano_normalizado}.")
             nova_temporada = Season(season=ano_normalizado)
             db.add(nova_temporada)
-            total_inseridas += 1
+            total_inseridas = total_inseridas + 1
 
         db.commit()
         logger.info("Commit ok.")
@@ -41,7 +43,7 @@ def carregar_temporadas():
         if total_inseridas == 0:
             logger.warning("Nenhuma temporada nova.")
         else:
-            logger.info(f"Fim — ins={total_inseridas}")
+            logger.info(f"Fim: ins={total_inseridas}")
 
 if __name__ == "__main__":
     carregar_temporadas()

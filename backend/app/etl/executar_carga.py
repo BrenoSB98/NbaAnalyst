@@ -2,6 +2,8 @@ import argparse
 import logging
 import sys
 
+from sqlalchemy import select
+
 from app.core.logging_config import configurar_logging
 from app.etl.carregar_ligas import carregar_ligas
 from app.etl.carregar_temporadas import carregar_temporadas
@@ -16,31 +18,27 @@ configurar_logging()
 logger = logging.getLogger(__name__)
 
 def upsert(db, modelo, filtro, dados):
-    registro = db.query(modelo).filter_by(**filtro).first()
+    stmt = select(modelo)
+    for campo, valor in filtro.items():
+        stmt = stmt.where(getattr(modelo, campo) == valor)
+    registro = db.execute(stmt).scalar_one_or_none()
 
     if registro:
         for campo, valor in dados.items():
             setattr(registro, campo, valor)
     else:
-        novo = modelo(**{**filtro, **dados})
+        todos_campos = {}
+        todos_campos.update(filtro)
+        todos_campos.update(dados)
+        novo = modelo(**todos_campos)
         db.add(novo)
 
     db.commit()
-    
+
 def main():
     parser = argparse.ArgumentParser(description="Script para executar cargas de dados na base de dados NBA.")
     parser.add_argument("--season", type=int, required=False, help="Ano da temporada")
-    parser.add_argument(
-        "--load",
-        type=str,
-        choices=[
-            "temporadas", "ligas", "times", "jogadores", "jogadores_times",
-            "partidas", "stats_jogador", "stats_jogador_massa",
-            "stats_times", "stats_times_massa", "all"
-        ],
-        required=True,
-        help="Escolha o tipo de dado a ser carregado"
-    )
+    parser.add_argument("--load", type=str, choices=["temporadas", "ligas", "times", "jogadores", "jogadores_times", "partidas", "stats_jogador", "stats_jogador_massa", "stats_times", "stats_times_massa", "all"], required=True, help="Escolha o tipo de dado a ser carregado")
     parser.add_argument("--team_id", dest="team_id", type=int, required=False, help="ID do time")
     parser.add_argument("--date", type=str, required=False, help="Data para carregar jogos (formato: YYYY-MM-DD).")
     parser.add_argument("--game_id", dest="game_id", type=int, required=False, help="ID do jogo.")

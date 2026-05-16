@@ -2,6 +2,8 @@ import os
 import logging
 import numpy as np
 
+from sqlalchemy import select
+
 from app.config import config
 from app.db.models import Game, PlayerGameStats
 
@@ -16,7 +18,6 @@ LIMIARES_TREINO["assists"] = 1.2
 LIMIARES_TREINO["tot_reb"] = 2.5
 LIMIARES_TREINO["steals"] = 0.5
 LIMIARES_TREINO["blocks"] = 0.4
-
 
 def _converter_minutos(minutos_str):
     if not minutos_str:
@@ -35,11 +36,9 @@ def _converter_minutos(minutos_str):
     except ValueError:
         return 0.0
 
-
 def _caminho_modelo(player_id, stat_name):
     pasta = config.PASTA_MODELOS
     return os.path.join(pasta, f"modelo_{player_id}_{stat_name}.pkl")
-
 
 def salvar_modelo(modelo, player_id, stat_name):
     import pickle
@@ -49,7 +48,6 @@ def salvar_modelo(modelo, player_id, stat_name):
     caminho = _caminho_modelo(player_id, stat_name)
     with open(caminho, "wb") as arquivo:
         pickle.dump(modelo, arquivo)
-
 
 def carregar_modelo(player_id, stat_name):
     import pickle
@@ -63,7 +61,6 @@ def carregar_modelo(player_id, stat_name):
         logger.warning(f"Falha ao carregar modelo: player_id={player_id}, stat={stat_name}: {erro}")
         return None
 
-
 def _treinar_modelo_novo(lista_features, lista_alvos):
     from xgboost import XGBRegressor
     matriz = np.array(lista_features)
@@ -72,18 +69,21 @@ def _treinar_modelo_novo(lista_features, lista_alvos):
     modelo.fit(matriz, alvos)
     return modelo
 
-
 def _treinar_modelo_jogador(player_id, stat_name, lista_features, lista_alvos):
     if lista_features is None or len(lista_features) < 5:
         return None
     logger.info(f"Treinando: player_id={player_id}, stat={stat_name}, amostras={len(lista_features)}")
     return _treinar_modelo_novo(lista_features, lista_alvos)
 
-
 def _pre_carregar_dados_temporada(db, season):
     logger.warning(f"Pre-carregando dados da temporada: {season}")
 
-    resultados = db.query(PlayerGameStats, Game.date_start).join(Game, PlayerGameStats.game_id == Game.id).filter(Game.season == season, Game.status_short == 3, Game.stage != 1).order_by(PlayerGameStats.player_id, Game.date_start.asc()).all()
+    stmt = (select(PlayerGameStats, Game.date_start)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(Game.season == season, Game.status_short == 3, Game.stage != 1)
+            .order_by(PlayerGameStats.player_id, Game.date_start.asc()))
+
+    resultados = db.execute(stmt).all()
 
     dados_por_jogador = {}
     for stat, data_jogo in resultados:
@@ -103,7 +103,6 @@ def _pre_carregar_dados_temporada(db, season):
 
     logger.warning(f"Dados carregados: {len(dados_por_jogador)} jogadores, {len(resultados)} registros")
     return dados_por_jogador
-
 
 def _extrair_features_em_memoria(jogos_jogador, stat_name):
     if len(jogos_jogador) < 5:
@@ -189,7 +188,6 @@ def _extrair_features_em_memoria(jogos_jogador, stat_name):
         return None, None
 
     return lista_features, lista_alvos
-
 
 def retreinar_todos_modelos(db, season):
     limiar_minutos = config.MIN_MINUTOS_PALPITE

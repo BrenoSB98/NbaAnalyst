@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from sqlalchemy import select
 
 from app.services import nba_api_client
 from app.db.models import Game, GameTeamScore, Team
@@ -14,11 +14,11 @@ STAGE_PLAYOFFS = 3
 STAGE_COPA_NBA = 4
 
 def carregar_partidas(season, date=None, team_id=None, league_id=None):
-    logger.info(f"Buscando jogos — temp={season} data={date}...")
+    logger.info(f"Buscando jogos: temp={season} data={date}...")
     dados_jogos = nba_api_client.get_games(season=season, date=date, team_id=team_id, league_id=league_id)
 
     if not dados_jogos:
-        logger.warning(f"API retornou vazio — temp={season} data={date}.")
+        logger.warning(f"API retornou vazio: temp={season} data={date}.")
         return
 
     logger.info(f"{len(dados_jogos)} jogos recebidos.")
@@ -67,7 +67,7 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
             data_inicio_obj = _processar_datetime(data_inicio)
             data_fim_obj = _processar_datetime(data_fim)
 
-            jogo_existente = db.query(Game).filter(Game.id == game_id).first()
+            jogo_existente = db.execute(select(Game).where(Game.id == game_id)).scalar_one_or_none()
 
             if jogo_existente:
                 logger.info(f"Atualiza jogo {game_id}.")
@@ -77,101 +77,50 @@ def carregar_partidas(season, date=None, team_id=None, league_id=None):
                 jogo_existente.periods_end_of_period = fim_de_periodo
                 jogo_existente.date_end = data_fim_obj
                 jogo_existente.duration = duracao
-                _atualizar_placares_jogo(
-                    db=db, game_id=game_id,
-                    placar_casa=placar_casa, placar_visitante=placar_visitante,
-                    id_time_casa=id_time_casa, id_time_visitante=id_time_visitante,
-                    linescore_casa=linescore_casa, linescore_visitante=linescore_visitante,
-                    serie_casa=serie_casa, serie_visitante=serie_visitante,
-                )
+                _atualizar_placares_jogo(db=db, game_id=game_id, placar_casa=placar_casa, placar_visitante=placar_visitante, id_time_casa=id_time_casa, id_time_visitante=id_time_visitante, linescore_casa=linescore_casa, linescore_visitante=linescore_visitante, serie_casa=serie_casa, serie_visitante=serie_visitante)
                 continue
 
             if not id_time_casa or not id_time_visitante:
-                logger.warning(f"Jogo {game_id} — times ausentes.")
+                logger.warning(f"Jogo {game_id}: times ausentes.")
                 continue
 
-            time_casa_existe = db.query(Team.id).filter(Team.id == id_time_casa).first()
-            time_visitante_existe = db.query(Team.id).filter(Team.id == id_time_visitante).first()
+            time_casa_existe = db.execute(select(Team.id).where(Team.id == id_time_casa)).first()
+            time_visitante_existe = db.execute(select(Team.id).where(Team.id == id_time_visitante)).first()
 
             if not time_casa_existe or not time_visitante_existe:
                 if estagio == STAGE_PRE_TEMPORADA:
-                    logger.info(f"Jogo {game_id} ignorado — pre-temp time externo.")
+                    logger.info(f"Jogo {game_id} ignorado: pre-temp time externo.")
                     total_ignorados_externos = total_ignorados_externos + 1
                 else:
-                    logger.warning(f"Jogo {game_id} ignorado — time nao cadastrado.")
+                    logger.warning(f"Jogo {game_id} ignorado: time nao cadastrado.")
                     total_ignorados_regulares = total_ignorados_regulares + 1
                 continue
 
             if not data_inicio_obj:
-                logger.warning(f"Jogo {game_id} ignorado — data invalida.")
+                logger.warning(f"Jogo {game_id} ignorado: data invalida.")
                 continue
 
             logger.info(f"Insere jogo {game_id}.")
-            novo_jogo = Game(
-                id=game_id,
-                league=liga,
-                season=season,
-                date_start=data_inicio_obj,
-                date_end=data_fim_obj,
-                duration=duracao,
-                stage=estagio,
-                status_short=status_curto,
-                status_long=status_longo,
-                periods_current=periodo_atual,
-                periods_total=total_periodos,
-                periods_end_of_period=fim_de_periodo,
-                arena_name=nome_arena,
-                arena_city=cidade_arena,
-                arena_state=estado_arena,
-                arena_country=pais_arena,
-                home_team_id=id_time_casa,
-                away_team_id=id_time_visitante,
-            )
+            novo_jogo = Game(id=game_id, league=liga, season=season, date_start=data_inicio_obj, date_end=data_fim_obj, duration=duracao, stage=estagio, status_short=status_curto, status_long=status_longo, periods_current=periodo_atual, periods_total=total_periodos, periods_end_of_period=fim_de_periodo, arena_name=nome_arena, arena_city=cidade_arena, arena_state=estado_arena, arena_country=pais_arena, home_team_id=id_time_casa, away_team_id=id_time_visitante)
             db.add(novo_jogo)
             total_inseridos = total_inseridos + 1
 
-            placar_time_casa = GameTeamScore(
-                game_id=game_id,
-                team_id=id_time_casa,
-                is_home=True,
-                win=_normalizar_inteiro(placar_casa.get("win")),
-                loss=_normalizar_inteiro(placar_casa.get("loss")),
-                series_win=_normalizar_inteiro(serie_casa.get("win")),
-                series_loss=_normalizar_inteiro(serie_casa.get("loss")),
-                points=_normalizar_inteiro(placar_casa.get("points")),
-                linescore_q1=_normalizar_inteiro(linescore_casa[0]) if len(linescore_casa) > 0 else None,
-                linescore_q2=_normalizar_inteiro(linescore_casa[1]) if len(linescore_casa) > 1 else None,
-                linescore_q3=_normalizar_inteiro(linescore_casa[2]) if len(linescore_casa) > 2 else None,
-                linescore_q4=_normalizar_inteiro(linescore_casa[3]) if len(linescore_casa) > 3 else None,
-            )
+            placar_time_casa = GameTeamScore(game_id=game_id, team_id=id_time_casa, is_home=True, win=_normalizar_inteiro(placar_casa.get("win")), loss=_normalizar_inteiro(placar_casa.get("loss")), series_win=_normalizar_inteiro(serie_casa.get("win")), series_loss=_normalizar_inteiro(serie_casa.get("loss")), points=_normalizar_inteiro(placar_casa.get("points")), linescore_q1=_normalizar_inteiro(linescore_casa[0]) if len(linescore_casa) > 0 else None, linescore_q2=_normalizar_inteiro(linescore_casa[1]) if len(linescore_casa) > 1 else None, linescore_q3=_normalizar_inteiro(linescore_casa[2]) if len(linescore_casa) > 2 else None, linescore_q4=_normalizar_inteiro(linescore_casa[3]) if len(linescore_casa) > 3 else None)
             db.add(placar_time_casa)
 
-            placar_time_visitante = GameTeamScore(
-                game_id=game_id,
-                team_id=id_time_visitante,
-                is_home=False,
-                win=_normalizar_inteiro(placar_visitante.get("win")),
-                loss=_normalizar_inteiro(placar_visitante.get("loss")),
-                series_win=_normalizar_inteiro(serie_visitante.get("win")),
-                series_loss=_normalizar_inteiro(serie_visitante.get("loss")),
-                points=_normalizar_inteiro(placar_visitante.get("points")),
-                linescore_q1=_normalizar_inteiro(linescore_visitante[0]) if len(linescore_visitante) > 0 else None,
-                linescore_q2=_normalizar_inteiro(linescore_visitante[1]) if len(linescore_visitante) > 1 else None,
-                linescore_q3=_normalizar_inteiro(linescore_visitante[2]) if len(linescore_visitante) > 2 else None,
-                linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None,
-            )
+            placar_time_visitante = GameTeamScore(game_id=game_id, team_id=id_time_visitante, is_home=False, win=_normalizar_inteiro(placar_visitante.get("win")), loss=_normalizar_inteiro(placar_visitante.get("loss")), series_win=_normalizar_inteiro(serie_visitante.get("win")), series_loss=_normalizar_inteiro(serie_visitante.get("loss")), points=_normalizar_inteiro(placar_visitante.get("points")), linescore_q1=_normalizar_inteiro(linescore_visitante[0]) if len(linescore_visitante) > 0 else None, linescore_q2=_normalizar_inteiro(linescore_visitante[1]) if len(linescore_visitante) > 1 else None, linescore_q3=_normalizar_inteiro(linescore_visitante[2]) if len(linescore_visitante) > 2 else None, linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None)
             db.add(placar_time_visitante)
 
         db.commit()
         logger.info("Commit ok.")
 
         if total_ignorados_externos > 0 or total_ignorados_regulares > 0:
-            logger.warning(f"Ignorados — pre_temp={total_ignorados_externos} sem_cadastro={total_ignorados_regulares}.")
+            logger.warning(f"Ignorados: pre_temp={total_ignorados_externos} sem_cadastro={total_ignorados_regulares}.")
 
-        logger.info(f"Fim — ins={total_inseridos}.")
+        logger.info(f"Fim: ins={total_inseridos}.")
 
 def _atualizar_placares_jogo(db, game_id, placar_casa, placar_visitante, id_time_casa, id_time_visitante, linescore_casa, linescore_visitante, serie_casa, serie_visitante):
-    placar_casa_existente = db.query(GameTeamScore).filter(GameTeamScore.game_id == game_id, GameTeamScore.team_id == id_time_casa).first()
+    placar_casa_existente = db.execute(select(GameTeamScore).where(GameTeamScore.game_id == game_id, GameTeamScore.team_id == id_time_casa)).scalar_one_or_none()
 
     if placar_casa_existente:
         placar_casa_existente.win = _normalizar_inteiro(placar_casa.get("win"))
@@ -184,21 +133,10 @@ def _atualizar_placares_jogo(db, game_id, placar_casa, placar_visitante, id_time
         placar_casa_existente.linescore_q3 = _normalizar_inteiro(linescore_casa[2]) if len(linescore_casa) > 2 else None
         placar_casa_existente.linescore_q4 = _normalizar_inteiro(linescore_casa[3]) if len(linescore_casa) > 3 else None
     else:
-        novo_placar_casa = GameTeamScore(
-            game_id=game_id, team_id=id_time_casa, is_home=True,
-            win=_normalizar_inteiro(placar_casa.get("win")),
-            loss=_normalizar_inteiro(placar_casa.get("loss")),
-            series_win=_normalizar_inteiro(serie_casa.get("win")),
-            series_loss=_normalizar_inteiro(serie_casa.get("loss")),
-            points=_normalizar_inteiro(placar_casa.get("points")),
-            linescore_q1=_normalizar_inteiro(linescore_casa[0]) if len(linescore_casa) > 0 else None,
-            linescore_q2=_normalizar_inteiro(linescore_casa[1]) if len(linescore_casa) > 1 else None,
-            linescore_q3=_normalizar_inteiro(linescore_casa[2]) if len(linescore_casa) > 2 else None,
-            linescore_q4=_normalizar_inteiro(linescore_casa[3]) if len(linescore_casa) > 3 else None,
-        )
+        novo_placar_casa = GameTeamScore(game_id=game_id, team_id=id_time_casa, is_home=True, win=_normalizar_inteiro(placar_casa.get("win")), loss=_normalizar_inteiro(placar_casa.get("loss")), series_win=_normalizar_inteiro(serie_casa.get("win")), series_loss=_normalizar_inteiro(serie_casa.get("loss")), points=_normalizar_inteiro(placar_casa.get("points")), linescore_q1=_normalizar_inteiro(linescore_casa[0]) if len(linescore_casa) > 0 else None, linescore_q2=_normalizar_inteiro(linescore_casa[1]) if len(linescore_casa) > 1 else None, linescore_q3=_normalizar_inteiro(linescore_casa[2]) if len(linescore_casa) > 2 else None, linescore_q4=_normalizar_inteiro(linescore_casa[3]) if len(linescore_casa) > 3 else None)
         db.add(novo_placar_casa)
 
-    placar_visitante_existente = db.query(GameTeamScore).filter(GameTeamScore.game_id == game_id, GameTeamScore.team_id == id_time_visitante).first()
+    placar_visitante_existente = db.execute(select(GameTeamScore).where(GameTeamScore.game_id == game_id, GameTeamScore.team_id == id_time_visitante)).scalar_one_or_none()
 
     if placar_visitante_existente:
         placar_visitante_existente.win = _normalizar_inteiro(placar_visitante.get("win"))
@@ -211,18 +149,7 @@ def _atualizar_placares_jogo(db, game_id, placar_casa, placar_visitante, id_time
         placar_visitante_existente.linescore_q3 = _normalizar_inteiro(linescore_visitante[2]) if len(linescore_visitante) > 2 else None
         placar_visitante_existente.linescore_q4 = _normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None
     else:
-        novo_placar_visitante = GameTeamScore(
-            game_id=game_id, team_id=id_time_visitante, is_home=False,
-            win=_normalizar_inteiro(placar_visitante.get("win")),
-            loss=_normalizar_inteiro(placar_visitante.get("loss")),
-            series_win=_normalizar_inteiro(serie_visitante.get("win")),
-            series_loss=_normalizar_inteiro(serie_visitante.get("loss")),
-            points=_normalizar_inteiro(placar_visitante.get("points")),
-            linescore_q1=_normalizar_inteiro(linescore_visitante[0]) if len(linescore_visitante) > 0 else None,
-            linescore_q2=_normalizar_inteiro(linescore_visitante[1]) if len(linescore_visitante) > 1 else None,
-            linescore_q3=_normalizar_inteiro(linescore_visitante[2]) if len(linescore_visitante) > 2 else None,
-            linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None,
-        )
+        novo_placar_visitante = GameTeamScore(game_id=game_id, team_id=id_time_visitante, is_home=False, win=_normalizar_inteiro(placar_visitante.get("win")), loss=_normalizar_inteiro(placar_visitante.get("loss")), series_win=_normalizar_inteiro(serie_visitante.get("win")), series_loss=_normalizar_inteiro(serie_visitante.get("loss")), points=_normalizar_inteiro(placar_visitante.get("points")), linescore_q1=_normalizar_inteiro(linescore_visitante[0]) if len(linescore_visitante) > 0 else None, linescore_q2=_normalizar_inteiro(linescore_visitante[1]) if len(linescore_visitante) > 1 else None, linescore_q3=_normalizar_inteiro(linescore_visitante[2]) if len(linescore_visitante) > 2 else None, linescore_q4=_normalizar_inteiro(linescore_visitante[3]) if len(linescore_visitante) > 3 else None)
         db.add(novo_placar_visitante)
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 import logging
 
+from sqlalchemy import delete, select, func
 from sqlalchemy.exc import IntegrityError
 
 from app.config import config
@@ -32,10 +33,10 @@ def _converter_minutos(minutos_str):
 
 def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
     limiar = config.MIN_MINUTOS_PALPITE
-    query = db.query(PlayerGameStats).filter(PlayerGameStats.team_id == team_id, PlayerGameStats.season == season)
+    stmt = select(PlayerGameStats).where(PlayerGameStats.team_id == team_id, PlayerGameStats.season == season)
     if data_corte is not None:
-        query = query.join(Game, PlayerGameStats.game_id == Game.id).filter(Game.date_start < data_corte)
-    stats = query.all()
+        stmt = stmt.join(Game, PlayerGameStats.game_id == Game.id).where(Game.date_start < data_corte)
+    stats = db.execute(stmt).scalars().all()
 
     soma_minutos = {}
     contagem_jogos = {}
@@ -68,7 +69,8 @@ def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
     return lista_titulares
 
 def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
-    ultimos_jogos = db.query(Game).filter(Game.season == season, Game.status_short == 3, (Game.home_team_id == team_id) | (Game.away_team_id == team_id)).order_by(Game.date_start.desc()).limit(5).all()
+    stmt = select(Game).where(Game.season == season, Game.status_short == 3, (Game.home_team_id == team_id) | (Game.away_team_id == team_id)).order_by(Game.date_start.desc()).limit(5)
+    ultimos_jogos = db.execute(stmt).scalars().all()
 
     if not ultimos_jogos:
         return player_ids
@@ -79,7 +81,8 @@ def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
 
     jogou_recentemente = set()
     for pid in player_ids:
-        stats_recentes = db.query(PlayerGameStats).filter(PlayerGameStats.player_id == pid, PlayerGameStats.game_id.in_(ids_ultimos_jogos)).all()
+        stmt_stats = select(PlayerGameStats).where(PlayerGameStats.player_id == pid, PlayerGameStats.game_id.in_(ids_ultimos_jogos))
+        stats_recentes = db.execute(stmt_stats).scalars().all()
         for stat in stats_recentes:
             minutos = _converter_minutos(stat.minutes)
             if minutos > 0:
@@ -99,20 +102,23 @@ def _buscar_jogos_do_dia(db, season):
     fim_sp = inicio_sp + timedelta(days=1, hours=6)
     inicio_utc = inicio_sp.astimezone(timezone.utc)
     fim_utc = fim_sp.astimezone(timezone.utc)
-    jogos = db.query(Game).filter(Game.season == season, Game.date_start >= inicio_utc, Game.date_start < fim_utc).all()
-    return jogos
+    stmt = select(Game).where(Game.season == season, Game.date_start >= inicio_utc, Game.date_start < fim_utc)
+    return db.execute(stmt).scalars().all()
 
 def _buscar_jogadores_do_time(db, team_id, season):
-    registros = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.active == True).all()
+    stmt = select(PlayerTeamSeason).where(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.active == True)
+    registros = db.execute(stmt).scalars().all()
     if not registros:
-        registros = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season).all()
+        stmt = select(PlayerTeamSeason).where(PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season)
+        registros = db.execute(stmt).scalars().all()
     lista_ids = []
     for registro in registros:
         lista_ids.append(registro.player_id)
     return lista_ids
 
 def _predicao_ja_existe(db, player_id, game_id):
-    existente = db.query(Prediction).filter(Prediction.player_id == player_id, Prediction.game_id == game_id).first()
+    stmt = select(Prediction).where(Prediction.player_id == player_id, Prediction.game_id == game_id)
+    existente = db.execute(stmt).scalar_one_or_none()
     if existente:
         return True
     return False
@@ -185,13 +191,16 @@ def salvar_predicoes_dia_atual(db, season):
     return total_geradas
 
 def deletar_todas_predicoes(db, season):
-    total = db.query(Prediction).filter(Prediction.season == season).delete()
+    stmt = delete(Prediction).where(Prediction.season == season)
+    resultado = db.execute(stmt)
+    total = resultado.rowcount
     db.commit()
     logger.warning(f"Predicoes deletadas: total={total}, temporada={season}")
     return total
 
 def gerar_predicoes_retroativas(db, season):
-    jogos = db.query(Game).filter(Game.season == season, Game.status_short == 3, Game.stage != 1).order_by(Game.date_start.asc()).all()
+    stmt = select(Game).where(Game.season == season, Game.status_short == 3, Game.stage != 1).order_by(Game.date_start.asc())
+    jogos = db.execute(stmt).scalars().all()
 
     if not jogos:
         logger.warning(f"Nenhum jogo finalizado encontrado: temporada={season}")
@@ -203,7 +212,8 @@ def gerar_predicoes_retroativas(db, season):
 
     for jogo in jogos:
         data_corte = jogo.date_start
-        predicoes_existentes = db.query(Prediction).filter(Prediction.game_id == jogo.id).count()
+        count_stmt = select(func.count(Prediction.id)).where(Prediction.game_id == jogo.id)
+        predicoes_existentes = db.execute(count_stmt).scalar()
         if predicoes_existentes > 0:
             continue
 
@@ -219,7 +229,8 @@ def gerar_predicoes_retroativas(db, season):
     return total_geradas
 
 def salvar_predicoes_temporada(db, season):
-    jogos = db.query(Game).filter(Game.season == season, Game.status_short == 3, Game.stage != 1).order_by(Game.date_start.asc()).all()
+    stmt = select(Game).where(Game.season == season, Game.status_short == 3, Game.stage != 1).order_by(Game.date_start.asc())
+    jogos = db.execute(stmt).scalars().all()
 
     if not jogos:
         logger.warning(f"Nenhum jogo finalizado encontrado: temporada={season}")
@@ -233,7 +244,8 @@ def salvar_predicoes_temporada(db, season):
         jogadores_casa = _buscar_jogadores_do_time(db=db, team_id=jogo.home_team_id, season=season)
         jogadores_fora = _buscar_jogadores_do_time(db=db, team_id=jogo.away_team_id, season=season)
         total_jogadores = len(jogadores_casa) + len(jogadores_fora)
-        predicoes_existentes = db.query(Prediction).filter(Prediction.game_id == jogo.id).count()
+        count_stmt = select(func.count(Prediction.id)).where(Prediction.game_id == jogo.id)
+        predicoes_existentes = db.execute(count_stmt).scalar()
 
         if total_jogadores > 0 and predicoes_existentes >= total_jogadores:
             continue

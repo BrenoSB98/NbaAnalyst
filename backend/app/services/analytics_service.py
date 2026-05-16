@@ -1,9 +1,7 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, func, desc
+from sqlalchemy import and_, func, desc, select
 from app.db.models import Player, Team, Game, PlayerGameStats, GameTeamScore
 from datetime import datetime, timedelta
 import numpy as np
-from app.db.db_utils import get_db
 
 def converter_para_int(valor):
     if valor is None:
@@ -143,9 +141,14 @@ def calcular_totais_e_medias(stats_data):
     return resultado
 
 def buscar_top_jogadores_por_stat(db, season, stat_field, stat_label, limit):
-    resultados = (db.query(PlayerGameStats.player_id, func.sum(stat_field).label(stat_label), func.count(PlayerGameStats.game_id).label("games_played"))
-                  .join(Game, PlayerGameStats.game_id == Game.id).filter(Game.season == season, Game.status_short == 3).group_by(PlayerGameStats.player_id).order_by(desc(stat_label)).limit(limit).all()
-                  )
+    stmt = (select(PlayerGameStats.player_id, func.sum(stat_field).label(stat_label), func.count(PlayerGameStats.game_id).label("games_played"))
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(Game.season == season, Game.status_short == 3)
+            .group_by(PlayerGameStats.player_id)
+            .order_by(desc(stat_label))
+            .limit(limit))
+
+    resultados = db.execute(stmt).all()
 
     lista_top = []
     for resultado in resultados:
@@ -153,7 +156,8 @@ def buscar_top_jogadores_por_stat(db, season, stat_field, stat_label, limit):
         total_stat = converter_para_int(resultado[1])
         games_played = resultado[2]
 
-        jogador = db.query(Player).filter(Player.id == player_id).first()
+        stmt_jogador = select(Player).where(Player.id == player_id)
+        jogador = db.execute(stmt_jogador).scalar_one_or_none()
         if jogador:
             nome_completo = f"{jogador.firstname} {jogador.lastname}"
         else:
@@ -174,11 +178,14 @@ def buscar_top_jogadores_por_stat(db, season, stat_field, stat_label, limit):
     return lista_top
 
 def calcular_medias_ultimos_n_jogos(db, player_id, n_games, season=None):
-    query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.status_short == 3))
+    stmt = (select(PlayerGameStats, Game)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.status_short == 3))
 
     if season:
-        query = query.filter(Game.season == season)
-    stats = query.order_by(Game.date_start.desc()).limit(n_games).all()
+        stmt = stmt.where(Game.season == season)
+    stmt = stmt.order_by(Game.date_start.desc()).limit(n_games)
+    stats = db.execute(stmt).all()
     resultado = calcular_totais_e_medias(stats)
 
     if resultado:
@@ -191,10 +198,12 @@ def calcular_medias_casa_fora(db, player_id, season, location):
     else:
         buscar_home = False
 
-    stats_query = (db.query(PlayerGameStats, Game, GameTeamScore).join(Game, PlayerGameStats.game_id == Game.id)
-                   .join(GameTeamScore, and_(GameTeamScore.game_id == Game.id, GameTeamScore.team_id == PlayerGameStats.team_id))
-                   .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, GameTeamScore.is_home == buscar_home).all()
-                   )
+    stmt = (select(PlayerGameStats, Game, GameTeamScore)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .join(GameTeamScore, and_(GameTeamScore.game_id == Game.id, GameTeamScore.team_id == PlayerGameStats.team_id))
+            .where(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, GameTeamScore.is_home == buscar_home))
+
+    stats_query = db.execute(stmt).all()
 
     stats_formatadas = []
     for item in stats_query:
@@ -206,20 +215,25 @@ def calcular_medias_casa_fora(db, player_id, season, location):
     return resultado
 
 def calcular_medias_temporada_completa(db, player_id, season):
-    stats_query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3).all())
+    stmt = (select(PlayerGameStats, Game)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3))
 
+    stats_query = db.execute(stmt).all()
     resultado = calcular_totais_e_medias(stats_query)
     if resultado:
         resultado["games_played"] = resultado.pop("num_jogos")
     return resultado
 
 def calcular_medias_contra_time(db, player_id, opponent_team_id, season=None):
-    query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.status_short == 3))
+    stmt = (select(PlayerGameStats, Game)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.status_short == 3))
 
     if season:
-        query = query.filter(Game.season == season)
+        stmt = stmt.where(Game.season == season)
 
-    stats_all = query.all()
+    stats_all = db.execute(stmt).all()
     stats_filtradas = []
     for stat_data in stats_all:
         stat = stat_data[0]
@@ -242,60 +256,76 @@ def calcular_medias_contra_time(db, player_id, opponent_team_id, season=None):
 def calcular_medias_ultimos_dias(db, player_id, days, season=None):
     data_limite = datetime.now() - timedelta(days=days)
 
-    query = (db.query(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).filter(PlayerGameStats.player_id == player_id, Game.status_short == 3, Game.date_start >= data_limite))
+    stmt = (select(PlayerGameStats, Game)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.status_short == 3, Game.date_start >= data_limite))
 
     if season:
-        query = query.filter(Game.season == season)
+        stmt = stmt.where(Game.season == season)
 
-    stats = query.order_by(Game.date_start.desc()).all()
+    stmt = stmt.order_by(Game.date_start.desc())
+    stats = db.execute(stmt).all()
     resultado = calcular_totais_e_medias(stats)
     if resultado:
         resultado["games_analyzed"] = resultado.pop("num_jogos")
         resultado["days"] = days
     return resultado
 
-def calcular_defesa_adversaria_stat(db: Session, team_id: int, season: int, stat_name: str = "points"):
-    stats_sofridas = (db.query(PlayerGameStats).join(Game, PlayerGameStats.game_id == Game.id)
-                      .filter(Game.season == season, Game.status_short == 3, PlayerGameStats.team_id != team_id,
-                              ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))).all()
-                      )
+def calcular_defesa_adversaria_stat(db, team_id, season, stat_name="points"):
+    stmt = (select(PlayerGameStats)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(Game.season == season, Game.status_short == 3, PlayerGameStats.team_id != team_id,
+                   ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))))
+
+    stats_sofridas = db.execute(stmt).scalars().all()
     if not stats_sofridas:
         return 0.0
 
-    total_stat = sum(float(getattr(s, stat_name, 0) or 0) for s in stats_sofridas)
-    num_jogos = db.query(Game).filter(Game.season == season, Game.status_short == 3, ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))).count()
-    return round(total_stat / num_jogos, 2) if num_jogos > 0 else 0.0
+    total_stat = 0.0
+    for s in stats_sofridas:
+        total_stat = total_stat + float(getattr(s, stat_name, 0) or 0)
 
-def calcular_metricas_consistencia(db: Session, player_id: int, season: int, stat_name: str = "points"):
-    stats = (db.query(getattr(PlayerGameStats, stat_name)).join(Game, PlayerGameStats.game_id == Game.id)
-             .filter(PlayerGameStats.player_id == player_id, Game.season == season).all()
-             )
-    
+    count_stmt = select(func.count(Game.id)).where(Game.season == season, Game.status_short == 3, ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)))
+    num_jogos = db.execute(count_stmt).scalar()
+    if num_jogos > 0:
+        return round(total_stat / num_jogos, 2)
+    return 0.0
+
+def calcular_metricas_consistencia(db, player_id, season, stat_name="points"):
+    stmt = (select(getattr(PlayerGameStats, stat_name))
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.season == season))
+
+    rows = db.execute(stmt).all()
+
     valores = []
-    for v in stats:
+    for v in rows:
         valores.append(float(v[0] or 0))
     if not valores:
         return None
 
+    media = float(np.mean(valores))
     return {
-        "media": round(np.mean(valores), 2),
-        "desvio_padrao": round(np.std(valores), 2),
+        "media": round(media, 2),
+        "desvio_padrao": round(float(np.std(valores)), 2),
         "max": max(valores),
         "min": min(valores),
-        "cv": round(np.std(valores) / np.mean(valores), 2) if np.mean(valores) > 0 else 0 # Coeficiente de Variação
+        "cv": round(float(np.std(valores)) / media, 2) if media > 0 else 0
     }
 
-def calcular_dias_descanso(db: Session, player_id: int, game_date, season: int):
-    jogo_anterior = (db.query(Game).join(PlayerGameStats, PlayerGameStats.game_id == Game.id)
-                     .filter(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.date_start < game_date)
-                     .order_by(Game.date_start.desc()).first()
-                     )    
+def calcular_dias_descanso(db, player_id, game_date, season):
+    stmt = (select(Game)
+            .join(PlayerGameStats, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == player_id, Game.season == season, Game.status_short == 3, Game.date_start < game_date)
+            .order_by(Game.date_start.desc()))
+
+    jogo_anterior = db.execute(stmt).scalars().first()
     if not jogo_anterior:
         return 3
-    
+
     delta = game_date - jogo_anterior.date_start
     return min(delta.days, 7)
-  
+
 def buscar_top_pontuadores(db, season, limit=10):
     return buscar_top_jogadores_por_stat(db=db, season=season, stat_field=PlayerGameStats.points, stat_label="points", limit=limit)
 

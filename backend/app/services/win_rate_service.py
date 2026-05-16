@@ -1,6 +1,8 @@
 import logging
 import math
 
+from sqlalchemy import select
+
 from app.db.models import Game, PlayerGameStats, Prediction
 from app.services.formatar_palpites import verificar_acerto_linha
 
@@ -72,16 +74,15 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real):
 
 
 def calcular_win_rate(db, temporada):
-    palpites_com_real = (
-        db.query(Prediction, PlayerGameStats)
-        .join(PlayerGameStats, (PlayerGameStats.player_id == Prediction.player_id) & (PlayerGameStats.game_id == Prediction.game_id))
-        .join(Game, Game.id == Prediction.game_id)
-        .filter(Prediction.season == temporada, Game.status_short == 3)
-        .all()
-    )
+    stmt = (select(Prediction, PlayerGameStats)
+            .join(PlayerGameStats, (PlayerGameStats.player_id == Prediction.player_id) & (PlayerGameStats.game_id == Prediction.game_id))
+            .join(Game, Game.id == Prediction.game_id)
+            .where(Prediction.season == temporada, Game.status_short == 3))
+
+    palpites_com_real = db.execute(stmt).all()
 
     if not palpites_com_real:
-        logger.warning(f"Nenhum palpite avaliável, temporada={temporada}")
+        logger.warning(f"Nenhum palpite avaliavel, temporada={temporada}")
         return None
 
     desempenho_pontos = _calcular_win_rate_stat(palpites_com_real, "predicted_points", "points")

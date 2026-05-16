@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.services import nba_api_client
 from app.db.models import Team, League, TeamLeagueInfo
 from app.db.db_utils import get_db
@@ -33,21 +35,21 @@ def carregar_times():
             nba_franchise = _normalizar_boolean(item.get("nbaFranchise", False))
 
             if not team_id or not team_name:
-                logger.info("Pulando — sem id/nome.")
+                logger.info("Pulando: sem id/nome.")
                 total_ignorados = total_ignorados + 1
                 continue
 
             if not nba_franchise:
-                logger.info(f"Pulando {team_name} — nao franquia.")
+                logger.info(f"Pulando {team_name}: nao franquia.")
                 total_ignorados = total_ignorados + 1
                 continue
 
             if all_star:
-                logger.info(f"Pulando {team_name} — all-star.")
+                logger.info(f"Pulando {team_name}: all-star.")
                 total_ignorados = total_ignorados + 1
                 continue
 
-            time_existente = db.query(Team).filter(Team.id == team_id).first()
+            time_existente = db.execute(select(Team).where(Team.id == team_id)).scalar_one_or_none()
 
             if time_existente:
                 logger.info(f"Atualiza {team_name}.")
@@ -61,21 +63,12 @@ def carregar_times():
                 total_atualizados = total_atualizados + 1
             else:
                 logger.info(f"Insere {team_name}.")
-                novo_time = Team(
-                    id=team_id,
-                    name=team_name,
-                    nickname=team_nickname,
-                    code=team_code,
-                    city=team_city,
-                    logo=team_logo,
-                    all_star=all_star if all_star is not None else False,
-                    nba_franchise=nba_franchise if nba_franchise is not None else False,
-                )
+                novo_time = Team(id=team_id, name=team_name, nickname=team_nickname, code=team_code, city=team_city, logo=team_logo, all_star=all_star if all_star is not None else False, nba_franchise=nba_franchise if nba_franchise is not None else False)
                 db.add(novo_time)
                 total_inseridos = total_inseridos + 1
 
             leagues = item.get("leagues", {})
-            logger.info(f"{team_name} — {len(leagues)} liga(s).")
+            logger.info(f"{team_name}: {len(leagues)} liga(s).")
 
             for nome_liga, dados_liga in leagues.items():
                 if not isinstance(dados_liga, dict):
@@ -84,23 +77,23 @@ def carregar_times():
                 conference = _normalizar_string(dados_liga.get("conference"))
                 division = _normalizar_string(dados_liga.get("division"))
 
-                liga = db.query(League).filter(League.code == nome_liga).first()
+                liga = db.execute(select(League).where(League.code == nome_liga)).scalar_one_or_none()
 
                 if not liga:
                     logger.warning(f"Liga '{nome_liga}' nao encontrada.")
                     total_sem_liga = total_sem_liga + 1
                     continue
 
-                info_existente = db.query(TeamLeagueInfo).filter(TeamLeagueInfo.team_id == team_id, TeamLeagueInfo.league_id == liga.id).first()
+                info_existente = db.execute(select(TeamLeagueInfo).where(TeamLeagueInfo.team_id == team_id, TeamLeagueInfo.league_id == liga.id)).scalar_one_or_none()
 
                 if info_existente:
-                    logger.info(f"{team_name}/{nome_liga} — atualiza conf/div.")
+                    logger.info(f"{team_name}/{nome_liga}: atualiza conf/div.")
                     if conference:
                         info_existente.conference = conference
                     if division:
                         info_existente.division = division
                 else:
-                    logger.info(f"{team_name}/{nome_liga} — vincula.")
+                    logger.info(f"{team_name}/{nome_liga}: vincula.")
                     nova_info = TeamLeagueInfo(team_id=team_id, league_id=liga.id, conference=conference, division=division)
                     db.add(nova_info)
 
@@ -110,7 +103,7 @@ def carregar_times():
         if total_inseridos == 0 and total_atualizados == 0:
             logger.warning("Nenhum time salvo.")
         else:
-            logger.info(f"Fim — ins={total_inseridos} atu={total_atualizados} ign={total_ignorados} sem_liga={total_sem_liga}")
+            logger.info(f"Fim: ins={total_inseridos} atu={total_atualizados} ign={total_ignorados} sem_liga={total_sem_liga}")
 
 if __name__ == "__main__":
     carregar_times()

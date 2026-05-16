@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
@@ -12,12 +13,10 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=TemporadasResponse)
 def listar_temporadas(db: Session = Depends(get_db)):
-    temporadas = db.query(Season).order_by(Season.season.desc()).all()
+    temporadas = db.execute(select(Season).order_by(Season.season.desc())).scalars().all()
 
     lista_temporadas = []
     for temporada in temporadas:
         lista_temporadas.append({"season": temporada.season})
 
-    return {"total": len(lista_temporadas), 
-            "temporadas": lista_temporadas
-            }
+    return {"total": len(lista_temporadas), "temporadas": lista_temporadas}

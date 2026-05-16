@@ -1,5 +1,9 @@
+import logging
 import os
+import time
 from sqlalchemy import create_engine, text
+
+logger = logging.getLogger("db_chat")
 
 _user = os.getenv("POSTGRES_USER")
 _password = os.getenv("POSTGRES_PASSWORD")
@@ -8,7 +12,9 @@ _port = os.getenv("POSTGRES_PORT", "5432")
 _db = os.getenv("POSTGRES_DB")
 
 DATABASE_URL = f"postgresql://{_user}:{_password}@{_host}:{_port}/{_db}"
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+logger.warning(f"db_chat: DATABASE_URL host={_host}, db={_db}, user={_user}")
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5)
 
 _APELIDOS_TIMES = {
     "lakers": "Los Angeles Lakers",
@@ -53,8 +59,24 @@ _PALAVRAS_IGNORAR = {
     "temporada", "jogo", "partida", "resultado", "placar", "time", "franquia", "equipe",
     "nba", "qual", "quais", "como", "quando", "onde", "quantos", "quantas", "teve", "fez",
     "media", "total", "melhor", "pior", "mais", "menos", "voce", "para", "qual", "esse",
-    "esta", "esse", "isso", "pelo", "pela", "numa", "numa", "com", "sem", "por",
+    "esta", "esse", "isso", "pelo", "pela", "numa", "com", "sem", "por", "titulo",
+    "titulos", "sobre", "jogou", "joga", "faz", "marca", "teve", "seus", "suas", "este",
+    "aquele", "tem", "ter", "ser", "sido", "resultados", "foram",
 }
+
+_MESES_PT = {
+    "janeiro": 1, "fevereiro": 2, "março": 3, "marco": 3,
+    "abril": 4, "maio": 5, "junho": 6, "julho": 7,
+    "agosto": 8, "setembro": 9, "outubro": 10,
+    "novembro": 11, "dezembro": 12,
+    "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5,
+    "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10,
+    "nov": 11, "dez": 12,
+}
+
+_PALAVRAS_NAO_NOME = set(_APELIDOS_TIMES.keys()) | set(_MESES_PT.keys()) | {"2020", "2021", "2022", "2023", "2024", "2025", "2026", "2027"}
+
+_cache_temporadas = {"valor": None, "ts": 0}
 
 def _extrair_possiveis_times(texto):
     encontrados = []
@@ -64,12 +86,19 @@ def _extrair_possiveis_times(texto):
     return encontrados
 
 def _extrair_possiveis_nomes(texto):
-    nomes = []
+    palavras_validas = []
     for palavra in texto.split():
         palavra_limpa = palavra.strip("?.,!:;()\"'").lower()
-        if len(palavra_limpa) > 3 and palavra_limpa not in _PALAVRAS_IGNORAR:
-            nomes.append(palavra_limpa)
-    return nomes
+        if len(palavra_limpa) > 2 and palavra_limpa not in _PALAVRAS_IGNORAR and palavra_limpa not in _PALAVRAS_NAO_NOME:
+            palavras_validas.append(palavra_limpa)
+    if not palavras_validas:
+        return []
+    bigrams = []
+    for i in range(len(palavras_validas) - 1):
+        bigrams.append(palavras_validas[i] + " " + palavras_validas[i + 1])
+    if bigrams:
+        return bigrams
+    return palavras_validas
 
 def _extrair_temporadas(texto):
     temporadas = []
@@ -78,216 +107,159 @@ def _extrair_temporadas(texto):
             temporadas.append(ano)
     return temporadas
 
-def buscar_times():
-    try:
-        with engine.connect() as conn:
-            linhas = conn.execute(text("""
-                SELECT name, nickname, city, code
-                FROM teams
-                WHERE nba_franchise = true
-                ORDER BY name
-            """)).fetchall()
-        if not linhas:
-            return ""
-        saida = []
-        for l in linhas:
-            saida.append(f"- {l.name} ({l.nickname}) | Cidade: {l.city} | Código: {l.code}")
-        return "\n".join(saida)
-    except Exception as e:
-        print(f"Erro em buscar_times: {e}")
-        return ""
+def _extrair_mes_ano(texto):
+    texto_lower = texto.lower()
+    for nome_mes, num_mes in _MESES_PT.items():
+        if nome_mes in texto_lower:
+            for ano in range(2020, 2028):
+                if str(ano) in texto_lower:
+                    return num_mes, ano
+    return None, None
 
 def buscar_jogador_por_nome(nome):
     try:
+        partes = nome.strip().split()
         with engine.connect() as conn:
-            linhas = conn.execute(text("""
-                SELECT firstname, lastname, birth_country, nba_start, height_meters, weight_kilograms
-                FROM players
-                WHERE firstname ILIKE :termo OR lastname ILIKE :termo
-                LIMIT 5
-            """), {"termo": f"%{nome}%"}).fetchall()
+            if len(partes) >= 2:
+                linhas = conn.execute(text("SELECT firstname, lastname, birth_country, nba_start FROM players WHERE (firstname ILIKE :p AND lastname ILIKE :u) OR (firstname ILIKE :u AND lastname ILIKE :p) LIMIT 2"), {"p": f"%{partes[0]}%", "u": f"%{partes[1]}%"}).fetchall()
+            else:
+                linhas = conn.execute(text("SELECT firstname, lastname, birth_country, nba_start FROM players WHERE lastname ILIKE :t LIMIT 2"), {"t": f"%{nome}%"}).fetchall()
         if not linhas:
             return ""
         saida = []
         for l in linhas:
-            saida.append(f"- {l.firstname} {l.lastname} | País: {l.birth_country} | Início NBA: {l.nba_start} | Altura: {l.height_meters}m | Peso: {l.weight_kilograms}kg")
+            saida.append(f"- {l.firstname} {l.lastname} | {l.birth_country} | NBA desde {l.nba_start}")
         return "\n".join(saida)
     except Exception as e:
-        print(f"Erro em buscar_jogador_por_nome: {e}")
+        logger.error(f"Erro buscar_jogador_por_nome: {e}")
         return ""
 
 def buscar_stats_jogador_na_temporada(nome_jogador, temporada):
     try:
+        partes = nome_jogador.strip().split()
         with engine.connect() as conn:
-            jogadores = conn.execute(text("""
-                SELECT id, firstname, lastname
-                FROM players
-                WHERE firstname ILIKE :termo OR lastname ILIKE :termo
-                LIMIT 3
-            """), {"termo": f"%{nome_jogador}%"}).fetchall()
+            if len(partes) >= 2:
+                jogadores = conn.execute(text("SELECT id, firstname, lastname FROM players WHERE (firstname ILIKE :p AND lastname ILIKE :u) OR (firstname ILIKE :u AND lastname ILIKE :p) LIMIT 2"), {"p": f"%{partes[0]}%", "u": f"%{partes[1]}%"}).fetchall()
+            else:
+                jogadores = conn.execute(text("SELECT id, firstname, lastname FROM players WHERE lastname ILIKE :t LIMIT 2"), {"t": f"%{nome_jogador}%"}).fetchall()
         if not jogadores:
             return ""
         saida = []
         for jogador in jogadores:
             with engine.connect() as conn:
-                stats = conn.execute(text("""
-                    SELECT points, assists, tot_reb, steals, blocks, turnovers, minutes
-                    FROM player_game_stats
-                    WHERE player_id = :pid AND season = :temporada
-                """), {"pid": jogador.id, "temporada": temporada}).fetchall()
-            if not stats:
+                row = conn.execute(text("SELECT COUNT(*) AS jogos, ROUND(AVG(points)::numeric, 1) AS pts, ROUND(AVG(assists)::numeric, 1) AS ast, ROUND(AVG(tot_reb)::numeric, 1) AS reb, ROUND(AVG(steals)::numeric, 1) AS stl, ROUND(AVG(blocks)::numeric, 1) AS blk, ROUND(AVG(turnovers)::numeric, 1) AS tov FROM player_game_stats WHERE player_id = :pid AND season = :t"), {"pid": jogador.id, "t": temporada}).fetchone()
+            if not row or row.jogos == 0:
                 continue
-            total_jogos = len(stats)
-
-            soma_pontos = 0
-            soma_assistencias = 0
-            soma_rebotes = 0
-            soma_roubos = 0
-            soma_bloqueios = 0
-            soma_turnovers = 0
-
-            for s in stats:
-                soma_pontos = soma_pontos + (s.points or 0)
-                soma_assistencias = soma_assistencias + (s.assists or 0)
-                soma_rebotes = soma_rebotes + (s.tot_reb or 0)
-                soma_roubos = soma_roubos + (s.steals or 0)
-                soma_bloqueios = soma_bloqueios + (s.blocks or 0)
-                soma_turnovers = soma_turnovers + (s.turnovers or 0)
-
-            media_pts = round(soma_pontos / total_jogos, 1)
-            media_ast = round(soma_assistencias / total_jogos, 1)
-            media_reb = round(soma_rebotes / total_jogos, 1)
-            media_stl = round(soma_roubos / total_jogos, 1)
-            media_blk = round(soma_bloqueios / total_jogos, 1)
-            media_tov = round(soma_turnovers / total_jogos, 1)
-
-            bloco = (
-                f"Jogador: {jogador.firstname} {jogador.lastname} | Temporada: {temporada} | Jogos: {total_jogos}\n"
-                f"  Pontos/jogo: {media_pts} | Assistências/jogo: {media_ast} | Rebotes/jogo: {media_reb}\n"
-                f"  Roubos/jogo: {media_stl} | Bloqueios/jogo: {media_blk} | Turnovers/jogo: {media_tov}"
-            )
-            saida.append(bloco)
-        return "\n\n".join(saida)
+            saida.append(f"{jogador.firstname} {jogador.lastname} | Temp {temporada} | {row.jogos} jogos | Pts: {row.pts} | Ast: {row.ast} | Reb: {row.reb} | Stl: {row.stl} | Blk: {row.blk}")
+        return "\n".join(saida)
     except Exception as e:
-        print(f"Erro em buscar_stats_jogador_na_temporada: {e}")
+        logger.error(f"Erro buscar_stats_jogador_na_temporada: {e}")
         return ""
 
 def buscar_stats_recentes_jogador(nome_jogador):
     try:
+        partes = nome_jogador.strip().split()
         with engine.connect() as conn:
-            jogadores = conn.execute(text("""
-                SELECT id, firstname, lastname
-                FROM players
-                WHERE firstname ILIKE :termo OR lastname ILIKE :termo
-                LIMIT 3
-            """), {"termo": f"%{nome_jogador}%"}).fetchall()
+            if len(partes) >= 2:
+                jogadores = conn.execute(text("SELECT id, firstname, lastname FROM players WHERE (firstname ILIKE :p AND lastname ILIKE :u) OR (firstname ILIKE :u AND lastname ILIKE :p) LIMIT 2"), {"p": f"%{partes[0]}%", "u": f"%{partes[1]}%"}).fetchall()
+            else:
+                jogadores = conn.execute(text("SELECT id, firstname, lastname FROM players WHERE lastname ILIKE :t LIMIT 2"), {"t": f"%{nome_jogador}%"}).fetchall()
         if not jogadores:
             return ""
         saida = []
         for jogador in jogadores:
             with engine.connect() as conn:
-                stats = conn.execute(text("""
-                    SELECT pgs.points, pgs.assists, pgs.tot_reb, pgs.steals, pgs.blocks, pgs.turnovers, g.season
-                    FROM player_game_stats pgs
-                    JOIN games g ON g.id = pgs.game_id
-                    WHERE pgs.player_id = :pid AND g.status_short = 3
-                    ORDER BY g.date_start DESC
-                    LIMIT 10
-                """), {"pid": jogador.id}).fetchall()
-            if not stats:
+                row = conn.execute(text("SELECT COUNT(*) AS jogos, ROUND(AVG(pgs.points)::numeric, 1) AS pts, ROUND(AVG(pgs.assists)::numeric, 1) AS ast, ROUND(AVG(pgs.tot_reb)::numeric, 1) AS reb, MAX(g.season) AS temporada FROM player_game_stats pgs JOIN games g ON g.id = pgs.game_id WHERE pgs.player_id = :pid AND g.status_short = 3 AND g.date_start >= (SELECT MAX(g2.date_start) - INTERVAL '30 days' FROM games g2 JOIN player_game_stats p2 ON p2.game_id = g2.id WHERE p2.player_id = :pid AND g2.status_short = 3)"), {"pid": jogador.id}).fetchone()
+            if not row or row.jogos == 0:
                 continue
-            total = len(stats)
-
-            soma_pts = 0
-            soma_ast = 0
-            soma_reb = 0
-
-            for s in stats:
-                soma_pts = soma_pts + (s.points or 0)
-                soma_ast = soma_ast + (s.assists or 0)
-                soma_reb = soma_reb + (s.tot_reb or 0)
-
-            if stats:
-                temporada_ref = stats[0].season 
-            else:
-                temporada_ref = "?"
-            bloco = (
-                f"Jogador: {jogador.firstname} {jogador.lastname} | Últimos {total} jogos (temporada {temporada_ref})\n"
-                f"  Média: {round(soma_pts/total,1)} pts | {round(soma_ast/total,1)} ast | {round(soma_reb/total,1)} reb"
-            )
-            saida.append(bloco)
-        return "\n\n".join(saida)
+            saida.append(f"{jogador.firstname} {jogador.lastname} | Últimos {row.jogos} jogos (temp. {row.temporada}) | Pts: {row.pts} | Ast: {row.ast} | Reb: {row.reb}")
+        return "\n".join(saida)
     except Exception as e:
-        print(f"Erro em buscar_stats_recentes_jogador: {e}")
+        logger.error(f"Erro buscar_stats_recentes_jogador: {e}")
         return ""
 
 def buscar_jogos_do_time(nome_time, temporada):
     try:
         with engine.connect() as conn:
-            time = conn.execute(text("""
-                SELECT id, name FROM teams
-                WHERE name ILIKE :termo OR nickname ILIKE :termo
-                LIMIT 1
-            """), {"termo": f"%{nome_time}%"}).fetchone()
-        if not time:
+            time_row = conn.execute(text("SELECT id, name FROM teams WHERE name ILIKE :t OR nickname ILIKE :t LIMIT 1"), {"t": f"%{nome_time}%"}).fetchone()
+        if not time_row:
+            logger.warning(f"Time nao encontrado: {nome_time}")
             return ""
         with engine.connect() as conn:
-            jogos = conn.execute(text("""
-                SELECT g.id, g.date_start, g.home_team_id, g.away_team_id,
-                    ht.name AS home_name, at.name AS away_name
-                FROM games g
-                JOIN teams ht ON ht.id = g.home_team_id
-                JOIN teams at ON at.id = g.away_team_id
-                WHERE g.season = :temporada
-                  AND g.status_short = 3
-                  AND (g.home_team_id = :tid OR g.away_team_id = :tid)
-                ORDER BY g.date_start DESC
-                LIMIT 15
-            """), {"temporada": temporada, "tid": time.id}).fetchall()
+            jogos = conn.execute(text("SELECT g.id, g.date_start, g.home_team_id, g.away_team_id, ht.name AS home_name, at.name AS away_name FROM games g JOIN teams ht ON ht.id = g.home_team_id JOIN teams at ON at.id = g.away_team_id WHERE g.season = :temp AND g.status_short = 3 AND (g.home_team_id = :tid OR g.away_team_id = :tid) ORDER BY g.date_start DESC LIMIT 15"), {"temp": temporada, "tid": time_row.id}).fetchall()
         if not jogos:
             return ""
-        saida = [f"Jogos recentes do {time.name} na temporada {temporada}:"]
-        for jogo in jogos:
-            if jogo.date_start:
-                data = jogo.date_start.strftime("%d/%m/%Y")     
-            else:
-                data = "?"
-                
-            eh_casa = jogo.home_team_id == time.id
-            if eh_casa:
-                local = "Casa"     
-            else:
-                local = "Fora"
-            if eh_casa:
-                adversario = jogo.away_name 
-            else:
-                adversario = jogo.home_name
-            if eh_casa:
-                adv_id = jogo.away_team_id     
-            else:
-                adv_id = jogo.home_team_id
-                
-            with engine.connect() as conn:
-                score_time = conn.execute(text("SELECT points FROM game_team_scores WHERE game_id = :gid AND team_id = :tid"), {"gid": jogo.id, "tid": time.id}).fetchone()
-                score_adv = conn.execute(text("SELECT points FROM game_team_scores WHERE game_id = :gid AND team_id = :tid"), {"gid": jogo.id, "tid": adv_id}).fetchone()
-            if score_time and score_adv:
-                pts_time = score_time.points or 0
-                pts_adv = score_adv.points or 0
-                placar = f"{pts_time} x {pts_adv}"
-                if pts_time > pts_adv:
-                    resultado_jogo = "Vitória"
-                else:
-                    resultado_jogo = "Derrota"
-            else:
-                placar = "Sem placar"
-                resultado_jogo = "?"
-            saida.append(f"  {data} | {local} vs {adversario} | {placar} | {resultado_jogo}")
-        return "\n".join(saida)
+        logger.warning(f"buscar_jogos_do_time: {time_row.name}, temp={temporada}, {len(jogos)} jogos")
+        return _formatar_lista_jogos(time_row.name, str(temporada), jogos, time_row.id)
     except Exception as e:
-        print(f"Erro em buscar_jogos_do_time: {e}")
+        logger.error(f"Erro buscar_jogos_do_time: {e}")
         return ""
 
+def buscar_jogos_do_time_por_mes(nome_time, ano, mes):
+    try:
+        with engine.connect() as conn:
+            time_row = conn.execute(text("SELECT id, name FROM teams WHERE name ILIKE :t OR nickname ILIKE :t LIMIT 1"), {"t": f"%{nome_time}%"}).fetchone()
+        if not time_row:
+            logger.warning(f"Time nao encontrado para mes/ano: {nome_time}")
+            return ""
+        with engine.connect() as conn:
+            jogos = conn.execute(text("SELECT g.id, g.date_start, g.home_team_id, g.away_team_id, ht.name AS home_name, at.name AS away_name FROM games g JOIN teams ht ON ht.id = g.home_team_id JOIN teams at ON at.id = g.away_team_id WHERE g.status_short = 3 AND (g.home_team_id = :tid OR g.away_team_id = :tid) AND EXTRACT(YEAR FROM g.date_start) = :ano AND EXTRACT(MONTH FROM g.date_start) = :mes ORDER BY g.date_start ASC LIMIT 20"), {"tid": time_row.id, "ano": ano, "mes": mes}).fetchall()
+        if not jogos:
+            logger.warning(f"Nenhum jogo encontrado: {time_row.name}, {mes}/{ano}")
+            return ""
+        logger.warning(f"buscar_jogos_do_time_por_mes: {time_row.name}, {mes}/{ano}, {len(jogos)} jogos")
+        nomes_meses = {1: "jan", 2: "fev", 3: "mar", 4: "abr", 5: "mai", 6: "jun", 7: "jul", 8: "ago", 9: "set", 10: "out", 11: "nov", 12: "dez"}
+        label = f"{nomes_meses.get(mes, str(mes))}/{ano}"
+        return _formatar_lista_jogos(time_row.name, label, jogos, time_row.id)
+    except Exception as e:
+        logger.error(f"Erro buscar_jogos_do_time_por_mes: {e}")
+        return ""
+
+def _formatar_lista_jogos(nome_time, label_periodo, jogos, team_id):
+    if not jogos:
+        return ""
+    ids_jogos = []
+    for jogo in jogos:
+        ids_jogos.append(jogo.id)
+    mapa_scores = {}
+    try:
+        with engine.connect() as conn:
+            scores = conn.execute(text("SELECT game_id, team_id, points FROM game_team_scores WHERE game_id = ANY(:ids)"), {"ids": ids_jogos}).fetchall()
+        for s in scores:
+            mapa_scores[(s.game_id, s.team_id)] = s.points or 0
+    except Exception as e:
+        logger.error(f"Erro ao buscar scores em batch: {e}")
+
+    saida = [f"Jogos do {nome_time} em {label_periodo}:"]
+    for jogo in jogos:
+        if jogo.date_start:
+            data = jogo.date_start.strftime("%d/%m/%Y")
+        else:
+            data = "?"
+        eh_casa = jogo.home_team_id == team_id
+        if eh_casa:
+            local = "Casa"
+            adversario = jogo.away_name
+            adv_id = jogo.away_team_id
+        else:
+            local = "Fora"
+            adversario = jogo.home_name
+            adv_id = jogo.home_team_id
+        pts_time = mapa_scores.get((jogo.id, team_id))
+        pts_adv = mapa_scores.get((jogo.id, adv_id))
+        if pts_time is not None and pts_adv is not None:
+            placar = f"{pts_time} x {pts_adv}"
+            resultado = "V" if pts_time > pts_adv else "D"
+        else:
+            placar = "?"
+            resultado = "?"
+        saida.append(f"  {data} | {local} vs {adversario} | {placar} | {resultado}")
+    return "\n".join(saida)
+
 def buscar_temporadas_disponiveis():
+    agora = time.time()
+    if _cache_temporadas["valor"] and (agora - _cache_temporadas["ts"]) < 3600:
+        return _cache_temporadas["valor"]
     try:
         with engine.connect() as conn:
             linhas = conn.execute(text("SELECT season FROM seasons ORDER BY season DESC")).fetchall()
@@ -296,9 +268,12 @@ def buscar_temporadas_disponiveis():
         lista = []
         for l in linhas:
             lista.append(str(l.season))
-        return "Temporadas disponíveis no banco: " + ", ".join(lista)
+        resultado = "Temporadas no banco: " + ", ".join(lista)
+        _cache_temporadas["valor"] = resultado
+        _cache_temporadas["ts"] = agora
+        return resultado
     except Exception as e:
-        print(f"Erro em buscar_temporadas_disponiveis: {e}")
+        logger.error(f"Erro buscar_temporadas_disponiveis: {e}")
         return ""
 
 def buscar_contexto_geral(pergunta):
@@ -308,17 +283,19 @@ def buscar_contexto_geral(pergunta):
     temporadas_disponiveis = buscar_temporadas_disponiveis()
     if temporadas_disponiveis:
         partes.append(temporadas_disponiveis)
-        
-    if any(p in pergunta_lower for p in ["time", "franquia", "equipe", "times", "franquias", "clube"]):
-        times = buscar_times()
-        if times:
-            partes.append("Times NBA no banco:\n" + times)
 
+    mes_mencionado, ano_mencionado = _extrair_mes_ano(pergunta_lower)
     temporadas_mencionadas = _extrair_temporadas(pergunta_lower)
     times_mencionados = _extrair_possiveis_times(pergunta_lower)
 
+    logger.warning(f"buscar_contexto_geral: times={times_mencionados}, mes={mes_mencionado}, ano={ano_mencionado}, temporadas={temporadas_mencionadas}")
+
     for apelido in times_mencionados:
-        if temporadas_mencionadas:
+        if mes_mencionado and ano_mencionado:
+            jogos = buscar_jogos_do_time_por_mes(apelido, ano_mencionado, mes_mencionado)
+            if jogos:
+                partes.append(jogos)
+        elif temporadas_mencionadas:
             for temporada in temporadas_mencionadas:
                 jogos = buscar_jogos_do_time(apelido, temporada)
                 if jogos:
@@ -328,24 +305,25 @@ def buscar_contexto_geral(pergunta):
             if jogos:
                 partes.append(jogos)
 
-    nomes_candidatos = _extrair_possiveis_nomes(pergunta_lower)
+    if not times_mencionados:
+        nomes_candidatos = _extrair_possiveis_nomes(pergunta_lower)
+        logger.warning(f"buscar_contexto_geral: nomes_candidatos={nomes_candidatos}")
 
-    for nome in nomes_candidatos:
-        if temporadas_mencionadas:
-            for temporada in temporadas_mencionadas:
-                stats = buscar_stats_jogador_na_temporada(nome, temporada)
+        for nome in nomes_candidatos:
+            if temporadas_mencionadas:
+                for temporada in temporadas_mencionadas:
+                    stats = buscar_stats_jogador_na_temporada(nome, temporada)
+                    if stats:
+                        partes.append(stats)
+            else:
+                stats = buscar_stats_recentes_jogador(nome)
                 if stats:
                     partes.append(stats)
-        else:
-            stats_recentes = buscar_stats_recentes_jogador(nome)
-            if stats_recentes:
-                partes.append(stats_recentes)
 
-        info = buscar_jogador_por_nome(nome)
-        if info:
-            partes.append("Jogadores encontrados:\n" + info)
+            info = buscar_jogador_por_nome(nome)
+            if info:
+                partes.append(info)
 
-    if not partes:
-        return ""
-
-    return "\n\n".join(partes)
+    contexto = "\n\n".join(partes)
+    logger.warning(f"buscar_contexto_geral: contexto_total={len(contexto)} chars")
+    return contexto

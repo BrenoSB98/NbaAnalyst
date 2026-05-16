@@ -1,9 +1,6 @@
-python-decouple
-langchain
-langchain-openai
-langchain-chroma
-langchain-community
-chromadb
-pypdf
-sqlalchemy
-psycopg2-binary
+langchain==0.3.28
+langchain-ollama==0.3.2
+langchain-core==0.3.84
+python-dotenv==1.1.1
+sqlalchemy==2.0.41
+psycopg2-binary==2.9.12

@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import select
 
 from app.services import nba_api_client
 from app.db.models import Player, PlayerTeamSeason
@@ -9,11 +10,11 @@ from app.core.logging_config import configurar_logger
 logger = configurar_logger(__name__)
 
 def carregar_jogadores(team_id=None, season=None):
-    logger.info(f"Buscando jogadores — time={team_id} temp={season}...")
+    logger.info(f"Buscando jogadores: time={team_id} temp={season}...")
     dados_jogadores = nba_api_client.get_players(team_id=team_id, season=season)
 
     if not dados_jogadores:
-        logger.warning(f"API retornou vazio — time={team_id} temp={season}.")
+        logger.warning(f"API retornou vazio: time={team_id} temp={season}.")
         return
 
     logger.info(f"{len(dados_jogadores)} jogadores recebidos.")
@@ -64,7 +65,7 @@ def carregar_jogadores(team_id=None, season=None):
                 except Exception:
                     data_nascimento_obj = None
 
-            jogador_existente = db.query(Player).filter(Player.id == player_id).first()
+            jogador_existente = db.execute(select(Player).where(Player.id == player_id)).scalar_one_or_none()
             if jogador_existente:
                 logger.info(f"Atualiza jogador {player_id}.")
                 jogador_existente.firstname = firstname
@@ -80,27 +81,12 @@ def carregar_jogadores(team_id=None, season=None):
                 jogador_existente.weight_kilograms = peso_quilos
                 jogador_existente.college = faculdade
                 jogador_existente.affiliation = afiliacao
-                total_atualizados += 1
+                total_atualizados = total_atualizados + 1
             else:
-                logger.info(f"Insere jogador {player_id} — {firstname} {lastname}.")
-                novo_jogador = Player(
-                    id=player_id,
-                    firstname=firstname,
-                    lastname=lastname,
-                    birth_date=data_nascimento_obj,
-                    birth_country=pais_nascimento,
-                    nba_start=nba_start,
-                    nba_pro=nba_pro,
-                    height_feet=altura_pes,
-                    height_inches=altura_polegadas,
-                    height_meters=altura_metros,
-                    weight_pounds=peso_libras,
-                    weight_kilograms=peso_quilos,
-                    college=faculdade,
-                    affiliation=afiliacao,
-                )
+                logger.info(f"Insere jogador {player_id}: {firstname} {lastname}.")
+                novo_jogador = Player(id=player_id, firstname=firstname, lastname=lastname, birth_date=data_nascimento_obj, birth_country=pais_nascimento, nba_start=nba_start, nba_pro=nba_pro, height_feet=altura_pes, height_inches=altura_polegadas, height_meters=altura_metros, weight_pounds=peso_libras, weight_kilograms=peso_quilos, college=faculdade, affiliation=afiliacao)
                 db.add(novo_jogador)
-                total_inseridos += 1
+                total_inseridos = total_inseridos + 1
 
             if not season or not team_id:
                 continue
@@ -112,7 +98,7 @@ def carregar_jogadores(team_id=None, season=None):
             posicao = _normalizar_string(liga_standard.get("pos"))
             codigo_liga = "standard"
 
-            vinculo_existente = db.query(PlayerTeamSeason).filter(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.league_code == codigo_liga).first()
+            vinculo_existente = db.execute(select(PlayerTeamSeason).where(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.league_code == codigo_liga)).scalar_one_or_none()
 
             if vinculo_existente:
                 logger.info(f"Atualiza vinculo {player_id}/time={team_id}.")
@@ -124,24 +110,16 @@ def carregar_jogadores(team_id=None, season=None):
                 vinculo_existente.pos = posicao
             else:
                 logger.info(f"Vincula {player_id}/time={team_id}/temp={season}.")
-                novo_vinculo = PlayerTeamSeason(
-                    player_id=player_id,
-                    team_id=team_id,
-                    season=season,
-                    league_code=codigo_liga,
-                    jersey=numero_camisa,
-                    active=ativo if isinstance(ativo, bool) else bool(ativo),
-                    pos=posicao,
-                )
+                novo_vinculo = PlayerTeamSeason(player_id=player_id, team_id=team_id, season=season, league_code=codigo_liga, jersey=numero_camisa, active=ativo if isinstance(ativo, bool) else bool(ativo), pos=posicao)
                 db.add(novo_vinculo)
 
         db.commit()
         logger.info("Commit ok.")
 
         if total_inseridos == 0 and total_atualizados == 0:
-            logger.warning(f"Nenhum jogador salvo — time={team_id} temp={season}.")
+            logger.warning(f"Nenhum jogador salvo: time={team_id} temp={season}.")
         else:
-            logger.info(f"Fim — ins={total_inseridos} atu={total_atualizados}")
+            logger.info(f"Fim: ins={total_inseridos} atu={total_atualizados}")
 
 if __name__ == "__main__":
     carregar_jogadores()

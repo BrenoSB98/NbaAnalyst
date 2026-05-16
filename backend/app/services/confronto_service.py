@@ -1,25 +1,31 @@
 import logging
 
+from sqlalchemy import select
+
 from app.db.models import Game, GameTeamScore, GameTeamStats, Team
 
 logger = logging.getLogger(__name__)
 
 def _buscar_time(db, time_id):
-    time = db.query(Team).filter(Team.id == time_id).first()
-    return time
+    stmt = select(Team).where(Team.id == time_id)
+    return db.execute(stmt).scalar_one_or_none()
 
 def _buscar_ultimos_jogos_head_to_head(db, time_casa_id, time_fora_id, ultimos_n):
-    jogos = (db.query(Game).filter(Game.status_short == 3, (((Game.home_team_id == time_casa_id) & (Game.away_team_id == time_fora_id)) |
-                                                            ((Game.home_team_id == time_fora_id) & (Game.away_team_id == time_casa_id)))).order_by(Game.date_start.desc()).limit(ultimos_n).all())
-    return jogos
+    stmt = (select(Game)
+            .where(Game.status_short == 3,
+                   (((Game.home_team_id == time_casa_id) & (Game.away_team_id == time_fora_id)) |
+                    ((Game.home_team_id == time_fora_id) & (Game.away_team_id == time_casa_id))))
+            .order_by(Game.date_start.desc())
+            .limit(ultimos_n))
+    return db.execute(stmt).scalars().all()
 
 def _buscar_stats_do_time_no_jogo(db, game_id, team_id):
-    stats = db.query(GameTeamStats).filter(GameTeamStats.game_id == game_id, GameTeamStats.team_id == team_id).first()
-    return stats
+    stmt = select(GameTeamStats).where(GameTeamStats.game_id == game_id, GameTeamStats.team_id == team_id)
+    return db.execute(stmt).scalar_one_or_none()
 
 def _buscar_score_do_time_no_jogo(db, game_id, team_id):
-    score = db.query(GameTeamScore).filter(GameTeamScore.game_id == game_id, GameTeamScore.team_id == team_id).first()
-    return score
+    stmt = select(GameTeamScore).where(GameTeamScore.game_id == game_id, GameTeamScore.team_id == team_id)
+    return db.execute(stmt).scalar_one_or_none()
 
 def _calcular_dados_confronto(db, time_casa_id, time_fora_id, jogos):
     vitorias_casa = 0
@@ -143,10 +149,10 @@ def analisar_confronto(db, time_casa_id, time_fora_id, ultimos_n):
     time_fora = _buscar_time(db, time_fora_id)
 
     if not time_casa:
-        logger.warning(f"Time casa nao encontrado —> time_casa_id={time_casa_id}")
+        logger.warning(f"Time casa nao encontrado: time_casa_id={time_casa_id}")
         return None
     if not time_fora:
-        logger.warning(f"Time fora nao encontrado —> time_fora_id={time_fora_id}")
+        logger.warning(f"Time fora nao encontrado: time_fora_id={time_fora_id}")
         return None
 
     jogos = _buscar_ultimos_jogos_head_to_head(db, time_casa_id, time_fora_id, ultimos_n)

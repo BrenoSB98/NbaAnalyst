@@ -28,6 +28,45 @@ services:
     networks:
       - nba_network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nba_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - nba_network
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
+  # Puxa llama3.2:3b (chat)
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: nba_ollama_pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Baixando llama3.2:3b..."
+        ollama pull llama3.2:3b
+        echo "Modelo pronto."
+    networks:
+      - nba_network
+    restart: "no"
+
   backend:
     build:
       context: ./backend
@@ -44,13 +83,16 @@ services:
       POSTGRES_PORT: 5432
       API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
       API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
     ports:
       - "8000:8000"
     depends_on:
       - postgres
+      - ollama
     volumes:
       - ./backend:/app
-      - ./chat:/app/chat 
+      - ./chat:/app/chat
     networks:
       - nba_network
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -65,7 +107,7 @@ services:
     networks:
       - nba_network
     restart: unless-stopped
-  
+
   airflow-init:
     build:
       context: ./airflow
@@ -174,6 +216,7 @@ services:
 volumes:
   postgres_data:
   airflow_logs:
+  ollama_data:
 
 networks:
   nba_network:

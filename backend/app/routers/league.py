@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
@@ -12,17 +13,10 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=LigasResponse)
 def listar_ligas(db: Session = Depends(get_db)):
-    ligas = db.query(League).all()
+    ligas = db.execute(select(League)).scalars().all()
 
     lista_ligas = []
     for liga in ligas:
-        lista_ligas.append({
-            "id": liga.id, 
-            "code": liga.code, 
-            "descricao": liga.description
-            })
+        lista_ligas.append({"id": liga.id, "code": liga.code, "descricao": liga.description})
 
-    return {
-        "total": len(lista_ligas), 
-        "ligas": lista_ligas
-        }
+    return {"total": len(lista_ligas), "ligas": lista_ligas}

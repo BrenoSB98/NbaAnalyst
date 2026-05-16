@@ -18,10 +18,11 @@ class Config:
     BACKEND_HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
     BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
     BACKEND_ENV = os.getenv("BACKEND_ENV", "development")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-    OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-5-nano")
-    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-    LIMITE_MENSAGENS_CHAT_DIA = int(os.getenv("LIMITE_MENSAGENS_CHAT_DIA", "20")) 
+
+    OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+
+    LIMITE_MENSAGENS_CHAT_DIA = int(os.getenv("LIMITE_MENSAGENS_CHAT_DIA", "20"))
     LIMITE_MENSAGENS_CHAT = int(os.getenv("LIMITE_MENSAGENS_CHAT", "20"))
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     PROJETO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,22 +30,23 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "suasenha-secreta")
     ALGORITHM = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
-    
+
     MARGEM_PONTOS = float(os.getenv("MARGEM_PONTOS", "4.0"))
     MARGEM_ASSISTENCIAS = float(os.getenv("MARGEM_ASSISTENCIAS", "2.5"))
     MARGEM_REBOTES = float(os.getenv("MARGEM_REBOTES", "3.0"))
     MARGEM_ROUBOS = float(os.getenv("MARGEM_ROUBOS", "1.5"))
     MARGEM_BLOQUEIOS = float(os.getenv("MARGEM_BLOQUEIOS", "1.0"))
-    
+
     MIN_MINUTOS_PALPITE = float(os.getenv("MIN_MINUTOS_PALPITE", "15.0"))
-    
+
     PASTA_MODELOS = os.getenv("PASTA_MODELOS", "/opt/airflow/modelos_ml")
     PASTA_RELATORIOS = os.getenv("PASTA_RELATORIOS", "/opt/airflow/relatorios_ml")
-    
+
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USUARIO = os.getenv("SMTP_USUARIO", "")
     SMTP_SENHA = os.getenv("SMTP_SENHA", "")
     SMTP_REMETENTE = os.getenv("SMTP_REMETENTE", "NbaAnalytics <noreply@nbaanalytics.com.br>")
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 config = Config()
