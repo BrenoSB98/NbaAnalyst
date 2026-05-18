@@ -11,15 +11,57 @@ from conhecimento_nba import DOCUMENTOS_CONHECIMENTO
 logger = logging.getLogger(__name__)
 
 _STOPWORDS = {
-    "o", "a", "os", "as", "um", "uma", "de", "do", "da", "dos", "das",
-    "em", "no", "na", "nos", "nas", "ao", "aos", "por", "para", "com",
-    "que", "se", "e", "ou", "mas", "não", "mais", "como", "quando",
-    "onde", "quem", "qual", "quais", "quanto", "sobre", "entre",
-    "nba", "jogo", "jogos", "time", "times", "jogador", "ser", "ter",
-    "foi", "tem", "são", "está", "faz", "fez", "isso", "isso",
+    "o",
+    "a",
+    "os",
+    "as",
+    "um",
+    "uma",
+    "de",
+    "do",
+    "da",
+    "dos",
+    "das",
+    "em",
+    "no",
+    "na",
+    "nos",
+    "nas",
+    "ao",
+    "aos",
+    "por",
+    "para",
+    "com",
+    "que",
+    "se",
+    "e",
+    "ou",
+    "mas",
+    "não",
+    "mais",
+    "como",
+    "quando",
+    "onde",
+    "quem",
+    "qual",
+    "quais",
+    "quanto",
+    "sobre",
+    "entre",
+    "foi",
+    "tem",
+    "são",
+    "está",
+    "faz",
+    "fez",
+    "isso",
+    "ser",
+    "ter",
+    "sido",
 }
 
 _documentos_cache = None
+
 
 def _preparar_documentos():
     global _documentos_cache
@@ -28,11 +70,14 @@ def _preparar_documentos():
     docs = []
     for item in DOCUMENTOS_CONHECIMENTO:
         conteudo = item["titulo"] + "\n\n" + item["conteudo"].strip()
-        doc = Document(page_content=conteudo, metadata={"id": item["id"], "titulo": item["titulo"]})
+        doc = Document(
+            page_content=conteudo, metadata={"id": item["id"], "titulo": item["titulo"]}
+        )
         docs.append(doc)
     _documentos_cache = docs
     logger.info(f"Base de conhecimento: {len(docs)} documentos preparados")
     return docs
+
 
 def _tokenizar(texto):
     texto_limpo = texto.lower()
@@ -43,6 +88,7 @@ def _tokenizar(texto):
         if len(p) > 2 and p not in _STOPWORDS:
             tokens.append(p)
     return tokens
+
 
 def _pontuar_documento(doc, tokens_pergunta):
     texto = doc.page_content.lower()
@@ -57,6 +103,7 @@ def _pontuar_documento(doc, tokens_pergunta):
             pontuacao = pontuacao + min(contagem, 4)
 
     return pontuacao
+
 
 class RetrieverKeyword(BaseRetriever):
     n_resultados: int = Field(default=2)
@@ -77,8 +124,10 @@ class RetrieverKeyword(BaseRetriever):
             resultado.append(scores[i][1])
         return resultado
 
+
 def obter_retriever(n_resultados=2):
     return RetrieverKeyword(n_resultados=n_resultados)
+
 
 def buscar_na_base_conhecimento(pergunta, n_resultados=2):
     retriever = obter_retriever(n_resultados)
@@ -92,9 +141,11 @@ def buscar_na_base_conhecimento(pergunta, n_resultados=2):
         logger.error(f"Erro na busca de conhecimento: {erro}")
         return ""
 
+
 def inicializar_base_conhecimento():
     _preparar_documentos()
     return True
+
 
 def reindexar_base_conhecimento():
     global _documentos_cache

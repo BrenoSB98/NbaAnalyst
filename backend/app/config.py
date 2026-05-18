@@ -1,7 +1,9 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 class Config:
     NBA_SEASON = int(os.getenv("NBA_SEASON", "2025"))
@@ -14,13 +16,16 @@ class Config:
     DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
     API_SPORTS_KEY = os.getenv("API_SPORTS_KEY", "")
-    API_SPORTS_BASE_URL = os.getenv("API_SPORTS_BASE_URL", "https://v2.nba.api-sports.io")
+    API_SPORTS_BASE_URL = os.getenv(
+        "API_SPORTS_BASE_URL", "https://v2.nba.api-sports.io"
+    )
     BACKEND_HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
     BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
     BACKEND_ENV = os.getenv("BACKEND_ENV", "development")
 
-    OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
     LIMITE_MENSAGENS_CHAT_DIA = int(os.getenv("LIMITE_MENSAGENS_CHAT_DIA", "20"))
     LIMITE_MENSAGENS_CHAT = int(os.getenv("LIMITE_MENSAGENS_CHAT", "20"))
@@ -46,7 +51,10 @@ class Config:
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USUARIO = os.getenv("SMTP_USUARIO", "")
     SMTP_SENHA = os.getenv("SMTP_SENHA", "")
-    SMTP_REMETENTE = os.getenv("SMTP_REMETENTE", "NbaAnalytics <noreply@nbaanalytics.com.br>")
+    SMTP_REMETENTE = os.getenv(
+        "SMTP_REMETENTE", "NbaAnalytics <noreply@nbaanalytics.com.br>"
+    )
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 
 config = Config()

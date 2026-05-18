@@ -19,6 +19,7 @@ if CHAT_DIR not in sys.path:
 
 _contagem_diaria = {}
 
+
 def _obter_contagem(user_id):
     hoje = str(date.today())
     chave = str(user_id)
@@ -27,6 +28,7 @@ def _obter_contagem(user_id):
     if _contagem_diaria[chave].get("data") != hoje:
         _contagem_diaria[chave] = {"data": hoje, "total": 0}
     return _contagem_diaria[chave]["total"]
+
 
 def _incrementar_contagem(user_id):
     hoje = str(date.today())
@@ -37,6 +39,7 @@ def _incrementar_contagem(user_id):
         _contagem_diaria[chave] = {"data": hoje, "total": 0}
     _contagem_diaria[chave]["total"] = _contagem_diaria[chave]["total"] + 1
 
+
 @router.get("/limite")
 def obter_limite(usuario_atual=Depends(obter_usuario_atual)):
     usadas = _obter_contagem(usuario_atual.id)
@@ -46,14 +49,21 @@ def obter_limite(usuario_atual=Depends(obter_usuario_atual)):
         "limite_diario": limite,
         "usadas_hoje": usadas,
         "restantes_hoje": restantes,
-        "modelo": config.OLLAMA_MODEL,
+        "modelo": config.GROQ_MODEL,
     }
+
 
 @router.get("/diagnostico")
 def diagnostico_chat(pergunta: str, usuario_atual=Depends(obter_usuario_atual)):
     try:
-        from db_chat import buscar_contexto_geral, _extrair_possiveis_times, _extrair_possiveis_nomes, _extrair_mes_ano, _extrair_temporadas
-        from base import buscar_na_base_conhecimento
+        from db_chat import ( # type: ignore
+            buscar_contexto_geral,
+            _extrair_possiveis_times,
+            _extrair_possiveis_nomes,
+            _extrair_mes_ano,
+            _extrair_temporadas,
+        )
+        from base import buscar_na_base_conhecimento # type: ignore
     except ImportError as erro:
         return {"erro": f"Falha ao importar modulos chat: {erro}"}
 
@@ -90,9 +100,9 @@ def diagnostico_chat(pergunta: str, usuario_atual=Depends(obter_usuario_atual)):
             "tempo_segundos": round(tempo_rag, 5),
             "preview": contexto_rag[:300] if contexto_rag else "(vazio)",
         },
-        "modelo": config.OLLAMA_MODEL,
-        "ollama_host": config.OLLAMA_HOST,
+        "modelo": config.GROQ_MODEL,
     }
+
 
 @router.post("/mensagem", response_model=RespostaChat)
 def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_atual)):
@@ -100,23 +110,34 @@ def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_a
     usadas = _obter_contagem(usuario_atual.id)
 
     if usadas >= limite:
-        raise HTTPException(status_code=429, detail=f"Limite diário de {limite} perguntas atingido. Tente novamente amanhã.")
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limite diário de {limite} perguntas atingido. Tente novamente amanhã.",
+        )
 
     try:
-        from oraculo import perguntar_ao_oraculo
+        from oraculo import perguntar_ao_oraculo # type: ignore
     except ImportError as erro:
         logger.error(f"Falha ao importar modulo oraculo: {erro}")
-        raise HTTPException(status_code=503, detail="Serviço de chat indisponível no momento.")
+        raise HTTPException(
+            status_code=503, detail="Serviço de chat indisponível no momento."
+        )
 
     historico_convertido = []
-    for entrada in (dados.historico or []):
-        historico_convertido.append({"papel": entrada.papel, "conteudo": entrada.conteudo})
+    for entrada in dados.historico or []:
+        historico_convertido.append(
+            {"papel": entrada.papel, "conteudo": entrada.conteudo}
+        )
 
     try:
-        resposta = perguntar_ao_oraculo(pergunta=dados.pergunta, historico=historico_convertido)
+        resposta = perguntar_ao_oraculo(
+            pergunta=dados.pergunta, historico=historico_convertido
+        )
     except Exception as erro:
         logger.error(f"Erro ao consultar o modelo: {erro}")
-        raise HTTPException(status_code=500, detail="Erro ao consultar o modelo de linguagem.")
+        raise HTTPException(
+            status_code=500, detail="Erro ao consultar o modelo de linguagem."
+        )
 
     _incrementar_contagem(usuario_atual.id)
     return {"resposta": resposta}

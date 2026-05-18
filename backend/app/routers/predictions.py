@@ -43,9 +43,14 @@ def get_predicao(jogador_id: int, time_adversario_id: int, temporada: int = Quer
     previsao = prever_performance_jogador(db, jogador_id, time_adversario_id, temporada, estatistica, eh_casa)
 
     return {
-        "jogador_id": jogador_id, "jogador": f"{jogador.firstname} {jogador.lastname}",
-        "adversario_id": time_adversario_id, "adversario": time_adversario.name,
-        "temporada": temporada, "estatistica": estatistica, "eh_casa": eh_casa, "previsao": previsao,
+        "jogador_id": jogador_id,
+        "jogador": f"{jogador.firstname} {jogador.lastname}",
+        "adversario_id": time_adversario_id,
+        "adversario": time_adversario.name,
+        "temporada": temporada,
+        "estatistica": estatistica,
+        "eh_casa": eh_casa,
+        "previsao": previsao,
     }
 
 @router.get("/prever/jogador/{jogador_id}/vs/{time_adversario_id}/multiplas")
@@ -56,9 +61,13 @@ def get_predicao_multiplas(jogador_id: int, time_adversario_id: int, temporada: 
     previsoes = prever_multiplas_stats_jogador(db, jogador_id, time_adversario_id, temporada, eh_casa)
 
     return {
-        "jogador_id": jogador_id, "jogador": f"{jogador.firstname} {jogador.lastname}",
-        "adversario_id": time_adversario_id, "adversario": time_adversario.name,
-        "temporada": temporada, "eh_casa": eh_casa, "previsoes": previsoes,
+        "jogador_id": jogador_id,
+        "jogador": f"{jogador.firstname} {jogador.lastname}",
+        "adversario_id": time_adversario_id,
+        "adversario": time_adversario.name,
+        "temporada": temporada,
+        "eh_casa": eh_casa,
+        "previsoes": previsoes,
     }
 
 @router.get("/contagem-hoje")
@@ -66,11 +75,17 @@ def contar_palpites_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     agora_sp = datetime.now(fuso_sp)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
-    fim_sp = inicio_sp + timedelta(days=1, hours=6)
+    fim_sp = inicio_sp + timedelta(days=1)
     inicio_utc = inicio_sp.astimezone(timezone.utc)
     fim_utc = fim_sp.astimezone(timezone.utc)
 
-    stmt_jogos = select(Game.id).where(Game.season == temporada_alvo, Game.date_start >= inicio_utc, Game.date_start < fim_utc)
+    stmt_jogos = select(Game.id).where(
+        Game.season == temporada_alvo,
+        Game.status_short == 1,
+        Game.stage != 1,
+        Game.date_start >= inicio_utc,
+        Game.date_start < fim_utc,
+    )
     jogos_hoje = db.execute(stmt_jogos).scalars().all()
     if not jogos_hoje:
         return {"total_palpites": 0}
@@ -83,38 +98,80 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     agora_sp = datetime.now(fuso_sp)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
-    fim_sp = inicio_sp + timedelta(days=1, hours=6)
+    fim_sp = inicio_sp + timedelta(days=1)
     inicio_utc = inicio_sp.astimezone(timezone.utc)
     fim_utc = fim_sp.astimezone(timezone.utc)
 
-    jogos_hoje = db.execute(select(Game).where(Game.season == temporada_alvo, Game.date_start >= inicio_utc, Game.date_start < fim_utc)).scalars().all()
+    jogos_hoje = (
+        db.execute(
+            select(Game).where(
+                Game.season == temporada_alvo,
+                Game.status_short == 1,
+                Game.stage != 1,
+                Game.date_start >= inicio_utc,
+                Game.date_start < fim_utc,
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     if not jogos_hoje:
-        return {"temporada": temporada_alvo, "data": str(agora_sp.date()), "total_jogos": 0, "total_predicoes": 0, "predicoes": []}
+        return {
+            "temporada": temporada_alvo,
+            "data": str(agora_sp.date()),
+            "total_jogos": 0,
+            "total_predicoes": 0,
+            "predicoes": [],
+        }
 
     ids_jogos_hoje = []
     for jogo in jogos_hoje:
         ids_jogos_hoje.append(jogo.id)
 
-    predicoes = db.execute(select(Prediction).where(Prediction.game_id.in_(ids_jogos_hoje))).scalars().all()
+    predicoes = (db.execute(select(Prediction).where(Prediction.game_id.in_(ids_jogos_hoje))).scalars().all())
 
     ids_players = []
     for pred in predicoes:
         ids_players.append(pred.player_id)
 
     contagem_jogos_map = {}
-    stmt_contagem = (select(PlayerGameStats.player_id, func.count(PlayerGameStats.game_id).label("total"))
-                     .join(Game, PlayerGameStats.game_id == Game.id)
-                     .where(PlayerGameStats.player_id.in_(ids_players), Game.season == temporada_alvo, Game.status_short == 3, Game.stage != 1)
-                     .group_by(PlayerGameStats.player_id))
+    stmt_contagem = (
+        select(
+            PlayerGameStats.player_id,
+            func.count(PlayerGameStats.game_id).label("total"),
+        )
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(
+            PlayerGameStats.player_id.in_(ids_players),
+            Game.season == temporada_alvo,
+            Game.status_short == 3,
+            Game.stage != 1,
+        )
+        .group_by(PlayerGameStats.player_id)
+    )
     for row in db.execute(stmt_contagem).all():
         contagem_jogos_map[row[0]] = row[1]
 
     medias_map = {}
-    stmt_medias = (select(PlayerGameStats.player_id, func.avg(PlayerGameStats.points).label("avg_pts"), func.avg(PlayerGameStats.assists).label("avg_ast"), func.avg(PlayerGameStats.tot_reb).label("avg_reb"), func.avg(PlayerGameStats.steals).label("avg_stl"), func.avg(PlayerGameStats.blocks).label("avg_blk"))
-                   .join(Game, PlayerGameStats.game_id == Game.id)
-                   .where(PlayerGameStats.player_id.in_(ids_players), Game.season == temporada_alvo, Game.status_short == 3, Game.stage != 1)
-                   .group_by(PlayerGameStats.player_id))
+    stmt_medias = (
+        select(
+            PlayerGameStats.player_id,
+            func.avg(PlayerGameStats.points).label("avg_pts"),
+            func.avg(PlayerGameStats.assists).label("avg_ast"),
+            func.avg(PlayerGameStats.tot_reb).label("avg_reb"),
+            func.avg(PlayerGameStats.steals).label("avg_stl"),
+            func.avg(PlayerGameStats.blocks).label("avg_blk"),
+        )
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(
+            PlayerGameStats.player_id.in_(ids_players),
+            Game.season == temporada_alvo,
+            Game.status_short == 3,
+            Game.stage != 1,
+        )
+        .group_by(PlayerGameStats.player_id)
+    )
     for row in db.execute(stmt_medias).all():
         medias_map[row[0]] = {}
         medias_map[row[0]]["pontos"] = round(float(row.avg_pts or 0), 2)
@@ -125,14 +182,20 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
 
     lista_resultado = []
     for pred in predicoes:
-        jogador = db.execute(select(Player).where(Player.id == pred.player_id)).scalar_one_or_none()
+        jogador = db.execute(
+            select(Player).where(Player.id == pred.player_id)
+        ).scalar_one_or_none()
         if jogador:
             nome_jogador = f"{jogador.firstname} {jogador.lastname}"
         else:
             nome_jogador = "Desconhecido"
 
-        time = db.execute(select(Team).where(Team.id == pred.team_id)).scalar_one_or_none()
-        adversario = db.execute(select(Team).where(Team.id == pred.opponent_team_id)).scalar_one_or_none()
+        time = db.execute(
+            select(Team).where(Team.id == pred.team_id)
+        ).scalar_one_or_none()
+        adversario = db.execute(
+            select(Team).where(Team.id == pred.opponent_team_id)
+        ).scalar_one_or_none()
 
         medias_jogador = medias_map.get(pred.player_id, {})
 
@@ -142,7 +205,9 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         item_resultado["player_id"] = pred.player_id
         item_resultado["nome_jogador"] = nome_jogador
         item_resultado["nome_time"] = time.name if time else "Desconhecido"
-        item_resultado["nome_adversario"] = adversario.name if adversario else "Desconhecido"
+        item_resultado["nome_adversario"] = (
+            adversario.name if adversario else "Desconhecido"
+        )
         item_resultado["eh_casa"] = pred.is_home
         item_resultado["temporada"] = pred.season
         item_resultado["pontos_previstos"] = pred.predicted_points
@@ -156,7 +221,9 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         item_resultado["media_roubos"] = medias_jogador.get("roubos", 0.0)
         item_resultado["media_bloqueios"] = medias_jogador.get("bloqueios", 0.0)
         item_resultado["palpite_pontos"] = formatar_palpite(pred.predicted_points)
-        item_resultado["palpite_assistencias"] = formatar_palpite(pred.predicted_assists)
+        item_resultado["palpite_assistencias"] = formatar_palpite(
+            pred.predicted_assists
+        )
         item_resultado["palpite_rebotes"] = formatar_palpite(pred.predicted_rebounds)
         item_resultado["palpite_roubos"] = formatar_palpite(pred.predicted_steals)
         item_resultado["palpite_bloqueios"] = formatar_palpite(pred.predicted_blocks)
@@ -165,15 +232,19 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         lista_resultado.append(item_resultado)
 
     return {
-        "temporada": temporada_alvo, "data": str(agora_sp.date()),
-        "total_jogos": len(jogos_hoje), "total_predicoes": len(lista_resultado), "predicoes": lista_resultado,
+        "temporada": temporada_alvo,
+        "data": str(agora_sp.date()),
+        "total_jogos": len(jogos_hoje),
+        "total_predicoes": len(lista_resultado),
+        "predicoes": lista_resultado,
     }
+
 
 @router.get("/jogo/{jogo_id}")
 def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
     jogo = _validar_jogo(db, jogo_id)
 
-    predicoes = db.execute(select(Prediction).where(Prediction.game_id == jogo_id)).scalars().all()
+    predicoes = (db.execute(select(Prediction).where(Prediction.game_id == jogo_id)).scalars().all())
 
     if not predicoes:
         return {"game_id": jogo_id, "total_predicoes": 0, "predicoes": []}
@@ -189,56 +260,84 @@ def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuar
         else:
             nome_jogador = "Desconhecido"
 
-        lista_resultado.append({
-            "prediction_id": pred.id, "player_id": pred.player_id, "nome_jogador": nome_jogador,
-            "team_id": pred.team_id, "eh_casa": pred.is_home,
-            "pontos_previstos": pred.predicted_points, "assistencias_previstas": pred.predicted_assists,
-            "rebotes_previstos": pred.predicted_rebounds, "roubos_previstos": pred.predicted_steals,
-            "bloqueios_previstos": pred.predicted_blocks,
-            "palpite_pontos": formatar_palpite(pred.predicted_points),
-            "palpite_assistencias": formatar_palpite(pred.predicted_assists),
-            "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
-            "palpite_roubos": formatar_palpite(pred.predicted_steals),
-            "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
-            "criado_em": pred.created_at,
-        })
+        lista_resultado.append(
+            {
+                "prediction_id": pred.id,
+                "player_id": pred.player_id,
+                "nome_jogador": nome_jogador,
+                "team_id": pred.team_id,
+                "eh_casa": pred.is_home,
+                "pontos_previstos": pred.predicted_points,
+                "assistencias_previstas": pred.predicted_assists,
+                "rebotes_previstos": pred.predicted_rebounds,
+                "roubos_previstos": pred.predicted_steals,
+                "bloqueios_previstos": pred.predicted_blocks,
+                "palpite_pontos": formatar_palpite(pred.predicted_points),
+                "palpite_assistencias": formatar_palpite(pred.predicted_assists),
+                "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
+                "palpite_roubos": formatar_palpite(pred.predicted_steals),
+                "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
+                "criado_em": pred.created_at,
+            }
+        )
 
     return {
-        "game_id": jogo_id, "data_inicio": jogo.date_start,
+        "game_id": jogo_id,
+        "data_inicio": jogo.date_start,
         "time_casa": time_casa.name if time_casa else "Desconhecido",
         "time_visitante": time_visitante.name if time_visitante else "Desconhecido",
-        "total_predicoes": len(lista_resultado), "predicoes": lista_resultado,
+        "total_predicoes": len(lista_resultado),
+        "predicoes": lista_resultado,
     }
 
 @router.get("/jogador/{jogador_id}")
 def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(obter_temporada), limite: int = Query(default=10, ge=1, le=100), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
     jogador = _validar_jogador(db, jogador_id)
-    predicoes = db.execute(select(Prediction).where(Prediction.player_id == jogador_id, Prediction.season == temporada_alvo).order_by(Prediction.created_at.desc()).limit(limite)).scalars().all()
+    predicoes = (
+        db.execute(
+            select(Prediction)
+            .where(
+                Prediction.player_id == jogador_id, Prediction.season == temporada_alvo
+            )
+            .order_by(Prediction.created_at.desc())
+            .limit(limite)
+        )
+        .scalars()
+        .all()
+    )
 
     lista_resultado = []
     for pred in predicoes:
         jogo = db.execute(select(Game).where(Game.id == pred.game_id)).scalar_one_or_none()
         adversario = db.execute(select(Team).where(Team.id == pred.opponent_team_id)).scalar_one_or_none()
 
-        lista_resultado.append({
-            "prediction_id": pred.id, "game_id": pred.game_id,
-            "data_jogo": jogo.date_start if jogo else None,
-            "adversario": adversario.name if adversario else "Desconhecido",
-            "eh_casa": pred.is_home,
-            "pontos_previstos": pred.predicted_points, "assistencias_previstas": pred.predicted_assists,
-            "rebotes_previstos": pred.predicted_rebounds, "roubos_previstos": pred.predicted_steals,
-            "bloqueios_previstos": pred.predicted_blocks,
-            "palpite_pontos": formatar_palpite(pred.predicted_points),
-            "palpite_assistencias": formatar_palpite(pred.predicted_assists),
-            "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
-            "palpite_roubos": formatar_palpite(pred.predicted_steals),
-            "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
-            "criado_em": pred.created_at,
-        })
+        lista_resultado.append(
+            {
+                "prediction_id": pred.id,
+                "game_id": pred.game_id,
+                "data_jogo": jogo.date_start if jogo else None,
+                "adversario": adversario.name if adversario else "Desconhecido",
+                "eh_casa": pred.is_home,
+                "pontos_previstos": pred.predicted_points,
+                "assistencias_previstas": pred.predicted_assists,
+                "rebotes_previstos": pred.predicted_rebounds,
+                "roubos_previstos": pred.predicted_steals,
+                "bloqueios_previstos": pred.predicted_blocks,
+                "palpite_pontos": formatar_palpite(pred.predicted_points),
+                "palpite_assistencias": formatar_palpite(pred.predicted_assists),
+                "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
+                "palpite_roubos": formatar_palpite(pred.predicted_steals),
+                "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
+                "criado_em": pred.created_at,
+            }
+        )
 
     return {
-        "player_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
-        "temporada": temporada_alvo, "total_predicoes": len(lista_resultado), "predicoes": lista_resultado,
+        "player_id": jogador_id,
+        "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+        "temporada": temporada_alvo,
+        "total_predicoes": len(lista_resultado),
+        "predicoes": lista_resultado,
     }
 
 @router.post("/gerar/hoje")
@@ -249,7 +348,11 @@ def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
         logger.error(f"Falha ao gerar palpites do dia: {erro}")
         raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
 
-    return {"mensagem": "Palpites gerados com sucesso.", "temporada": temporada_alvo, "total_predicoes_geradas": total}
+    return {
+        "mensagem": "Palpites gerados com sucesso.",
+        "temporada": temporada_alvo,
+        "total_predicoes_geradas": total,
+    }
 
 @router.post("/gerar/temporada")
 def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
@@ -259,7 +362,12 @@ def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends
         logger.error(f"Falha ao gerar palpites da temporada {temporada}: {erro}")
         raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
 
-    return {"mensagem": f"Palpites da temporada {temporada} geradas com sucesso.", "temporada": temporada, "total_predicoes_geradas": total}
+    return {
+        "mensagem": f"Palpites da temporada {temporada} geradas com sucesso.",
+        "temporada": temporada,
+        "total_predicoes_geradas": total,
+    }
+
 
 @router.post("/retroativo")
 def gerar_predicoes_retroativo(db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
@@ -274,4 +382,8 @@ def gerar_predicoes_retroativo(db: Session = Depends(get_db), usuario_atual=Depe
         logger.error(f"Falha ao gerar predicoes retroativas: {erro}")
         raise HTTPException(status_code=500, detail=f"Erro ao gerar predicoes retroativas: {str(erro)}")
 
-    return {"mensagem": "Predicoes retroativas geradas com sucesso.", "temporada": season, "total": total}
+    return {
+        "mensagem": "Predicoes retroativas geradas com sucesso.",
+        "temporada": season,
+        "total": total,
+    }
