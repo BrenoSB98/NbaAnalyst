@@ -1,117 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+  </head>
 
-<div id="app-wrapper">
-    <nav id="navbar-principal"></nav>
+  <body>
+    <div id="app-wrapper">
+      <nav id="navbar-principal"></nav>
 
-    <main id="conteudo-principal">
-
+      <main id="conteudo-principal">
         <div class="cabecalho-admin">
-            <div class="container">
-                <h1 class="cabecalho-titulo">Painel Admin</h1>
-                <p class="cabecalho-subtitulo">Gerenciamento do modelo preditivo e relatórios de treinamento</p>
+          <div class="container">
+            <div class="linha-acento mb-2"></div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h1 class="cabecalho-titulo mb-0">Painel Admin</h1>
+              <span class="badge-acesso-restrito"
+                ><i class="bi bi-shield-lock-fill me-1"></i>Acesso
+                Restrito</span
+              >
             </div>
+            <p class="cabecalho-subtitulo">
+              Gerenciamento do modelo preditivo e relatórios de treinamento
+            </p>
+          </div>
         </div>
 
         <div class="area-admin">
-            <div class="container">
-
-                <div class="row g-4 mb-4">
-                    <div class="col-12 col-md-4">
-                        <div class="card-admin-kpi" id="card-modelos">
-                            <div class="kpi-icone"><i class="bi bi-cpu-fill"></i></div>
-                            <div class="kpi-valor" id="kpi-modelos">—</div>
-                            <div class="kpi-rotulo">Modelos treinados</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card-admin-kpi" id="card-relatorios">
-                            <div class="kpi-icone"><i class="bi bi-file-earmark-pdf-fill"></i></div>
-                            <div class="kpi-valor" id="kpi-relatorios">—</div>
-                            <div class="kpi-rotulo">Relatórios gerados</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card-admin-kpi" id="card-winrate">
-                            <div class="kpi-icone"><i class="bi bi-graph-up-arrow"></i></div>
-                            <div class="kpi-valor" id="kpi-winrate">—</div>
-                            <div class="kpi-rotulo">Win-rate atual</div>
-                        </div>
-                    </div>
+          <div class="container">
+            <div class="row g-4 mb-4">
+              <div class="col-12 col-md-4">
+                <div class="card-admin-kpi kpi-laranja" id="card-modelos">
+                  <div class="kpi-icone"><i class="bi bi-cpu-fill"></i></div>
+                  <div class="kpi-valor" id="kpi-modelos">—</div>
+                  <div class="kpi-rotulo">Modelos treinados</div>
                 </div>
-
-                <div class="secao-admin">
-                    <div class="secao-titulo-admin">
-                        <i class="bi bi-play-circle-fill me-2" style="color:#F75C03;"></i>
-                        Ações do Modelo
-                    </div>
-                    <div class="acoes-grid">
-                        <div class="card-acao">
-                            <div class="acao-titulo">Retreinar Modelos</div>
-                            <div class="acao-desc">Treina todos os modelos XGBoost do zero com os dados atuais e gera o relatório PDF.</div>
-                            <button class="btn-admin-acao" id="btn-retreinar" onclick="retreinarModelos()">
-                                <i class="bi bi-arrow-repeat me-2"></i>Iniciar Retreinamento
-                            </button>
-                            <div class="acao-resultado" id="resultado-retreinar" style="display:none;"></div>
-                        </div>
-                        <div class="card-acao">
-                            <div class="acao-titulo">Predições Retroativas</div>
-                            <div class="acao-desc">Deleta todas as predições da temporada e regera retroativamente com data de corte por jogo.</div>
-                            <button class="btn-admin-acao btn-admin-perigo" id="btn-retroativo" onclick="confirmarRetroativo()">
-                                <i class="bi bi-clock-history me-2"></i>Gerar Retroativo
-                            </button>
-                            <div class="acao-resultado" id="resultado-retroativo" style="display:none;"></div>
-                        </div>
-                    </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="card-admin-kpi kpi-vermelho" id="card-relatorios">
+                  <div class="kpi-icone">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                  </div>
+                  <div class="kpi-valor" id="kpi-relatorios">—</div>
+                  <div class="kpi-rotulo">Relatórios gerados</div>
                 </div>
-
-                <div class="secao-admin">
-                    <div class="secao-titulo-admin">
-                        <i class="bi bi-file-earmark-pdf-fill me-2" style="color:#F75C03;"></i>
-                        Relatórios de Treinamento
-                    </div>
-                    <div id="relatorios-carregando" class="texto-carregando">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        Carregando relatórios...
-                    </div>
-                    <div id="relatorios-vazio" style="display:none;" class="texto-vazio">
-                        Nenhum relatório gerado ainda. Execute o retreinamento para gerar o primeiro.
-                    </div>
-                    <div id="relatorios-lista" style="display:none;"></div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="card-admin-kpi kpi-verde" id="card-winrate">
+                  <div class="kpi-icone">
+                    <i class="bi bi-graph-up-arrow"></i>
+                  </div>
+                  <div class="kpi-valor" id="kpi-winrate">—</div>
+                  <div class="kpi-rotulo">Win-rate atual</div>
                 </div>
-
+              </div>
             </div>
-        </div>
 
-    </main>
-    <footer id="rodape-principal"></footer>
-</div>
+            <div class="secao-admin">
+              <div class="secao-titulo-admin">
+                <i
+                  class="bi bi-play-circle-fill me-2"
+                  style="color: #f75c03"
+                ></i>
+                Ações do Modelo
+              </div>
+              <div class="acoes-grid">
+                <div class="card-acao">
+                  <div class="acao-titulo">Retreinar Modelos</div>
+                  <div class="acao-desc">
+                    Treina todos os modelos XGBoost do zero com os dados atuais
+                    e gera o relatório PDF.
+                  </div>
+                  <button
+                    class="btn-admin-acao"
+                    id="btn-retreinar"
+                    onclick="retreinarModelos()"
+                  >
+                    <i class="bi bi-arrow-repeat me-2"></i>Iniciar Retreinamento
+                  </button>
+                  <div
+                    class="acao-resultado"
+                    id="resultado-retreinar"
+                    style="display: none"
+                  ></div>
+                </div>
+                <div class="card-acao card-acao-perigo">
+                  <div class="aviso-perigo">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Ação
+                    destrutiva
+                  </div>
+                  <div class="acao-titulo">Predições Retroativas</div>
+                  <div class="acao-desc">
+                    Deleta todas as predições da temporada e regera
+                    retroativamente com data de corte por jogo.
+                  </div>
+                  <button
+                    class="btn-admin-acao btn-admin-perigo"
+                    id="btn-retroativo"
+                    onclick="confirmarRetroativo()"
+                  >
+                    <i class="bi bi-clock-history me-2"></i>Gerar Retroativo
+                  </button>
+                  <div
+                    class="acao-resultado"
+                    id="resultado-retroativo"
+                    style="display: none"
+                  ></div>
+                </div>
+              </div>
+            </div>
 
-<div class="modal-overlay" id="modal-confirmacao" style="display:none;">
-    <div class="modal-caixa">
-        <div class="modal-titulo">Atenção</div>
-        <div class="modal-corpo">Esta ação irá <strong>deletar todas as predições</strong> da temporada atual e regerá do zero. Pode demorar mais de 1 hora. Deseja continuar?</div>
-        <div class="modal-botoes">
-            <button class="btn-modal-cancelar" onclick="fecharModal()">Cancelar</button>
-            <button class="btn-modal-confirmar" onclick="executarRetroativo()">Confirmar</button>
+            <div class="secao-admin">
+              <div class="secao-titulo-admin">
+                <i
+                  class="bi bi-file-earmark-pdf-fill me-2"
+                  style="color: #f75c03"
+                ></i>
+                Relatórios de Treinamento
+              </div>
+              <div id="relatorios-carregando" class="texto-carregando">
+                <div
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                ></div>
+                Carregando relatórios...
+              </div>
+              <div
+                id="relatorios-vazio"
+                style="display: none"
+                class="texto-vazio"
+              >
+                Nenhum relatório gerado ainda. Execute o retreinamento para
+                gerar o primeiro.
+              </div>
+              <div id="relatorios-lista" style="display: none"></div>
+            </div>
+          </div>
         </div>
+      </main>
+      <footer id="rodape-principal"></footer>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/componentes.js"></script>
-<script src="js/admin.js"></script>
-</body>
+    <div class="modal-overlay" id="modal-confirmacao" style="display: none">
+      <div class="modal-caixa">
+        <div class="modal-icone-perigo">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="modal-titulo">Confirmar ação destrutiva</div>
+        <div class="modal-corpo">
+          Esta ação irá <strong>deletar todas as predições</strong> da temporada
+          atual e regerá do zero. Pode demorar mais de 1 hora. Deseja continuar?
+        </div>
+        <div class="modal-botoes">
+          <button class="btn-modal-cancelar" onclick="fecharModal()">
+            Cancelar
+          </button>
+          <button class="btn-modal-confirmar" onclick="executarRetroativo()">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/componentes.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
 </html>

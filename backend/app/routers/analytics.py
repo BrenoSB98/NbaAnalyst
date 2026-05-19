@@ -5,16 +5,43 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.db.db_utils import get_db
-from app.db.models import Game, GameTeamScore, Player, PlayerGameStats, PlayerTeamSeason, Team
+from app.db.models import (
+    Game,
+    GameTeamScore,
+    Player,
+    PlayerGameStats,
+    PlayerTeamSeason,
+    Team,
+)
 from app.routers.auth import obter_usuario_atual
-from app.schemas.analytics import LideresResponse, MaioresPontuadoresResponse, MediasCasaForaResponse, MediasContraTimeResponse, MediasTemporadaResponse, MediasUltimosJogosResponse, TendenciasTimeResponse
+from app.schemas.analytics import (
+    LideresResponse,
+    MaioresPontuadoresResponse,
+    MediasCasaForaResponse,
+    MediasContraTimeResponse,
+    MediasTemporadaResponse,
+    MediasUltimosJogosResponse,
+    TendenciasTimeResponse,
+)
 from app.services.analytics_service import (
-    buscar_top_assistencias, buscar_top_arremessos_campo, buscar_top_arremessos_tres,
-    buscar_top_bloqueios, buscar_top_faltas_pessoais, buscar_top_lances_livres,
-    buscar_top_plus_minus, buscar_top_pontuadores, buscar_top_rebotes,
-    buscar_top_rebotes_defensivos, buscar_top_rebotes_ofensivos, buscar_top_roubos_bola,
-    buscar_top_turnovers, calcular_medias_casa_fora, calcular_medias_contra_time,
-    calcular_medias_temporada_completa, calcular_medias_ultimos_n_jogos, calcular_totais_e_medias
+    buscar_top_assistencias,
+    buscar_top_arremessos_campo,
+    buscar_top_arremessos_tres,
+    buscar_top_bloqueios,
+    buscar_top_faltas_pessoais,
+    buscar_top_lances_livres,
+    buscar_top_plus_minus,
+    buscar_top_pontuadores,
+    buscar_top_rebotes,
+    buscar_top_rebotes_defensivos,
+    buscar_top_rebotes_ofensivos,
+    buscar_top_roubos_bola,
+    buscar_top_turnovers,
+    calcular_medias_casa_fora,
+    calcular_medias_contra_time,
+    calcular_medias_temporada_completa,
+    calcular_medias_ultimos_n_jogos,
+    calcular_totais_e_medias,
 )
 
 router = APIRouter()
@@ -33,11 +60,17 @@ CATEGORIAS = {
     "plus-minus": PlayerGameStats.plus_minus,
 }
 
+
 def _validar_jogador(db, player_id):
-    jogador = db.execute(select(Player).where(Player.id == player_id)).scalar_one_or_none()
+    jogador = db.execute(
+        select(Player).where(Player.id == player_id)
+    ).scalar_one_or_none()
     if not jogador:
-        raise HTTPException(status_code=404, detail=f"Jogador {player_id} não encontrado.")
+        raise HTTPException(
+            status_code=404, detail=f"Jogador {player_id} não encontrado."
+        )
     return jogador
+
 
 def _validar_time(db, team_id):
     time = db.execute(select(Team).where(Team.id == team_id)).scalar_one_or_none()
@@ -45,112 +78,215 @@ def _validar_time(db, team_id):
         raise HTTPException(status_code=404, detail=f"Time {team_id} não encontrado.")
     return time
 
+
 @router.get("/lideres/{temporada}/pontos", response_model=LideresResponse)
-def get_top_pontuadores(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_pontuadores(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_pontuadores(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/assistencias", response_model=LideresResponse)
-def get_top_assistencias(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_assistencias(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_assistencias(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/rebotes", response_model=LideresResponse)
-def get_top_rebotes(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_rebotes(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_rebotes(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/roubos-bola", response_model=LideresResponse)
-def get_top_roubos_bola(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_roubos_bola(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_roubos_bola(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/bloqueios", response_model=LideresResponse)
-def get_top_bloqueios(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_bloqueios(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_bloqueios(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/turnovers", response_model=LideresResponse)
-def get_top_turnovers(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_turnovers(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_turnovers(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/arremessos-campo", response_model=LideresResponse)
-def get_top_arremessos_campo(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_arremessos_campo(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_arremessos_campo(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/arremessos-tres", response_model=LideresResponse)
-def get_top_arremessos_tres(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_arremessos_tres(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_arremessos_tres(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/lances-livres", response_model=LideresResponse)
-def get_top_lances_livres(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_lances_livres(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_lances_livres(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/rebotes-ofensivos", response_model=LideresResponse)
-def get_top_rebotes_ofensivos(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_rebotes_ofensivos(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_rebotes_ofensivos(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/rebotes-defensivos", response_model=LideresResponse)
-def get_top_rebotes_defensivos(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_rebotes_defensivos(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_rebotes_defensivos(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/faltas-pessoais", response_model=LideresResponse)
-def get_top_faltas_pessoais(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_faltas_pessoais(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_faltas_pessoais(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
+
 @router.get("/lideres/{temporada}/plus-minus", response_model=LideresResponse)
-def get_top_plus_minus(temporada: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_top_plus_minus(
+    temporada: int,
+    limite: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     resultado = buscar_top_plus_minus(db, temporada, limite)
     if not resultado:
         return {"temporada": temporada, "total": 0, "lideres": []}
     return {"temporada": temporada, "total": len(resultado), "lideres": resultado}
 
-@router.get("/jogadores/{jogador_id}/medias/ultimos-jogos", response_model=MediasUltimosJogosResponse)
-def get_medias_ultimos_n_jogos(jogador_id: int, n_jogos: int = Query(default=10, ge=1, le=82), temporada: int = Query(default=None), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+
+@router.get(
+    "/jogadores/{jogador_id}/medias/ultimos-jogos",
+    response_model=MediasUltimosJogosResponse,
+)
+def get_medias_ultimos_n_jogos(
+    jogador_id: int,
+    n_jogos: int = Query(default=10, ge=1, le=82),
+    temporada: int = Query(default=None),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
     resultado = calcular_medias_ultimos_n_jogos(db, jogador_id, n_jogos, temporada)
 
     if not resultado:
-        logger.warning(f"Nenhum dado encontrado: jogador_id={jogador_id}, n_jogos={n_jogos}, temporada={temporada}")
-        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "mensagem": "Nenhum dado encontrado."}
+        logger.warning(
+            f"Nenhum dado encontrado: jogador_id={jogador_id}, n_jogos={n_jogos}, temporada={temporada}"
+        )
+        return {
+            "jogador_id": jogador_id,
+            "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+            "mensagem": "Nenhum dado encontrado.",
+        }
 
     resultado["jogador_id"] = jogador_id
     resultado["nome_jogador"] = f"{jogador.firstname} {jogador.lastname}"
     return resultado
 
-@router.get("/jogadores/{jogador_id}/medias/casa-fora", response_model=MediasCasaForaResponse)
-def get_medias_casa_fora(jogador_id: int, temporada: int = Query(...), local: str = Query(default="casa", pattern="^(casa|fora)$"), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+
+@router.get(
+    "/jogadores/{jogador_id}/medias/casa-fora", response_model=MediasCasaForaResponse
+)
+def get_medias_casa_fora(
+    jogador_id: int,
+    temporada: int = Query(...),
+    local: str = Query(default="casa", pattern="^(casa|fora)$"),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
 
     if local == "casa":
@@ -161,8 +297,14 @@ def get_medias_casa_fora(jogador_id: int, temporada: int = Query(...), local: st
     resultado = calcular_medias_casa_fora(db, jogador_id, temporada, location)
 
     if not resultado:
-        logger.warning(f"Nenhum dado encontrado para medias casa/fora: jogador_id={jogador_id}, temporada={temporada}, local={local}")
-        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "mensagem": "Nenhum dado encontrado."}
+        logger.warning(
+            f"Nenhum dado encontrado para medias casa/fora: jogador_id={jogador_id}, temporada={temporada}, local={local}"
+        )
+        return {
+            "jogador_id": jogador_id,
+            "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+            "mensagem": "Nenhum dado encontrado.",
+        }
 
     resultado["jogador_id"] = jogador_id
     resultado["nome_jogador"] = f"{jogador.firstname} {jogador.lastname}"
@@ -170,46 +312,87 @@ def get_medias_casa_fora(jogador_id: int, temporada: int = Query(...), local: st
     resultado["temporada"] = temporada
     return resultado
 
-@router.get("/jogadores/{jogador_id}/medias/temporada", response_model=MediasTemporadaResponse)
-def get_medias_temporada_completa(jogador_id: int, temporada: int = Query(None), db: Session = Depends(get_db)):
+
+@router.get(
+    "/jogadores/{jogador_id}/medias/temporada", response_model=MediasTemporadaResponse
+)
+def get_medias_temporada_completa(
+    jogador_id: int, temporada: int = Query(None), db: Session = Depends(get_db)
+):
     jogador = _validar_jogador(db, jogador_id)
 
     if temporada is not None:
         resultado = calcular_medias_temporada_completa(db, jogador_id, temporada)
     else:
-        stmt = select(PlayerGameStats, Game).join(Game, PlayerGameStats.game_id == Game.id).where(PlayerGameStats.player_id == jogador_id, Game.status_short == 3)
+        stmt = (
+            select(PlayerGameStats, Game)
+            .join(Game, PlayerGameStats.game_id == Game.id)
+            .where(PlayerGameStats.player_id == jogador_id, Game.status_short == 3)
+        )
         stats_query = db.execute(stmt).all()
         resultado = calcular_totais_e_medias(stats_query)
         if resultado:
             resultado["games_played"] = resultado.pop("num_jogos")
 
     if not resultado:
-        logger.warning(f"Nenhum dado encontrado: jogador_id={jogador_id}, temporada={temporada}")
-        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "temporada": temporada, "mensagem": "Nenhum dado encontrado."}
+        logger.warning(
+            f"Nenhum dado encontrado: jogador_id={jogador_id}, temporada={temporada}"
+        )
+        return {
+            "jogador_id": jogador_id,
+            "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+            "temporada": temporada,
+            "mensagem": "Nenhum dado encontrado.",
+        }
 
-    avgs = resultado.get("averages")
+    avgs = resultado.get("averages") or {}
     return {
         "jogador_id": jogador_id,
         "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
         "temporada": temporada,
         "jogos_disputados": resultado.get("games_played", 0),
         "medias": {
-            "pontos": avgs.get("points"), "assistencias": avgs.get("assists"), "rebotes": avgs.get("rebounds"),
-            "roubos": avgs.get("steals"), "bloqueios": avgs.get("blocks"), "turnovers": avgs.get("turnovers"),
-            "fg_pct": avgs.get("fg_pct"), "three_pct": avgs.get("three_pct"), "ft_pct": avgs.get("ft_pct"),
-            "minutos": avgs.get("minutes"), "plus_minus": avgs.get("plus_minus"),
+            "pontos": avgs.get("points"),
+            "assistencias": avgs.get("assists"),
+            "rebotes": avgs.get("rebounds"),
+            "roubos": avgs.get("steals"),
+            "bloqueios": avgs.get("blocks"),
+            "turnovers": avgs.get("turnovers"),
+            "fg_pct": avgs.get("fg_pct"),
+            "three_pct": avgs.get("three_pct"),
+            "ft_pct": avgs.get("ft_pct"),
+            "minutos": avgs.get("minutes"),
+            "plus_minus": avgs.get("plus_minus"),
         },
     }
 
-@router.get("/jogadores/{jogador_id}/medias/contra-time/{time_adversario_id}", response_model=MediasContraTimeResponse)
-def get_medias_contra_time(jogador_id: int, time_adversario_id: int, temporada: int = Query(default=None), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+
+@router.get(
+    "/jogadores/{jogador_id}/medias/contra-time/{time_adversario_id}",
+    response_model=MediasContraTimeResponse,
+)
+def get_medias_contra_time(
+    jogador_id: int,
+    time_adversario_id: int,
+    temporada: int = Query(default=None),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
     time_adversario = _validar_time(db, time_adversario_id)
-    resultado = calcular_medias_contra_time(db, jogador_id, time_adversario_id, temporada)
+    resultado = calcular_medias_contra_time(
+        db, jogador_id, time_adversario_id, temporada
+    )
 
     if not resultado:
-        logger.warning(f"Nenhum dado encontrado para medias contra time: jogador_id={jogador_id}, time_adversario_id={time_adversario_id}, temporada={temporada}")
-        return {"jogador_id": jogador_id, "nome_jogador": f"{jogador.firstname} {jogador.lastname}", "mensagem": "Nenhum dado encontrado."}
+        logger.warning(
+            f"Nenhum dado encontrado para medias contra time: jogador_id={jogador_id}, time_adversario_id={time_adversario_id}, temporada={temporada}"
+        )
+        return {
+            "jogador_id": jogador_id,
+            "nome_jogador": f"{jogador.firstname} {jogador.lastname}",
+            "mensagem": "Nenhum dado encontrado.",
+        }
 
     resultado["jogador_id"] = jogador_id
     resultado["nome_jogador"] = f"{jogador.firstname} {jogador.lastname}"
@@ -221,15 +404,30 @@ def get_medias_contra_time(jogador_id: int, time_adversario_id: int, temporada: 
 
     return resultado
 
+
 @router.get("/maiores-pontuadores", response_model=MaioresPontuadoresResponse)
-def maiores_pontuadores(temporada: int = Query(2025), limite: int = Query(10, ge=1, le=50), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
-    stmt = (select(Player.id, Player.firstname, Player.lastname, func.count(PlayerGameStats.game_id).label("jogos"), func.sum(PlayerGameStats.points).label("total_pontos"), func.avg(PlayerGameStats.points).label("media_pontos"))
-            .join(PlayerGameStats, Player.id == PlayerGameStats.player_id)
-            .join(Game, PlayerGameStats.game_id == Game.id)
-            .where(Game.season == temporada, Game.status_short == 3)
-            .group_by(Player.id, Player.firstname, Player.lastname)
-            .order_by(desc("media_pontos"))
-            .limit(limite))
+def maiores_pontuadores(
+    temporada: int = Query(2025),
+    limite: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
+    stmt = (
+        select(
+            Player.id,
+            Player.firstname,
+            Player.lastname,
+            func.count(PlayerGameStats.game_id).label("jogos"),
+            func.sum(PlayerGameStats.points).label("total_pontos"),
+            func.avg(PlayerGameStats.points).label("media_pontos"),
+        )
+        .join(PlayerGameStats, Player.id == PlayerGameStats.player_id)
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(Game.season == temporada, Game.status_short == 3)
+        .group_by(Player.id, Player.firstname, Player.lastname)
+        .order_by(desc("media_pontos"))
+        .limit(limite)
+    )
 
     resultados = db.execute(stmt).all()
 
@@ -245,24 +443,42 @@ def maiores_pontuadores(temporada: int = Query(2025), limite: int = Query(10, ge
 
     return {"temporada": temporada, "total": len(lista), "maiores_pontuadores": lista}
 
+
 @router.get("/tendencias-time/{time_id}", response_model=TendenciasTimeResponse)
-def tendencias_time(time_id: int, temporada: int = Query(2025), ultimos_n_jogos: int = Query(10, ge=1, le=20), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def tendencias_time(
+    time_id: int,
+    temporada: int = Query(2025),
+    ultimos_n_jogos: int = Query(10, ge=1, le=20),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     time = db.execute(select(Team).where(Team.id == time_id)).scalar_one_or_none()
     if not time:
         logger.warning(f"Time nao encontrado ao buscar tendencias: id={time_id}")
         raise HTTPException(status_code=404, detail="Time não encontrado.")
 
-    stmt = (select(Game, GameTeamScore)
-            .join(GameTeamScore, GameTeamScore.game_id == Game.id)
-            .where(Game.season == temporada, GameTeamScore.team_id == time_id, Game.status_short == 3)
-            .order_by(Game.date_start.desc())
-            .limit(ultimos_n_jogos))
+    stmt = (
+        select(Game, GameTeamScore)
+        .join(GameTeamScore, GameTeamScore.game_id == Game.id)
+        .where(
+            Game.season == temporada,
+            GameTeamScore.team_id == time_id,
+            Game.status_short == 3,
+        )
+        .order_by(Game.date_start.desc())
+        .limit(ultimos_n_jogos)
+    )
 
     jogos = db.execute(stmt).all()
 
     if len(jogos) == 0:
-        logger.warning(f"Sem jogos finalizados para tendencias: time_id={time_id}, temporada={temporada}")
-        raise HTTPException(status_code=404, detail="Sem jogos finalizados para este time na temporada informada.")
+        logger.warning(
+            f"Sem jogos finalizados para tendencias: time_id={time_id}, temporada={temporada}"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Sem jogos finalizados para este time na temporada informada.",
+        )
 
     vitorias = 0
     pontos_feitos = []
@@ -272,7 +488,11 @@ def tendencias_time(time_id: int, temporada: int = Query(2025), ultimos_n_jogos:
         jogo = jogo_data[0]
         score = jogo_data[1]
 
-        adversario = db.execute(select(GameTeamScore).where(GameTeamScore.game_id == jogo.id, GameTeamScore.team_id != time_id)).scalar_one_or_none()
+        adversario = db.execute(
+            select(GameTeamScore).where(
+                GameTeamScore.game_id == jogo.id, GameTeamScore.team_id != time_id
+            )
+        ).scalar_one_or_none()
         if adversario:
             if score.points is not None:
                 pts_feitos = score.points
@@ -286,7 +506,7 @@ def tendencias_time(time_id: int, temporada: int = Query(2025), ultimos_n_jogos:
             pontos_feitos.append(pts_feitos)
             pontos_sofridos.append(pts_sofridos)
 
-            if pts_feitos > pts_sofridos:
+            if pts_feitos > pts_sofridos: # type: ignore
                 vitorias = vitorias + 1
 
     num_jogos = len(pontos_feitos)
@@ -323,45 +543,97 @@ def tendencias_time(time_id: int, temporada: int = Query(2025), ultimos_n_jogos:
             tendencia_defensiva = "piorando"
 
     return {
-        "time_id": time_id, "nome_time": time.name, "temporada": temporada, "ultimos_n_jogos": num_jogos,
-        "record": f"{vitorias}-{derrotas}", "aproveitamento": aproveitamento,
-        "media_pontos_feitos": media_feitos, "media_pontos_sofridos": media_sofridos,
-        "diferencial_pontos": diferencial, "tendencia_ofensiva": tendencia_ofensiva, "tendencia_defensiva": tendencia_defensiva,
+        "time_id": time_id,
+        "nome_time": time.name,
+        "temporada": temporada,
+        "ultimos_n_jogos": num_jogos,
+        "record": f"{vitorias}-{derrotas}",
+        "aproveitamento": aproveitamento,
+        "media_pontos_feitos": media_feitos,
+        "media_pontos_sofridos": media_sofridos,
+        "diferencial_pontos": diferencial,
+        "tendencia_ofensiva": tendencia_ofensiva,
+        "tendencia_defensiva": tendencia_defensiva,
     }
 
+
 @router.get("/lideres")
-def lideres_publico(categoria: str = Query("pontos"), temporada: int = Query(None), limite: int = Query(10, ge=1, le=500), db: Session = Depends(get_db)):
+def lideres_publico(
+    categoria: str = Query("pontos"),
+    temporada: int = Query(None),
+    limite: int = Query(10, ge=1, le=500),
+    stage: int = Query(None),
+    db: Session = Depends(get_db),
+):
     stat_field = CATEGORIAS.get(categoria)
     if stat_field is None:
-        raise HTTPException(status_code=400, detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}",
+        )
 
-    stmt = (select(PlayerGameStats.player_id, func.sum(stat_field).label("total"), func.count(PlayerGameStats.game_id).label("jogos"))
-            .join(Game, PlayerGameStats.game_id == Game.id)
-            .where(Game.status_short == 3))
+    stmt = (
+        select(
+            PlayerGameStats.player_id,
+            func.sum(stat_field).label("total"),
+            func.count(PlayerGameStats.game_id).label("jogos"),
+        )
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(Game.status_short == 3, Game.stage != 1)
+    )
 
     if temporada is not None:
         stmt = stmt.where(Game.season == temporada)
 
-    stmt = stmt.group_by(PlayerGameStats.player_id).order_by(desc("total")).limit(limite)
+    if stage is not None:
+        stmt = stmt.where(Game.stage == stage)
+
+    stmt = (
+        stmt.group_by(PlayerGameStats.player_id).order_by(desc("total")).limit(limite)
+    )
     resultados = db.execute(stmt).all()
 
     if not resultados:
-        return {"categoria": categoria, "temporada": temporada, "total": 0, "lideres": []}
+        return {
+            "categoria": categoria,
+            "temporada": temporada,
+            "total": 0,
+            "lideres": [],
+        }
 
     ids_jogadores = []
     for row in resultados:
         ids_jogadores.append(row[0])
 
     jogadores_map = {}
-    jogadores_db = db.execute(select(Player).where(Player.id.in_(ids_jogadores))).scalars().all()
+    jogadores_db = (
+        db.execute(select(Player).where(Player.id.in_(ids_jogadores))).scalars().all()
+    )
     for jogador in jogadores_db:
         jogadores_map[jogador.id] = f"{jogador.firstname} {jogador.lastname}"
 
     posicao_map = {}
     if temporada is not None:
-        vinculos = db.execute(select(PlayerTeamSeason).where(PlayerTeamSeason.player_id.in_(ids_jogadores), PlayerTeamSeason.season == temporada)).scalars().all()
+        vinculos = (
+            db.execute(
+                select(PlayerTeamSeason).where(
+                    PlayerTeamSeason.player_id.in_(ids_jogadores),
+                    PlayerTeamSeason.season == temporada,
+                )
+            )
+            .scalars()
+            .all()
+        )
     else:
-        vinculos = db.execute(select(PlayerTeamSeason).where(PlayerTeamSeason.player_id.in_(ids_jogadores)).order_by(PlayerTeamSeason.season.desc())).scalars().all()
+        vinculos = (
+            db.execute(
+                select(PlayerTeamSeason)
+                .where(PlayerTeamSeason.player_id.in_(ids_jogadores))
+                .order_by(PlayerTeamSeason.season.desc())
+            )
+            .scalars()
+            .all()
+        )
 
     for vinculo in vinculos:
         if vinculo.player_id not in posicao_map:
@@ -392,17 +664,41 @@ def lideres_publico(categoria: str = Query("pontos"), temporada: int = Query(Non
         item_lider["pos"] = posicao
         lideres.append(item_lider)
 
-    return {"categoria": categoria, "temporada": temporada, "total": len(lideres), "lideres": lideres}
+    return {
+        "categoria": categoria,
+        "temporada": temporada,
+        "total": len(lideres),
+        "lideres": lideres,
+    }
+
 
 @router.get("/recordes")
-def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(None), limite: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
+def recordes_publico(
+    categoria: str = Query("pontos"),
+    temporada: int = Query(None),
+    limite: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
     stat_field = CATEGORIAS.get(categoria)
     if stat_field is None:
-        raise HTTPException(status_code=400, detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}",
+        )
 
-    stmt = (select(PlayerGameStats.player_id, PlayerGameStats.game_id, stat_field.label("valor"), Game.date_start, Game.home_team_id, Game.away_team_id, PlayerGameStats.team_id)
-            .join(Game, PlayerGameStats.game_id == Game.id)
-            .where(Game.status_short == 3, stat_field.isnot(None)))
+    stmt = (
+        select(
+            PlayerGameStats.player_id,
+            PlayerGameStats.game_id,
+            stat_field.label("valor"),
+            Game.date_start,
+            Game.home_team_id,
+            Game.away_team_id,
+            PlayerGameStats.team_id,
+        )
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(Game.status_short == 3, stat_field.isnot(None))
+    )
 
     if temporada is not None:
         stmt = stmt.where(Game.season == temporada)
@@ -419,7 +715,9 @@ def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(No
         away_id = row[5]
         team_id = row[6]
 
-        jogador = db.execute(select(Player).where(Player.id == player_id)).scalar_one_or_none()
+        jogador = db.execute(
+            select(Player).where(Player.id == player_id)
+        ).scalar_one_or_none()
         if jogador is not None:
             nome_jogador = f"{jogador.firstname} {jogador.lastname}"
         else:
@@ -430,7 +728,9 @@ def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(No
         else:
             adversario_id = home_id
 
-        time_adv = db.execute(select(Team).where(Team.id == adversario_id)).scalar_one_or_none()
+        time_adv = db.execute(
+            select(Team).where(Team.id == adversario_id)
+        ).scalar_one_or_none()
         if time_adv is not None:
             nome_adversario = time_adv.name
         else:
@@ -455,20 +755,39 @@ def recordes_publico(categoria: str = Query("pontos"), temporada: int = Query(No
         item_recorde["logo_adversario"] = logo_adversario
         recordes.append(item_recorde)
 
-    return {"categoria": categoria, "temporada": temporada, "total": len(recordes), "recordes": recordes}
+    return {
+        "categoria": categoria,
+        "temporada": temporada,
+        "total": len(recordes),
+        "recordes": recordes,
+    }
+
 
 @router.get("/evolucao-medias")
-def evolucao_medias(categoria: str = Query("pontos"), temporada: int = Query(None), db: Session = Depends(get_db)):
+def evolucao_medias(
+    categoria: str = Query("pontos"),
+    temporada: int = Query(None),
+    stage: int = Query(None),
+    db: Session = Depends(get_db),
+):
     stat_field = CATEGORIAS.get(categoria)
     if stat_field is None:
-        raise HTTPException(status_code=400, detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}",
+        )
 
-    stmt = (select(PlayerGameStats.player_id, stat_field.label("valor"), Game.date_start)
-            .join(Game, PlayerGameStats.game_id == Game.id)
-            .where(Game.status_short == 3, Game.stage != 1, stat_field.isnot(None)))
+    stmt = (
+        select(PlayerGameStats.player_id, stat_field.label("valor"), Game.date_start)
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(Game.status_short == 3, Game.stage != 1, stat_field.isnot(None))
+    )
 
     if temporada is not None:
         stmt = stmt.where(Game.season == temporada)
+
+    if stage is not None:
+        stmt = stmt.where(Game.stage == stage)
 
     resultados = db.execute(stmt.order_by(Game.date_start)).all()
 
@@ -497,7 +816,9 @@ def evolucao_medias(categoria: str = Query("pontos"), temporada: int = Query(Non
     resultado_jogadores = []
     for pid in medias_acumuladas:
         if pid not in jogador_cache:
-            jogador = db.execute(select(Player).where(Player.id == pid)).scalar_one_or_none()
+            jogador = db.execute(
+                select(Player).where(Player.id == pid)
+            ).scalar_one_or_none()
             if jogador is not None:
                 jogador_cache[pid] = f"{jogador.firstname} {jogador.lastname}"
             else:
@@ -518,6 +839,7 @@ def evolucao_medias(categoria: str = Query("pontos"), temporada: int = Query(Non
 
     def chave_media_final(x):
         return x["media_final"]
+
     resultado_jogadores.sort(key=chave_media_final, reverse=True)
 
     total_rodadas = 0
@@ -526,4 +848,9 @@ def evolucao_medias(categoria: str = Query("pontos"), temporada: int = Query(Non
             if len(v) > total_rodadas:
                 total_rodadas = len(v)
 
-    return {"categoria": categoria, "temporada": temporada, "total_rodadas": total_rodadas, "jogadores": resultado_jogadores}
+    return {
+        "categoria": categoria,
+        "temporada": temporada,
+        "total_rodadas": total_rodadas,
+        "jogadores": resultado_jogadores,
+    }

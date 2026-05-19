@@ -1,99 +1,151 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Palpites do Dia</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/predicoes.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/predicoes.css" />
+  </head>
 
-<div id="app-wrapper">
-    <nav id="navbar-principal"></nav>
-    <main id="conteudo-principal">
-
+  <body>
+    <div id="app-wrapper">
+      <nav id="navbar-principal"></nav>
+      <main id="conteudo-principal">
         <div class="cabecalho-predicoes">
-            <div class="container">
-                <div class="linha-acento mb-2"></div>
-                <h1 class="titulo-secao mb-3">Palpites do Dia</h1>
+          <div class="container">
+            <div class="linha-acento mb-2"></div>
+            <h1 class="titulo-secao mb-3">Palpites do Dia</h1>
 
-                <div class="resumo-dia" id="resumo-dia" style="display:none;">
-                    <div class="resumo-item">
-                        <span class="resumo-valor" id="resumo-jogos">—</span>
-                        <span class="resumo-rotulo">Jogos Hoje</span>
-                    </div>
-                    <div class="resumo-item">
-                        <span class="resumo-valor" id="resumo-palpites">—</span>
-                        <span class="resumo-rotulo">Palpites Gerados</span>
-                    </div>
-                    <div class="resumo-item">
-                        <span class="resumo-valor" id="resumo-data">—</span>
-                        <span class="resumo-rotulo">Data</span>
-                    </div>
-                </div>
-
-                <div id="painel-modelo" class="painel-modelo mt-3" style="display:none;">
-                    <div class="modelo-titulo"><i class="bi bi-cpu me-1"></i> Desempenho do Modelo</div>
-                    <div class="modelo-stats" id="modelo-stats"></div>
-                </div>
-
+            <div class="resumo-dia" id="resumo-dia" style="display: none">
+              <div class="resumo-item">
+                <span class="resumo-valor" id="resumo-jogos">—</span>
+                <span class="resumo-rotulo">Jogos Hoje</span>
+              </div>
+              <div class="resumo-item">
+                <span class="resumo-valor" id="resumo-palpites">—</span>
+                <span class="resumo-rotulo">Palpites Gerados</span>
+              </div>
+              <div class="resumo-item">
+                <span class="resumo-valor" id="resumo-data">—</span>
+                <span class="resumo-rotulo">Data</span>
+              </div>
             </div>
+
+            <div
+              id="painel-modelo"
+              class="painel-modelo mt-3"
+              style="display: none"
+            >
+              <div class="modelo-titulo">
+                <i class="bi bi-cpu me-1"></i> Desempenho do Modelo
+              </div>
+              <div class="modelo-stats" id="modelo-stats"></div>
+            </div>
+          </div>
         </div>
 
         <div class="area-predicoes">
-            <div class="container">
-
-                <div id="pagina-carregando" class="spinner-center py-5">
-                    <div class="spinner-nba"><div class="bola-animada"></div><span>Carregando palpites...</span></div>
-                </div>
-
-                <div id="pagina-conteudo" style="display:none;">
-                    <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
-                        <span class="form-label-nba mb-0">Filtrar por confiança:</span>
-                        <button class="btn-filtro-conf ativo" id="filtro-todos" onclick="filtrarConfianca('TODOS')">Todos</button>
-                        <button class="btn-filtro-conf" id="filtro-alta" onclick="filtrarConfianca('ALTA')">
-                            <span class="conf-dot conf-alta"></span> Alta
-                        </button>
-                        <button class="btn-filtro-conf" id="filtro-media" onclick="filtrarConfianca('MEDIA')">
-                            <span class="conf-dot conf-media"></span> Média
-                        </button>
-                        <button class="btn-filtro-conf" id="filtro-baixa" onclick="filtrarConfianca('BAIXA')">
-                            <span class="conf-dot conf-baixa"></span> Baixa
-                        </button>
-                    </div>
-                    <div id="lista-jogos"></div>
-                </div>
-
-                <div id="pagina-sem-jogos" style="display:none;">
-                    <div class="estado-vazio">
-                        <i class="bi bi-calendar-x icone-vazio"></i>
-                        <p class="titulo-vazio">Nenhum jogo hoje</p>
-                        <p class="desc-vazio">Não há partidas agendadas para hoje na temporada atual.</p>
-                    </div>
-                </div>
-
-                <div id="pagina-aguardando" style="display:none;">
-                    <div class="estado-vazio">
-                        <i class="bi bi-hourglass-split icone-vazio"></i>
-                        <p class="titulo-vazio">Palpites sendo processados</p>
-                        <p class="desc-vazio">Há <strong id="desc-n-jogos">—</strong> jogo(s) hoje. Os palpites são gerados automaticamente após a carga diária dos dados (06h).</p>
-                    </div>
-                </div>
-
+          <div class="container">
+            <div id="pagina-carregando" class="spinner-center py-5">
+              <div class="spinner-nba">
+                <div class="bola-animada"></div>
+                <span>Carregando palpites...</span>
+              </div>
             </div>
+
+            <div id="pagina-conteudo" style="display: none">
+              <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+                <span class="form-label-nba mb-0">Filtrar por confiança:</span>
+                <button
+                  class="btn-filtro-conf ativo"
+                  id="filtro-todos"
+                  onclick="filtrarConfianca('TODOS')"
+                >
+                  Todos
+                </button>
+                <button
+                  class="btn-filtro-conf"
+                  id="filtro-alta"
+                  onclick="filtrarConfianca('ALTA')"
+                >
+                  <span class="conf-dot conf-alta"></span> Alta
+                </button>
+                <button
+                  class="btn-filtro-conf"
+                  id="filtro-media"
+                  onclick="filtrarConfianca('MEDIA')"
+                >
+                  <span class="conf-dot conf-media"></span> Média
+                </button>
+                <button
+                  class="btn-filtro-conf"
+                  id="filtro-baixa"
+                  onclick="filtrarConfianca('BAIXA')"
+                >
+                  <span class="conf-dot conf-baixa"></span> Baixa
+                </button>
+              </div>
+              <div id="lista-jogos"></div>
+            </div>
+
+            <div id="pagina-sem-jogos" style="display: none">
+              <div class="estado-vazio">
+                <i class="bi bi-calendar-x icone-vazio"></i>
+                <p class="titulo-vazio">Nenhum jogo hoje</p>
+                <p class="desc-vazio">
+                  Não há partidas agendadas para hoje na temporada atual.
+                </p>
+              </div>
+            </div>
+
+            <div id="pagina-aguardando" style="display: none">
+              <div class="estado-vazio">
+                <i class="bi bi-hourglass-split icone-vazio"></i>
+                <p class="titulo-vazio">Palpites sendo processados</p>
+                <p class="desc-vazio">
+                  Há <strong id="desc-n-jogos">—</strong> jogo(s) hoje. Os
+                  palpites são gerados automaticamente após a carga diária dos
+                  dados (06h).
+                </p>
+              </div>
+            </div>
+
+            <div id="pagina-erro" style="display: none">
+              <div class="estado-vazio">
+                <i class="bi bi-wifi-off icone-vazio"></i>
+                <p class="titulo-vazio">
+                  Não foi possível carregar os palpites
+                </p>
+                <p class="desc-vazio" id="desc-erro-mensagem">
+                  Verifique sua conexão ou tente novamente em instantes.
+                </p>
+                <button
+                  class="btn btn-outline-secondary btn-sm mt-2"
+                  onclick="location.reload()"
+                >
+                  <i class="bi bi-arrow-clockwise me-1"></i> Tentar novamente
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      </main>
+      <footer id="rodape-principal"></footer>
+    </div>
 
-    </main>
-    <footer id="rodape-principal"></footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/componentes.js"></script>
-<script src="js/predicoes.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/componentes.js"></script>
+    <script src="js/predicoes.js"></script>
+  </body>
 </html>

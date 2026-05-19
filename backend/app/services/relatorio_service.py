@@ -1,7 +1,6 @@
-import os
 import json
 import logging
-
+import os
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
@@ -15,16 +14,20 @@ BRANCO = (1, 1, 1)
 VERDE = (0, 0.478, 0.2)
 VERMELHO = (0.784, 0.063, 0.18)
 
+
 def _pasta_relatorios():
     from app.config import config
+
     pasta = config.PASTA_RELATORIOS
     if not os.path.exists(pasta):
         os.makedirs(pasta)
     return pasta
 
+
 def _caminho_metadados():
     pasta = _pasta_relatorios()
     return os.path.join(pasta, NOME_METADADOS)
+
 
 def salvar_metadados_relatorio(dados):
     caminho = _caminho_metadados()
@@ -33,6 +36,7 @@ def salvar_metadados_relatorio(dados):
             json.dump(dados, f, ensure_ascii=False, indent=2)
     except Exception as erro:
         logger.warning(f"Falha ao salvar metadados do relatorio: {erro}")
+
 
 def carregar_metadados_anterior():
     caminho = _caminho_metadados()
@@ -45,8 +49,10 @@ def carregar_metadados_anterior():
         logger.warning(f"Falha ao carregar metadados anteriores: {erro}")
         return None
 
+
 def _cor_rgb(r, g, b):
     return (r, g, b)
+
 
 def _desenhar_cabecalho(c, width, height):
     from reportlab.lib.colors import Color
@@ -70,7 +76,8 @@ def _desenhar_cabecalho(c, width, height):
     c.setFont("Helvetica", 9)
     c.drawRightString(width - 40, height - 42, data_str)
 
-def _desenhar_rodape(c, width, numero_pagina):
+
+def _desenhar_rodape(c, width, numero_pagina, season=None):
     from reportlab.lib.colors import Color
 
     c.setFillColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
@@ -78,10 +85,25 @@ def _desenhar_rodape(c, width, numero_pagina):
 
     c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
     c.setFont("Helvetica", 8)
-    c.drawString(40, 13, "NbaAnalyst — Documento gerado automaticamente apos retreinamento")
+    rodape_texto = "NbaAnalyst — Documento gerado automaticamente apos retreinamento"
+    if season:
+        rodape_texto = rodape_texto + "  |  Temporada " + str(season)
+    c.drawString(40, 13, rodape_texto)
     c.drawRightString(width - 40, 13, f"Pagina {numero_pagina}")
 
-def _bloco_metrica(c, x, y, largura, altura, rotulo, valor, subtexto=None, cor_valor=None):
+
+def _bloco_metrica(
+    c,
+    x,
+    y,
+    largura,
+    altura,
+    rotulo,
+    valor,
+    subtexto=None,
+    cor_valor=None,
+    progresso=None,
+):
     from reportlab.lib.colors import Color
 
     c.setFillColor(Color(BRANCO[0], BRANCO[1], BRANCO[2]))
@@ -98,29 +120,57 @@ def _bloco_metrica(c, x, y, largura, altura, rotulo, valor, subtexto=None, cor_v
     c.setFont("Helvetica-Bold", 22)
     c.drawString(x + 12, y + altura - 44, str(valor))
 
+    if progresso is not None:
+        barra_x = x + 12
+        barra_y = y + 22
+        barra_larg = largura - 24
+        barra_alt = 5
+
+        c.setFillColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
+        c.roundRect(barra_x, barra_y, barra_larg, barra_alt, 2, fill=1, stroke=0)
+
+        pct_clamp = max(0, min(100, progresso))
+        fill_larg = barra_larg * pct_clamp / 100
+        if fill_larg > 0:
+            c.setFillColor(Color(cor_valor[0], cor_valor[1], cor_valor[2]))
+            c.roundRect(barra_x, barra_y, fill_larg, barra_alt, 2, fill=1, stroke=0)
+
     if subtexto is not None:
         c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
         c.setFont("Helvetica", 8)
         c.drawString(x + 12, y + 10, subtexto)
 
+
 def _linha_divisoria(c, x, y, largura):
     from reportlab.lib.colors import Color
+
     c.setStrokeColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
     c.setLineWidth(1)
     c.line(x, y, x + largura, y)
 
+
 def _titulo_secao(c, x, y, texto):
     from reportlab.lib.colors import Color
+
     c.setFillColor(Color(LARANJA[0], LARANJA[1], LARANJA[2]))
     c.rect(x, y + 2, 3, 14, fill=1, stroke=0)
     c.setFillColor(Color(CINZA_ESCURO[0], CINZA_ESCURO[1], CINZA_ESCURO[2]))
     c.setFont("Helvetica-Bold", 12)
     c.drawString(x + 10, y + 2, texto)
 
+
 def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
     from reportlab.lib.colors import Color
 
-    colunas = ["Estatistica", "Total Prev.", "Acertos", "Win-Rate", "MAE", "RMSE", "vs Anterior"]
+    colunas = [
+        "Estatistica",
+        "Total Prev.",
+        "Acertos",
+        "Win-Rate",
+        "MAE",
+        "RMSE",
+        "vs Anterior",
+    ]
     larguras_col = [90, 70, 60, 70, 55, 55, 80]
     altura_linha = 22
     altura_header = 26
@@ -174,17 +224,17 @@ def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
             if wr_anterior is not None:
                 diff = round(win_rate - wr_anterior, 2)
                 if diff > 0:
-                    comparacao = f"+{diff}%"
+                    comparacao = f"▲ +{diff}%"
                     cor_comp = VERDE
                 elif diff < 0:
-                    comparacao = f"{diff}%"
+                    comparacao = f"▼ {diff}%"
                     cor_comp = VERMELHO
                 else:
-                    comparacao = "0.00%"
+                    comparacao = "= 0.00%"
                     cor_comp = CINZA_MEDIO
 
         if mae is not None:
-            mae_str = str(mae) 
+            mae_str = str(mae)
         else:
             mae_str = "—"
         if rmse is not None:
@@ -192,9 +242,33 @@ def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
         else:
             rmse_str = "—"
 
-        valores = [label, str(total), str(acertos), f"{win_rate}%", mae_str, rmse_str, comparacao]
-        cores = [CINZA_ESCURO, CINZA_ESCURO, CINZA_ESCURO, cor_wr, CINZA_ESCURO, CINZA_ESCURO, cor_comp]
-        fontes = ["Helvetica", "Helvetica", "Helvetica", "Helvetica-Bold", "Helvetica", "Helvetica", "Helvetica-Bold"]
+        valores = [
+            label,
+            str(total),
+            str(acertos),
+            f"{win_rate}%",
+            mae_str,
+            rmse_str,
+            comparacao,
+        ]
+        cores = [
+            CINZA_ESCURO,
+            CINZA_ESCURO,
+            CINZA_ESCURO,
+            cor_wr,
+            CINZA_ESCURO,
+            CINZA_ESCURO,
+            cor_comp,
+        ]
+        fontes = [
+            "Helvetica",
+            "Helvetica",
+            "Helvetica",
+            "Helvetica-Bold",
+            "Helvetica",
+            "Helvetica",
+            "Helvetica-Bold",
+        ]
 
         pos_x = x + 8
         for i in range(len(valores)):
@@ -204,12 +278,28 @@ def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
             pos_x = pos_x + larguras_col[i]
 
     altura_total = altura_header + len(nomes_stats) * altura_linha
+
+    from reportlab.lib.colors import Color
+
+    c.setStrokeColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
+    c.setLineWidth(1)
+    c.roundRect(x, y - altura_total, largura, altura_total, 4, fill=0, stroke=1)
+
     return altura_total
 
-def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_treino, total_modelos_salvos, total_erros, dados_win_rate, dados_win_rate_anterior=None):
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A4
+
+def gerar_relatorio_treinamento(
+    season,
+    total_registros_db,
+    total_jogadores_treino,
+    total_modelos_salvos,
+    total_erros,
+    dados_win_rate,
+    dados_win_rate_anterior=None,
+):
     from reportlab.lib.colors import Color
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
 
     pasta = _pasta_relatorios()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -223,7 +313,7 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
     y = height - 100
 
     _desenhar_cabecalho(c, width, height)
-    _desenhar_rodape(c, width, 1)
+    _desenhar_rodape(c, width, 1, season)
 
     c.setFillColor(Color(CINZA_ESCURO[0], CINZA_ESCURO[1], CINZA_ESCURO[2]))
     c.setFont("Helvetica-Bold", 16)
@@ -232,7 +322,11 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
     y = y - 20
     c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
     c.setFont("Helvetica", 9)
-    c.drawString(margem, y, f"Gerado em: {datetime.now(timezone.utc).strftime('%d/%m/%Y as %H:%M UTC')}")
+    c.drawString(
+        margem,
+        y,
+        f"Gerado em: {datetime.now(timezone.utc).strftime('%d/%m/%Y as %H:%M UTC')}",
+    )
 
     y = y - 30
     _linha_divisoria(c, margem, y, area_util)
@@ -253,7 +347,9 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
         cor = CINZA_ESCURO
         if i == 3 and total_erros > 0:
             cor = VERMELHO
-        _bloco_metrica(c, bx, y, larg_bloco, 76, blocos[i][0], blocos[i][1], blocos[i][2], cor)
+        _bloco_metrica(
+            c, bx, y, larg_bloco, 76, blocos[i][0], blocos[i][1], blocos[i][2], cor
+        )
 
     y = y - 36
     _linha_divisoria(c, margem, y, area_util)
@@ -295,12 +391,41 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
         y = y - 90
         larg_destaque = (area_util - 5) / 3
 
-        _bloco_metrica(c, margem, y, larg_destaque, 80, "Win-Rate Geral", f"{win_rate_geral}%", f"{total_avaliadas} palpites avaliados", cor_wr)
+        _bloco_metrica(
+            c,
+            margem,
+            y,
+            larg_destaque,
+            80,
+            "Win-Rate Geral",
+            f"{win_rate_geral}%",
+            f"{total_avaliadas} palpites avaliados",
+            cor_wr,
+            progresso=win_rate_geral,
+        )
 
         mae_str = str(mae_geral) if mae_geral is not None else "—"
         rmse_str = str(rmse_geral) if rmse_geral is not None else "—"
-        _bloco_metrica(c, margem + larg_destaque + 5, y, larg_destaque, 80, "MAE Medio Geral", mae_str, "erro absoluto medio")
-        _bloco_metrica(c, margem + (larg_destaque + 5) * 2, y, larg_destaque, 80, "RMSE Medio Geral", rmse_str, "raiz erro quadratico medio")
+        _bloco_metrica(
+            c,
+            margem + larg_destaque + 5,
+            y,
+            larg_destaque,
+            80,
+            "MAE Medio Geral",
+            mae_str,
+            "erro absoluto medio",
+        )
+        _bloco_metrica(
+            c,
+            margem + (larg_destaque + 5) * 2,
+            y,
+            larg_destaque,
+            80,
+            "RMSE Medio Geral",
+            rmse_str,
+            "raiz erro quadratico medio",
+        )
 
         y = y - 20
         c.setFillColor(Color(cor_comp_geral[0], cor_comp_geral[1], cor_comp_geral[2]))
@@ -309,7 +434,45 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
         if wr_anterior is not None:
             c.setFont("Helvetica", 9)
             c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
-            c.drawString(margem + 160, y, f"(anterior: {wr_anterior}%  |  atual: {win_rate_geral}%)")
+            c.drawString(
+                margem + 160,
+                y,
+                f"(anterior: {wr_anterior}%  |  atual: {win_rate_geral}%)",
+            )
+
+        y = y - 20
+
+        if win_rate_geral >= 60:
+            badge_texto = "MODELO DENTRO DA META  (meta: >= 60%)"
+            badge_cor_fundo = (0.9, 0.97, 0.93)
+            badge_cor_borda = (0, 0.6, 0.25)
+            badge_cor_texto = VERDE
+        elif win_rate_geral >= 55:
+            badge_texto = "MODELO PROXIMO DA META  (meta: >= 60%)"
+            badge_cor_fundo = (1.0, 0.97, 0.88)
+            badge_cor_borda = (0.85, 0.55, 0.0)
+            badge_cor_texto = LARANJA
+        else:
+            badge_texto = "MODELO ABAIXO DA META  (meta: >= 60%)"
+            badge_cor_fundo = (0.98, 0.92, 0.93)
+            badge_cor_borda = (0.7, 0.05, 0.15)
+            badge_cor_texto = VERMELHO
+
+        c.setFillColor(
+            Color(badge_cor_fundo[0], badge_cor_fundo[1], badge_cor_fundo[2])
+        )
+        c.setStrokeColor(
+            Color(badge_cor_borda[0], badge_cor_borda[1], badge_cor_borda[2])
+        )
+        c.setLineWidth(1)
+        c.roundRect(margem, y - 14, area_util, 22, 4, fill=1, stroke=1)
+        c.setFillColor(
+            Color(badge_cor_texto[0], badge_cor_texto[1], badge_cor_texto[2])
+        )
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(margem + 10, y - 6, badge_texto)
+
+        y = y - 16
 
         y = y - 30
         _titulo_secao(c, margem, y, "Detalhamento por Estatistica")
@@ -325,11 +488,31 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
         if dados_win_rate_anterior is not None:
             stats_anteriores_map = {}
             stats_anteriores_map["stats"] = {}
-            stats_anteriores_map["stats"]["points"] = {"win_rate": dados_win_rate_anterior.get("pontos", {}).get("win_rate", None)}
-            stats_anteriores_map["stats"]["assists"] = {"win_rate": dados_win_rate_anterior.get("assistencias", {}).get("win_rate", None)}
-            stats_anteriores_map["stats"]["tot_reb"] = {"win_rate": dados_win_rate_anterior.get("rebotes", {}).get("win_rate", None)}
-            stats_anteriores_map["stats"]["steals"] = {"win_rate": dados_win_rate_anterior.get("roubos", {}).get("win_rate", None)}
-            stats_anteriores_map["stats"]["blocks"] = {"win_rate": dados_win_rate_anterior.get("bloqueios", {}).get("win_rate", None)}
+            stats_anteriores_map["stats"]["points"] = {
+                "win_rate": dados_win_rate_anterior.get("pontos", {}).get(
+                    "win_rate", None
+                )
+            }
+            stats_anteriores_map["stats"]["assists"] = {
+                "win_rate": dados_win_rate_anterior.get("assistencias", {}).get(
+                    "win_rate", None
+                )
+            }
+            stats_anteriores_map["stats"]["tot_reb"] = {
+                "win_rate": dados_win_rate_anterior.get("rebotes", {}).get(
+                    "win_rate", None
+                )
+            }
+            stats_anteriores_map["stats"]["steals"] = {
+                "win_rate": dados_win_rate_anterior.get("roubos", {}).get(
+                    "win_rate", None
+                )
+            }
+            stats_anteriores_map["stats"]["blocks"] = {
+                "win_rate": dados_win_rate_anterior.get("bloqueios", {}).get(
+                    "win_rate", None
+                )
+            }
 
         y = y - 20
         _tabela_stats(c, margem, y, area_util, stats_map, stats_anteriores_map)
@@ -337,13 +520,23 @@ def gerar_relatorio_treinamento(season, total_registros_db, total_jogadores_trei
         y = y - 30
         c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
         c.setFont("Helvetica", 10)
-        c.drawString(margem, y, "Nenhum dado de desempenho disponivel para esta temporada ainda.")
+        c.drawString(
+            margem, y, "Nenhum dado de desempenho disponivel para esta temporada ainda."
+        )
 
     c.save()
     logger.warning(f"Relatorio gerado: {caminho_pdf}")
     return caminho_pdf
 
-def gerar_e_salvar_relatorio(db, season, total_registros_db, total_jogadores_treino, total_modelos_salvos, total_erros):
+
+def gerar_e_salvar_relatorio(
+    db,
+    season,
+    total_registros_db,
+    total_jogadores_treino,
+    total_modelos_salvos,
+    total_erros,
+):
     from app.services.win_rate_service import calcular_win_rate
 
     dados_win_rate_anterior = carregar_metadados_anterior()
@@ -354,7 +547,15 @@ def gerar_e_salvar_relatorio(db, season, total_registros_db, total_jogadores_tre
     except Exception as erro:
         logger.warning(f"Falha ao calcular win_rate para relatorio: {erro}")
 
-    caminho_pdf = gerar_relatorio_treinamento(season=season, total_registros_db=total_registros_db, total_jogadores_treino=total_jogadores_treino, total_modelos_salvos=total_modelos_salvos, total_erros=total_erros, dados_win_rate=dados_win_rate, dados_win_rate_anterior=dados_win_rate_anterior)
+    caminho_pdf = gerar_relatorio_treinamento(
+        season=season,
+        total_registros_db=total_registros_db,
+        total_jogadores_treino=total_jogadores_treino,
+        total_modelos_salvos=total_modelos_salvos,
+        total_erros=total_erros,
+        dados_win_rate=dados_win_rate,
+        dados_win_rate_anterior=dados_win_rate_anterior,
+    )
 
     if dados_win_rate is not None:
         metadados = {}
@@ -363,7 +564,9 @@ def gerar_e_salvar_relatorio(db, season, total_registros_db, total_jogadores_tre
         metadados["win_rate_geral"] = dados_win_rate.get("win_rate_geral", 0.0)
         metadados["mae_medio_geral"] = dados_win_rate.get("mae_medio_geral", None)
         metadados["rmse_geral"] = dados_win_rate.get("rmse_geral", None)
-        metadados["total_predicoes_avaliadas"] = dados_win_rate.get("total_predicoes_avaliadas", 0)
+        metadados["total_predicoes_avaliadas"] = dados_win_rate.get(
+            "total_predicoes_avaliadas", 0
+        )
         metadados["pontos"] = dados_win_rate.get("pontos", {})
         metadados["assistencias"] = dados_win_rate.get("assistencias", {})
         metadados["rebotes"] = dados_win_rate.get("rebotes", {})
