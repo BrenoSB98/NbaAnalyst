@@ -1,221 +1,278 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Franquias</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/time.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/time.css" />
+  </head>
+  <body>
+    <div id="app-wrapper">
+      <nav id="navbar-principal"></nav>
 
-<div id="app-wrapper">
-    <nav id="navbar-principal"></nav>
-
-    <main id="conteudo-principal">
-
+      <main id="conteudo-principal">
         <div id="pagina-carregando">
-            <div class="spinner-nba" style="margin-top: 80px;">
-                <div class="bola-animada"></div>
-                <span>Carregando time...</span>
-            </div>
+          <div class="spinner-nba" style="margin-top: 80px">
+            <div class="bola-animada"></div>
+            <span>Carregando time...</span>
+          </div>
         </div>
 
-        <div id="pagina-conteudo" style="display: none;">
-
-            <!-- Cabeçalho -->
-            <div class="cabecalho-time">
-                <div class="container">
-                    <div class="d-flex align-items-center gap-4 flex-wrap">
-                        <div id="time-logo-container"></div>
-                        <div>
-                            <h1 class="time-nome-grande" id="time-nome">—</h1>
-                            <div class="time-info-basica">
-                                <span id="time-cidade"></span>
-                                <span id="time-conferencia"></span>
-                                <span id="time-divisao"></span>
-                            </div>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="times.html" class="btn-nba-ghost btn-nba btn-sm">
-                                <i class="bi bi-arrow-left me-1"></i> Voltar
-                            </a>
-                        </div>
-                    </div>
+        <div id="pagina-conteudo" style="display: none">
+          <!-- Cabeçalho -->
+          <div class="cabecalho-time">
+            <div class="container">
+              <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div id="time-logo-container"></div>
+                <div>
+                  <h1 class="time-nome-grande" id="time-nome">—</h1>
+                  <div class="time-info-basica">
+                    <span id="time-cidade"></span>
+                    <span id="time-conferencia"></span>
+                    <span id="time-divisao"></span>
+                  </div>
                 </div>
-            </div>
-
-            <!-- Abas: apenas Visão Geral e Elenco -->
-            <div class="abas-time">
-                <div class="container">
-                    <div class="d-flex">
-                        <button class="nav-link ativo" id="aba-btn-geral" onclick="trocarAba('geral')">
-                            <i class="bi bi-info-circle me-1"></i> Visão Geral
-                        </button>
-                        <button class="nav-link" id="aba-btn-elenco" onclick="trocarAba('elenco')">
-                            <i class="bi bi-people me-1"></i> Elenco
-                        </button>
-                    </div>
+                <div class="ms-auto">
+                  <a href="times.html" class="btn-nba-ghost btn-nba btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar
+                  </a>
                 </div>
+              </div>
             </div>
+          </div>
 
-            <!-- ABA: VISÃO GERAL -->
-            <div class="conteudo-aba ativo" id="aba-geral">
-                <div class="container">
+          <!-- Abas: apenas Visão Geral e Elenco -->
+          <div class="abas-time">
+            <div class="container">
+              <div class="d-flex">
+                <button
+                  class="nav-link ativo"
+                  id="aba-btn-geral"
+                  onclick="trocarAba('geral')"
+                >
+                  <i class="bi bi-info-circle me-1"></i> Visão Geral
+                </button>
+                <button
+                  class="nav-link"
+                  id="aba-btn-elenco"
+                  onclick="trocarAba('elenco')"
+                >
+                  <i class="bi bi-people me-1"></i> Elenco
+                </button>
+              </div>
+            </div>
+          </div>
 
-                    <!-- Informações da Franquia -->
-                    <h2 class="titulo-secao mb-3" style="font-size:1rem; margin-top:28px;">Informações da Franquia</h2>
-                    <div class="card-nba mb-4">
-                        <div class="card-body-nba">
-                            <div class="row g-3" id="dados-cadastrais"></div>
-                        </div>
-                    </div>
-
-                    <!-- Filtros do retrospecto -->
-                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                        <h2 class="titulo-secao mb-0" style="font-size:1rem;">Retrospecto da Temporada</h2>
-                        <div class="d-flex align-items-center gap-3 flex-wrap">
-
-                            <div class="d-flex align-items-center gap-2">
-                                <label class="form-label-nba mb-0" style="font-size:0.82rem; color:#888; white-space:nowrap;">Temporada</label>
-                                <select class="form-control-nba" id="select-temporada" style="max-width:130px;" onchange="trocarFiltros()">
-                                    <option value="2025" selected>2025</option>
-                                    <option value="2024">2024</option>
-                                    <option value="2023">2023</option>
-                                    <option value="2022">2022</option>
-                                    <option value="2021">2021</option>
-                                </select>
-                            </div>
-
-                            <div class="d-flex align-items-center gap-2">
-                                <label class="form-label-nba mb-0" style="font-size:0.82rem; color:#888; white-space:nowrap;">Competição</label>
-                                <select class="form-control-nba" id="select-stage" style="max-width:185px;" onchange="trocarFiltros()">
-                                    <option value="">Todas</option>
-                                    <option value="2">Temporada Regular</option>
-                                    <option value="3">Playoffs</option>
-                                    <option value="4">Copa NBA</option>
-                                    <option value="1">Pré-Temporada</option>
-                                </select>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- Spinner do retrospecto -->
-                    <div id="stats-carregando">
-                        <div class="spinner-nba" style="padding:20px;">
-                            <div class="bola-animada"></div>
-                            <span>Carregando retrospecto...</span>
-                        </div>
-                    </div>
-
-                    <!-- Cards de retrospecto -->
-                    <div id="stats-conteudo" style="display:none;">
-                        <div class="row g-3 mb-4" id="cards-estatisticas"></div>
-                    </div>
-
-                    <!-- Seção de últimas partidas -->
-                    <div id="jogos-secao" style="display:none;">
-
-                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                            <h2 class="titulo-secao mb-0" style="font-size:1rem;">Últimas Partidas</h2>
-                            <div class="d-flex align-items-center gap-2">
-                                <label class="form-label-nba mb-0" style="font-size:0.82rem; color:#888; white-space:nowrap;">Exibir</label>
-                                <select class="form-control-nba" id="select-n-jogos" style="max-width:120px;" onchange="trocarNJogos()">
-                                    <option value="5">5 jogos</option>
-                                    <option value="10" selected>10 jogos</option>
-                                    <option value="15">15 jogos</option>
-                                    <option value="20">20 jogos</option>
-                                    <option value="50">Todas</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="card-nba mb-4">
-                            <div style="overflow-x: auto;">
-                                <table class="tabela-elenco" id="tabela-jogos">
-                                    <thead>
-                                        <tr>
-                                            <th>Res.</th>
-                                            <th>Adversário</th>
-                                            <th>Local</th>
-                                            <th>Placar</th>
-                                            <th>Data</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="jogos-tbody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                    </div>
-
+          <!-- ABA: VISÃO GERAL -->
+          <div class="conteudo-aba ativo" id="aba-geral">
+            <div class="container">
+              <!-- Informações da Franquia -->
+              <h2
+                class="titulo-secao mb-3"
+                style="font-size: 1rem; margin-top: 28px"
+              >
+                Informações da Franquia
+              </h2>
+              <div class="card-nba mb-4">
+                <div class="card-body-nba">
+                  <div class="row g-3" id="dados-cadastrais"></div>
                 </div>
-            </div>
+              </div>
 
-            <!-- ABA: ELENCO -->
-            <div class="conteudo-aba" id="aba-elenco">
-                <div class="container">
+              <!-- Filtros do retrospecto -->
+              <div
+                class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2"
+              >
+                <h2 class="titulo-secao mb-0" style="font-size: 1rem">
+                  Retrospecto da Temporada
+                </h2>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                  <div class="d-flex align-items-center gap-2">
+                    <label
+                      class="form-label-nba mb-0"
+                      style="
+                        font-size: 0.82rem;
+                        color: #888;
+                        white-space: nowrap;
+                      "
+                      >Temporada</label
+                    >
+                    <select
+                      class="form-control-nba"
+                      id="select-temporada"
+                      style="max-width: 130px"
+                      onchange="trocarFiltros()"
+                    >
+                      <option value="2025" selected>2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                      <option value="2022">2022</option>
+                      <option value="2021">2021</option>
+                    </select>
+                  </div>
 
-                    <div id="elenco-carregando">
-                        <div class="spinner-nba">
-                            <div class="bola-animada"></div>
-                            <span>Carregando elenco...</span>
-                        </div>
-                    </div>
-
-                    <div id="elenco-conteudo" style="display: none;">
-                        <p class="subtitulo-secao" id="elenco-titulo">Elenco</p>
-                        <div class="card-nba">
-                            <table class="tabela-elenco">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Jogador</th>
-                                        <th>Pos.</th>
-                                        <th>Altura</th>
-                                        <th>Peso</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="elenco-tbody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="elenco-vazio" style="display: none;">
-                        <div class="estado-vazio">
-                            <i class="bi bi-people icone-vazio"></i>
-                            <p class="titulo-vazio">Elenco não disponível</p>
-                            <p class="desc-vazio">Nenhum jogador encontrado para esta temporada.</p>
-                        </div>
-                    </div>
-
+                  <div class="d-flex align-items-center gap-2">
+                    <label
+                      class="form-label-nba mb-0"
+                      style="
+                        font-size: 0.82rem;
+                        color: #888;
+                        white-space: nowrap;
+                      "
+                      >Competição</label
+                    >
+                    <select
+                      class="form-control-nba"
+                      id="select-stage"
+                      style="max-width: 185px"
+                      onchange="trocarFiltros()"
+                    >
+                      <option value="">Todas</option>
+                      <option value="2">Temporada Regular</option>
+                      <option value="3">Playoffs</option>
+                      <option value="4">Copa NBA</option>
+                      <option value="1">Pré-Temporada</option>
+                    </select>
+                  </div>
                 </div>
-            </div>
+              </div>
 
+              <!-- Spinner do retrospecto -->
+              <div id="stats-carregando">
+                <div class="spinner-nba" style="padding: 20px">
+                  <div class="bola-animada"></div>
+                  <span>Carregando retrospecto...</span>
+                </div>
+              </div>
+
+              <!-- Cards de retrospecto -->
+              <div id="stats-conteudo" style="display: none">
+                <div class="row g-3 mb-4" id="cards-estatisticas"></div>
+              </div>
+
+              <!-- Seção de últimas partidas -->
+              <div id="jogos-secao" style="display: none">
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2"
+                >
+                  <h2 class="titulo-secao mb-0" style="font-size: 1rem">
+                    Últimas Partidas
+                  </h2>
+                  <div class="d-flex align-items-center gap-2">
+                    <label
+                      class="form-label-nba mb-0"
+                      style="
+                        font-size: 0.82rem;
+                        color: #888;
+                        white-space: nowrap;
+                      "
+                      >Exibir</label
+                    >
+                    <select
+                      class="form-control-nba"
+                      id="select-n-jogos"
+                      style="max-width: 120px"
+                      onchange="trocarNJogos()"
+                    >
+                      <option value="5">5 jogos</option>
+                      <option value="10" selected>10 jogos</option>
+                      <option value="15">15 jogos</option>
+                      <option value="20">20 jogos</option>
+                      <option value="50">Todas</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="card-nba mb-4">
+                  <div style="overflow-x: auto">
+                    <table class="tabela-elenco" id="tabela-jogos">
+                      <thead>
+                        <tr>
+                          <th>Res.</th>
+                          <th>Adversário</th>
+                          <th>Local</th>
+                          <th>Placar</th>
+                          <th>Data</th>
+                        </tr>
+                      </thead>
+                      <tbody id="jogos-tbody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ABA: ELENCO -->
+          <div class="conteudo-aba" id="aba-elenco">
+            <div class="container">
+              <div id="elenco-carregando">
+                <div class="spinner-nba">
+                  <div class="bola-animada"></div>
+                  <span>Carregando elenco...</span>
+                </div>
+              </div>
+
+              <div id="elenco-conteudo" style="display: none">
+                <p class="subtitulo-secao" id="elenco-titulo">Elenco</p>
+                <div class="card-nba">
+                  <table class="tabela-elenco">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Jogador</th>
+                        <th>Pos.</th>
+                        <th>Altura</th>
+                        <th>Peso</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="elenco-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div id="elenco-vazio" style="display: none">
+                <div class="estado-vazio">
+                  <i class="bi bi-people icone-vazio"></i>
+                  <p class="titulo-vazio">Elenco não disponível</p>
+                  <p class="desc-vazio">
+                    Nenhum jogador encontrado para esta temporada.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div id="pagina-erro" style="display: none;">
-            <div class="estado-vazio" style="margin-top: 80px;">
-                <i class="bi bi-exclamation-circle icone-vazio"></i>
-                <p class="titulo-vazio">Time não encontrado</p>
-                <p class="desc-vazio">Verifique se o endereço está correto.</p>
-                <a href="times.html" class="btn-nba btn-nba mt-3">Ver todos os times</a>
-            </div>
+        <div id="pagina-erro" style="display: none">
+          <div class="estado-vazio" style="margin-top: 80px">
+            <i class="bi bi-exclamation-circle icone-vazio"></i>
+            <p class="titulo-vazio">Time não encontrado</p>
+            <p class="desc-vazio">Verifique se o endereço está correto.</p>
+            <a href="times.html" class="btn-nba btn-nba mt-3"
+              >Ver todos os times</a
+            >
+          </div>
         </div>
+      </main>
+      <footer id="rodape-principal"></footer>
+    </div>
 
-    </main>
-    <footer id="rodape-principal"></footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/componentes.js"></script>
-<script src="js/time.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/componentes.js"></script>
+    <script src="js/time.js"></script>
+  </body>
 </html>

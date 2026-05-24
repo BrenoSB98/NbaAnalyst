@@ -1,6 +1,8 @@
 var abaAtiva = "lideres";
 var recordesCarregados = false;
 var dadosEvolucao = null;
+var todasDatas = [];
+var seriesPreenchidas = {};
 var totalRodasEvolucao = 0;
 var playerInterval = null;
 var dadosScatterPtsAst = [];
@@ -133,6 +135,8 @@ async function carregarTemporadas() {
 function aoTrocarFiltroGlobal() {
   recordesCarregados = false;
   dadosEvolucao = null;
+  todasDatas = [];
+  seriesPreenchidas = {};
   dadosScatterPtsAst = [];
   dadosScatterRebBlk = [];
 
@@ -224,9 +228,10 @@ function renderizarCardsLideres(dadosLideres) {
     var item = dadosLideres[i];
     var lider = item.lider;
     var partes = lider.player_name.split(" ");
-    var sobrenome =
-      partes.length > 1 ? partes[partes.length - 1] : lider.player_name;
-    var inicial = partes[0] ? partes[0].charAt(0) + "." : "";
+    var nomeExibido =
+      partes.length > 1
+        ? partes[0].charAt(0) + ". " + partes[partes.length - 1]
+        : lider.player_name;
 
     var col = document.createElement("div");
     col.className = "col-6 col-md-4 col-lg";
@@ -242,11 +247,9 @@ function renderizarCardsLideres(dadosLideres) {
       ';">' +
       item.cat.descricao.toUpperCase() +
       "</div>" +
-      '<div class="card-lider-nome"><span class="card-lider-inicial">' +
-      inicial +
-      '</span> <span class="card-lider-sobrenome">' +
-      sobrenome +
-      "</span></div>" +
+      '<div class="card-lider-nome">' +
+      nomeExibido +
+      "</div>" +
       '<div class="card-lider-valor" style="color:' +
       item.cat.cor +
       ';">' +
@@ -254,7 +257,7 @@ function renderizarCardsLideres(dadosLideres) {
       "</div>" +
       '<div class="card-lider-sub">' +
       lider.games_played +
-      ' jogos · <span class="badge-lider">#1</span></div>' +
+      " jogos</div>" +
       "</a>";
 
     container.appendChild(col);
@@ -274,6 +277,11 @@ async function carregarEvolucao() {
   document.getElementById("legenda-evolucao").innerHTML = "";
   document.getElementById("evolucao-slider-area").style.display = "none";
   document.getElementById("evolucao-carregando").style.display = "flex";
+  pararPlayer();
+
+  todasDatas = [];
+  seriesPreenchidas = {};
+  dadosEvolucao = null;
 
   try {
     var url =
@@ -285,41 +293,51 @@ async function carregarEvolucao() {
       url = url + "&stage=" + fase;
     }
     var resposta = await chamarApi(url);
-
     var todosJogadores = resposta.jogadores || [];
-    totalRodasEvolucao = resposta.total_rodadas || 0;
-
-    var limiteMinJogos = Math.floor(totalRodasEvolucao * 0.3);
-    dadosEvolucao = [];
-    for (var i = 0; i < todosJogadores.length; i++) {
-      if (todosJogadores[i].total_jogos >= limiteMinJogos) {
-        dadosEvolucao.push(todosJogadores[i]);
-      }
-    }
 
     document.getElementById("evolucao-carregando").style.display = "none";
 
-    if (dadosEvolucao.length === 0 || totalRodasEvolucao === 0) {
+    if (todosJogadores.length === 0) {
       document.getElementById("grafico-evolucao").innerHTML =
         '<p style="color:#888899; font-size:0.88rem; padding:16px 0;">Sem dados de evolução para essa seleção.</p>';
       return;
     }
 
-    var sliderInicio = document.getElementById("slider-inicio");
-    var sliderFim = document.getElementById("slider-fim");
-    sliderInicio.min = 1;
-    sliderInicio.max = totalRodasEvolucao;
-    sliderInicio.value = 1;
-    sliderFim.min = 1;
-    sliderFim.max = totalRodasEvolucao;
-    sliderFim.value = totalRodasEvolucao;
+    todasDatas = buildTodasDatas(todosJogadores);
 
-    document.getElementById("slider-max-label").textContent =
-      totalRodasEvolucao;
+    if (todasDatas.length === 0) {
+      document.getElementById("grafico-evolucao").innerHTML =
+        '<p style="color:#888899; font-size:0.88rem; padding:16px 0;">Sem dados de evolução para essa seleção.</p>';
+      return;
+    }
+
+    for (var i = 0; i < todosJogadores.length; i++) {
+      var jog = todosJogadores[i];
+      seriesPreenchidas[jog.player_id] = buildSerieFilled(
+        jog.series,
+        todasDatas,
+      );
+    }
+
+    dadosEvolucao = todosJogadores;
+
+    var sliderFim = document.getElementById("slider-fim");
+    var sliderInicio = document.getElementById("slider-inicio");
+    sliderInicio.style.display = "none";
+    sliderFim.min = 0;
+    sliderFim.max = todasDatas.length - 1;
+    sliderFim.value = todasDatas.length - 1;
+    document.getElementById("slider-min-label").textContent = formatarDataCurta(
+      todasDatas[0],
+    );
+    document.getElementById("slider-max-label").textContent = formatarDataCurta(
+      todasDatas[todasDatas.length - 1],
+    );
     document.getElementById("evolucao-slider-area").style.display = "block";
 
     atualizarSliderLabel();
-    renderizarGraficoLinhas(1, totalRodasEvolucao);
+    atualizarTrackFill();
+    renderizarGraficoLinhas(todasDatas.length - 1);
   } catch (erro) {
     document.getElementById("evolucao-carregando").style.display = "none";
     document.getElementById("grafico-evolucao").innerHTML =
@@ -327,44 +345,75 @@ async function carregarEvolucao() {
   }
 }
 
+function buildTodasDatas(todosJogadores) {
+  var mapaData = {};
+  for (var i = 0; i < todosJogadores.length; i++) {
+    var serie = todosJogadores[i].series;
+    for (var k = 0; k < serie.length; k++) {
+      if (serie[k].data) {
+        mapaData[serie[k].data] = true;
+      }
+    }
+  }
+  var datas = Object.keys(mapaData);
+  datas.sort();
+  return datas;
+}
+
+function buildSerieFilled(serie, todasDatas) {
+  var mapaJogador = {};
+  for (var i = 0; i < serie.length; i++) {
+    if (serie[i].data) {
+      mapaJogador[serie[i].data] = serie[i].media;
+    }
+  }
+  var resultado = [];
+  var ultimaMedia = null;
+  for (var j = 0; j < todasDatas.length; j++) {
+    var data = todasDatas[j];
+    if (mapaJogador[data] !== undefined) {
+      ultimaMedia = mapaJogador[data];
+    }
+    resultado.push(ultimaMedia);
+  }
+  return resultado;
+}
+
+function formatarDataCurta(dataStr) {
+  if (!dataStr) {
+    return "";
+  }
+  var partes = dataStr.split("-");
+  if (partes.length < 3) {
+    return dataStr;
+  }
+  return partes[2] + "/" + partes[1];
+}
+
 function aoMoverSlider() {
   pararPlayer();
-  var inicio = parseInt(document.getElementById("slider-inicio").value);
-  var fim = parseInt(document.getElementById("slider-fim").value);
-
-  if (inicio > fim) {
-    var temp = inicio;
-    inicio = fim;
-    fim = temp;
-    document.getElementById("slider-inicio").value = inicio;
-    document.getElementById("slider-fim").value = fim;
-  }
-
+  var idxAtual = parseInt(document.getElementById("slider-fim").value);
   atualizarSliderLabel();
   atualizarTrackFill();
-  renderizarGraficoLinhas(inicio, fim);
+  renderizarGraficoLinhas(idxAtual);
 }
 
 function atualizarSliderLabel() {
-  var inicio = document.getElementById("slider-inicio").value;
-  var fim = document.getElementById("slider-fim").value;
+  var idx = parseInt(document.getElementById("slider-fim").value);
+  var dataStr = todasDatas[idx] || "";
   document.getElementById("slider-label").textContent =
-    "Rodada " + inicio + " a " + fim;
-  atualizarTrackFill();
+    formatarDataCurta(dataStr);
 }
 
 function atualizarTrackFill() {
-  var sliderInicio = document.getElementById("slider-inicio");
   var sliderFim = document.getElementById("slider-fim");
   var fill = document.getElementById("slider-track-fill");
-  var min = parseInt(sliderInicio.min);
-  var max = parseInt(sliderInicio.max);
-  var inicio = parseInt(sliderInicio.value);
-  var fim = parseInt(sliderFim.value);
-  var pctInicio = ((inicio - min) / (max - min)) * 100;
-  var pctFim = ((fim - min) / (max - min)) * 100;
-  fill.style.left = pctInicio + "%";
-  fill.style.width = pctFim - pctInicio + "%";
+  var min = parseInt(sliderFim.min) || 0;
+  var max = parseInt(sliderFim.max) || 1;
+  var atual = parseInt(sliderFim.value) || 0;
+  var pct = ((atual - min) / (max - min)) * 100;
+  fill.style.left = "0%";
+  fill.style.width = pct + "%";
 }
 
 function togglePlayer() {
@@ -385,12 +434,10 @@ function iniciarPlayer() {
   var max = parseInt(sliderFim.max);
 
   if (parseInt(sliderFim.value) >= max) {
-    sliderFim.value = parseInt(document.getElementById("slider-inicio").value);
+    sliderFim.value = 0;
     atualizarSliderLabel();
-    renderizarGraficoLinhas(
-      parseInt(document.getElementById("slider-inicio").value),
-      parseInt(sliderFim.value),
-    );
+    atualizarTrackFill();
+    renderizarGraficoLinhas(0);
   }
 
   btnPlayer.innerHTML = '<i class="bi bi-pause-fill"></i>';
@@ -400,17 +447,18 @@ function iniciarPlayer() {
     var sliderFimEl = document.getElementById("slider-fim");
     var atual = parseInt(sliderFimEl.value);
     var maximo = parseInt(sliderFimEl.max);
-    var inicio = parseInt(document.getElementById("slider-inicio").value);
 
     if (atual >= maximo) {
       pararPlayer();
       return;
     }
 
-    sliderFimEl.value = atual + 1;
+    var proximo = Math.min(atual + 2, maximo);
+    sliderFimEl.value = proximo;
     atualizarSliderLabel();
-    renderizarGraficoLinhas(inicio, atual + 1);
-  }, 300);
+    atualizarTrackFill();
+    renderizarGraficoLinhas(proximo);
+  }, 60);
 }
 
 function pararPlayer() {
@@ -425,99 +473,118 @@ function pararPlayer() {
   }
 }
 
-function renderizarGraficoLinhas(rodadaInicio, rodadaFim) {
+function calcularTop10(idxAtual) {
+  var candidatos = [];
+  for (var i = 0; i < dadosEvolucao.length; i++) {
+    var jog = dadosEvolucao[i];
+    var serie = seriesPreenchidas[jog.player_id];
+    if (!serie) {
+      continue;
+    }
+    var valor = serie[idxAtual];
+    if (valor === null) {
+      continue;
+    }
+    var candidato = {};
+    candidato.jog = jog;
+    candidato.valorAtual = valor;
+    candidatos.push(candidato);
+  }
+  candidatos.sort(function (a, b) {
+    return b.valorAtual - a.valorAtual;
+  });
+  return candidatos.slice(0, 10);
+}
+
+function renderizarGraficoLinhas(idxAtual) {
   var container = document.getElementById("grafico-evolucao");
   container.innerHTML = "";
   document.getElementById("legenda-evolucao").innerHTML = "";
 
-  if (!dadosEvolucao || dadosEvolucao.length === 0) {
+  if (!dadosEvolucao || dadosEvolucao.length === 0 || todasDatas.length === 0) {
     return;
   }
 
-  var jogadoresComMedia = [];
-  for (var i = 0; i < dadosEvolucao.length; i++) {
-    var jog = dadosEvolucao[i];
-    var serie = jog.series;
-    if (!serie || serie.length === 0) {
-      continue;
-    }
-    var idxFim = Math.min(rodadaFim, serie.length) - 1;
-    if (idxFim < rodadaInicio - 1) {
-      continue;
-    }
-    var mediaNoFim = serie[idxFim];
-    var itemMedia = {};
-    itemMedia.jog = jog;
-    itemMedia.mediaNoFim = mediaNoFim;
-    jogadoresComMedia.push(itemMedia);
-  }
-
-  jogadoresComMedia.sort(function (a, b) {
-    return b.mediaNoFim - a.mediaNoFim;
-  });
-
-  var top10 = jogadoresComMedia.slice(0, 10);
+  var top10 = calcularTop10(idxAtual);
 
   if (top10.length === 0) {
     return;
   }
 
-  var maiorMediaFinal = top10[0].mediaNoFim;
+  var CORES_RANK = [
+    "#C8102E",
+    "#1D428A",
+    "#007A33",
+    "#F9A01B",
+    "#552583",
+    "#00838A",
+    "#E56020",
+    "#860038",
+    "#006BB6",
+    "#6B6B6B",
+  ];
 
-  var margem = { topo: 20, dir: 20, baixo: 50, esq: 55 };
+  var margem = { topo: 20, dir: 30, baixo: 60, esq: 55 };
   var largTotal = Math.max(obterLarguraContainer("grafico-evolucao"), 500);
-  var altTotal = 420;
+  var altTotal = 380;
   var largDisp = largTotal - margem.esq - margem.dir;
   var altDisp = altTotal - margem.topo - margem.baixo;
+
+  var maiorMedia = 0;
+  for (var k = 0; k < top10.length; k++) {
+    var serieTmp = seriesPreenchidas[top10[k].jog.player_id];
+    for (var r = 0; r <= idxAtual; r++) {
+      if (serieTmp[r] !== null && serieTmp[r] > maiorMedia) {
+        maiorMedia = serieTmp[r];
+      }
+    }
+  }
+
+  var numTicks = Math.min(8, todasDatas.length);
+  var tickIndices = [];
+  for (var ti = 0; ti < numTicks; ti++) {
+    tickIndices.push(
+      Math.round((ti * (todasDatas.length - 1)) / (numTicks - 1)),
+    );
+  }
+
+  var escX = d3
+    .scaleLinear()
+    .domain([0, todasDatas.length - 1])
+    .range([0, largDisp]);
+  var escY = d3
+    .scaleLinear()
+    .domain([0, maiorMedia * 1.1 || 1])
+    .range([altDisp, 0]);
 
   var svg = d3
     .select("#grafico-evolucao")
     .append("svg")
     .attr("width", largTotal)
     .attr("height", altTotal);
-
   var g = svg
     .append("g")
     .attr("transform", "translate(" + margem.esq + "," + margem.topo + ")");
-
-  var numRodadas = rodadaFim - rodadaInicio + 1;
-  var escX = d3
-    .scaleLinear()
-    .domain([rodadaInicio, rodadaFim])
-    .range([0, largDisp]);
-
-  var maiorMedia = 0;
-  for (var k = 0; k < top10.length; k++) {
-    var serie = top10[k].jog.series;
-    for (var r = rodadaInicio - 1; r < Math.min(rodadaFim, serie.length); r++) {
-      if (serie[r] > maiorMedia) {
-        maiorMedia = serie[r];
-      }
-    }
-  }
-
-  var escY = d3
-    .scaleLinear()
-    .domain([0, maiorMedia * 1.1 || 1])
-    .range([altDisp, 0]);
 
   g.append("g")
     .attr("transform", "translate(0," + altDisp + ")")
     .call(
       d3
         .axisBottom(escX)
-        .ticks(Math.min(numRodadas, 10))
-        .tickFormat(d3.format("d"))
+        .tickValues(tickIndices)
+        .tickFormat(function (d) {
+          return formatarDataCurta(todasDatas[Math.round(d)] || "");
+        })
         .tickSize(-altDisp),
     )
     .call(function (gr) {
       gr.select(".domain").remove();
       gr.selectAll(".tick line")
-        .attr("stroke", "#E0E0E8")
+        .attr("stroke", "#E8E8F0")
         .attr("stroke-dasharray", "3,3");
       gr.selectAll(".tick text")
-        .attr("fill", "#888899")
-        .attr("font-size", "12px");
+        .attr("fill", "#AAAABC")
+        .attr("font-size", "11px");
     });
 
   g.append("g")
@@ -525,144 +592,184 @@ function renderizarGraficoLinhas(rodadaInicio, rodadaFim) {
     .call(function (gr) {
       gr.select(".domain").remove();
       gr.selectAll(".tick line")
-        .attr("stroke", "#E0E0E8")
+        .attr("stroke", "#E8E8F0")
         .attr("stroke-dasharray", "3,3");
       gr.selectAll(".tick text")
-        .attr("fill", "#888899")
-        .attr("font-size", "12px");
+        .attr("fill", "#AAAABC")
+        .attr("font-size", "11px");
     });
 
-  g.append("text")
-    .attr("x", largDisp / 2)
-    .attr("y", altDisp + 40)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#555570")
-    .attr("font-size", "13px")
-    .attr("font-weight", "600")
-    .text("Rodada");
-  g.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("x", -altDisp / 2)
-    .attr("y", -42)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#555570")
-    .attr("font-size", "13px")
-    .attr("font-weight", "600")
-    .text("Média acumulada");
+  g.append("line")
+    .attr("x1", escX(idxAtual))
+    .attr("x2", escX(idxAtual))
+    .attr("y1", 0)
+    .attr("y2", altDisp)
+    .attr("stroke", "#CCCCDD")
+    .attr("stroke-width", 1.5)
+    .attr("stroke-dasharray", "4,3");
 
   var gerador = d3
     .line()
-    .x(function (d) {
-      return escX(d.rodada);
+    .defined(function (d) {
+      return d !== null;
+    })
+    .x(function (d, i) {
+      return escX(i);
     })
     .y(function (d) {
-      return escY(d.media);
+      return escY(d);
     })
     .curve(d3.curveLinear);
-
-  var legendaHtml = "";
 
   for (var t = 0; t < top10.length; t++) {
     var item = top10[t];
     var jog = item.jog;
-    var cor = CORES_LINHAS[t % CORES_LINHAS.length];
-    var eLider = item.mediaNoFim === maiorMediaFinal;
-    var espessura = eLider ? 3.5 : 1.8;
-    var opacidade = eLider ? 1.0 : 0.6;
-    var pontos = [];
+    var cor = CORES_RANK[t];
+    var eLider = t === 0;
 
-    for (var rd = rodadaInicio; rd <= rodadaFim; rd++) {
-      if (rd <= jog.series.length) {
-        var ponto = {};
-        ponto.rodada = rd;
-        ponto.media = jog.series[rd - 1];
-        pontos.push(ponto);
-      } else {
-        var ultimoValor = jog.series[jog.series.length - 1];
-        var pontoExtra = {};
-        pontoExtra.rodada = rd;
-        pontoExtra.media = ultimoValor;
-        pontos.push(pontoExtra);
-      }
+    var espessura = 1.0;
+    if (t === 0) {
+      espessura = 2.5;
+    } else if (t === 1) {
+      espessura = 2.0;
+    } else if (t <= 4) {
+      espessura = 1.5;
+    } else {
+      espessura = 1.0;
     }
 
-    if (pontos.length === 0) {
-      continue;
-    }
+    var opacidade = eLider ? 1.0 : 0.65;
+
+    var serieFull = seriesPreenchidas[jog.player_id];
+    var pontosAteAtual = serieFull.slice(0, idxAtual + 1);
 
     g.append("path")
-      .datum(pontos)
+      .datum(pontosAteAtual)
       .attr("fill", "none")
       .attr("stroke", cor)
       .attr("stroke-width", espessura)
       .attr("opacity", opacidade)
       .attr("d", gerador);
 
-    var ultimoPonto = pontos[pontos.length - 1];
-    g.append("circle")
-      .attr("cx", escX(ultimoPonto.rodada))
-      .attr("cy", escY(ultimoPonto.media))
-      .attr("r", eLider ? 7 : 4)
-      .attr("fill", cor)
-      .style("cursor", "pointer")
-      .on(
-        "mouseover",
-        (function (nomeJog, ponto) {
-          return function (evento) {
-            showTT(
-              evento,
-              "<strong>" +
-                nomeJog +
-                "</strong><br>Média: <strong>" +
-                ponto.media +
-                "</strong><br>Rodada " +
-                ponto.rodada,
-            );
-          };
-        })(jog.player_name, ultimoPonto),
-      )
-      .on("mousemove", moveTT)
-      .on("mouseout", hideTT)
-      .on(
-        "click",
-        (function (pid) {
-          return function () {
-            window.location.href = "jogador.html?id=" + pid;
-          };
-        })(jog.player_id),
-      );
-
-    if (eLider) {
-      var partes = jog.player_name.split(" ");
-      var nomeAbrev = partes[0].charAt(0) + ". " + partes[partes.length - 1];
-      g.append("text")
-        .attr("x", escX(ultimoPonto.rodada) + 10)
-        .attr("y", escY(ultimoPonto.media) + 4)
+    if (item.valorAtual !== null) {
+      g.append("circle")
+        .attr("cx", escX(idxAtual))
+        .attr("cy", escY(item.valorAtual))
+        .attr("r", eLider ? 5 : 3.5)
         .attr("fill", cor)
-        .attr("font-size", "11px")
-        .attr("font-weight", "700")
-        .text(nomeAbrev + " " + ultimoPonto.media);
+        .attr("opacity", Math.min(opacidade + 0.2, 1.0))
+        .style("cursor", "pointer")
+        .on(
+          "click",
+          (function (pid) {
+            return function () {
+              window.location.href = "jogador.html?id=" + pid;
+            };
+          })(jog.player_id),
+        );
     }
 
-    var partesLeg = jog.player_name.split(" ");
-    var nomeAbrevLeg =
-      partesLeg[0].charAt(0) + ". " + partesLeg[partesLeg.length - 1];
-    var destaqueLeg = eLider ? " font-weight:700;" : "";
-    legendaHtml =
-      legendaHtml +
-      '<span class="legenda-item" style="' +
-      destaqueLeg +
-      '"><span class="legenda-cor" style="background:' +
-      cor +
-      ";height:" +
-      (eLider ? "4px" : "2px") +
-      ';"></span>' +
-      nomeAbrevLeg +
-      " <strong>" +
-      ultimoPonto.media +
-      "</strong></span>";
+    if (eLider && item.valorAtual !== null) {
+      var partes = jog.player_name.split(" ");
+      var nomeAbrev = partes[0].charAt(0) + ". " + partes[partes.length - 1];
+
+      var xCirulo = escX(idxAtual);
+      var yCirulo = escY(item.valorAtual);
+
+      var idxLabel = Math.max(
+        0,
+        idxAtual - Math.floor(todasDatas.length * 0.08),
+      );
+      var valorLabel = serieFull[idxLabel];
+      if (valorLabel === null) {
+        valorLabel = item.valorAtual;
+        idxLabel = idxAtual;
+      }
+
+      var xLabel = escX(idxLabel) - 6;
+      var yLabel = escY(valorLabel) - 8;
+
+      g.append("text")
+        .attr("x", xLabel)
+        .attr("y", yLabel)
+        .attr("text-anchor", "end")
+        .attr("fill", cor)
+        .attr("font-size", "10px")
+        .attr("font-weight", "700")
+        .text(nomeAbrev + " " + item.valorAtual);
+    }
   }
 
+  var overlay = g
+    .append("rect")
+    .attr("width", largDisp)
+    .attr("height", altDisp)
+    .attr("fill", "none")
+    .attr("pointer-events", "all")
+    .style("cursor", "crosshair");
+
+  overlay.on("mousemove", function (evento) {
+    var coords = d3.pointer(evento);
+    var xPos = coords[0];
+    var idxHovered = Math.round(escX.invert(xPos));
+    if (idxHovered < 0) {
+      idxHovered = 0;
+    }
+    if (idxHovered > idxAtual) {
+      idxHovered = idxAtual;
+    }
+
+    var top10Hover = calcularTop10(idxHovered);
+    var dataLabel = formatarDataCurta(todasDatas[idxHovered] || "");
+
+    var html = "<strong>" + dataLabel + "</strong>";
+    for (var li = 0; li < top10Hover.length; li++) {
+      var partesNome = top10Hover[li].jog.player_name.split(" ");
+      var nomeAbrevTT =
+        partesNome[0].charAt(0) + ". " + partesNome[partesNome.length - 1];
+      html =
+        html +
+        '<br><span style="color:' +
+        CORES_RANK[li] +
+        ';font-weight:700;">' +
+        (li + 1) +
+        "º</span> " +
+        nomeAbrevTT +
+        ": <strong>" +
+        top10Hover[li].valorAtual +
+        "</strong>";
+    }
+    showTT(evento, html);
+  });
+
+  overlay.on("mouseout", hideTT);
+
+  var legendaHtml = "";
+  for (var lk = 0; lk < top10.length; lk++) {
+    var itemLeg = top10[lk];
+    var corLeg = CORES_RANK[lk];
+    var eLiderLeg = lk === 0;
+    var partesLeg = itemLeg.jog.player_name.split(" ");
+    var nomeAbrevLeg =
+      partesLeg[0].charAt(0) + ". " + partesLeg[partesLeg.length - 1];
+    legendaHtml =
+      legendaHtml +
+      '<span class="legenda-item"><span class="legenda-cor" style="background:' +
+      corLeg +
+      ";height:" +
+      (eLiderLeg ? "3px" : "2px") +
+      ';"></span><span style="color:' +
+      corLeg +
+      ';font-weight:700;margin-right:1px;">' +
+      (lk + 1) +
+      'º</span><span style="' +
+      (eLiderLeg ? "font-weight:700;" : "") +
+      '">' +
+      nomeAbrevLeg +
+      " <strong>" +
+      itemLeg.valorAtual +
+      "</strong></span></span>";
+  }
   document.getElementById("legenda-evolucao").innerHTML = legendaHtml;
 }
 

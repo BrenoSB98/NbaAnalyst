@@ -1,280 +1,271 @@
 .hero-home {
-    padding-top: 100px;
-    padding-bottom: 60px;
-    background-image: url('../img/banner.jpeg');
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    border-bottom: 1px solid #D0D0E0;
-    position: relative;
+  padding-top: 100px;
+  padding-bottom: 60px;
+  background-image: url("../img/banner.jpeg");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  border-bottom: 1px solid #d0d0e0;
+  position: relative;
 }
 
 .hero-home::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(13,13,20,0.92) 55%, rgba(13,13,20,0.4) 100%);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(13, 13, 20, 0.92) 55%,
+    rgba(13, 13, 20, 0.4) 100%
+  );
 }
 
 .hero-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #F75C03;
-    margin-bottom: 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f75c03;
+  margin-bottom: 14px;
 }
 
 .hero-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 3.4rem;
-    font-weight: 700;
-    color: #EEEEF5;
-    line-height: 1.08;
-    margin-bottom: 16px;
+  font-family: "Oswald", sans-serif;
+  font-size: 3.4rem;
+  font-weight: 700;
+  color: #eeeef5;
+  line-height: 1.08;
+  margin-bottom: 16px;
 }
 
 .hero-titulo .destaque {
-    color: #F75C03;
+  color: #f75c03;
 }
 
 .hero-nav-publico {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
 .hero-nav-auth {
-    gap: 10px;
-    flex-wrap: wrap;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .faixa-kpis {
-    background-color: #FFFFFF;
-    border-bottom: 1px solid #D0D0E0;
-    padding: 24px 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d0d0e0;
+  padding: 24px 0;
 }
 
 .kpi-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 4px 20px;
-    border-right: 1px solid #D0D0E0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 20px;
+  border-right: 1px solid #d0d0e0;
 }
 
 .kpi-item:last-child {
-    border-right: none;
+  border-right: none;
 }
 
 .kpi-icone {
-    font-size: 1.6rem;
-    color: #F75C03;
+  font-size: 1.6rem;
+  color: #f75c03;
 }
 
 .kpi-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    line-height: 1;
-    margin-bottom: 2px;
+  font-family: "Oswald", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
 .kpi-rotulo {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #555570;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #555570;
 }
 
 .kpi-carregando {
-    display: inline-block;
-    width: 60px;
-    height: 28px;
-    background-color: #EAEAF0;
-    border-radius: 4px;
-    vertical-align: middle;
+  display: inline-block;
+  width: 60px;
+  height: 28px;
+  background-color: #eaeaf0;
+  border-radius: 4px;
+  vertical-align: middle;
 }
 
 .secao-modelo {
-    padding: 60px 0;
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 60px 0;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .card-winrate-principal {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 32px 24px;
-    text-align: center;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
 }
 
 .card-winrate-principal .numero-grande {
-    font-family: 'Oswald', sans-serif;
-    font-size: 4.5rem;
-    font-weight: 700;
-    color: #F75C03;
-    line-height: 1;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: #f75c03;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 .card-winrate-principal .rotulo-winrate {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #555570;
-    margin-bottom: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #555570;
+  margin-bottom: 12px;
 }
 
 .card-winrate-principal .total-predicoes {
-    font-size: 0.82rem;
-    color: #888899;
+  font-size: 0.82rem;
+  color: #888899;
 }
 
 .card-stat-modelo {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 18px 16px;
-    text-align: center;
-    height: 100%;
-    transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.card-stat-modelo:hover {
-    border-color: rgba(247, 92, 3, 0.4);
-    transform: translateY(-2px);
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 18px 16px;
+  text-align: center;
+  height: 100%;
 }
 
 .card-stat-modelo .stat-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 .card-stat-modelo .stat-nome {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #555570;
-    margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #555570;
+  margin-bottom: 2px;
 }
 
 .card-stat-modelo .stat-margem {
-    font-size: 0.68rem;
-    color: #888899;
-    margin-bottom: 10px;
+  font-size: 0.68rem;
+  color: #888899;
+  margin-bottom: 10px;
 }
 
 .barra-progresso {
-    height: 5px;
-    background-color: #EAEAF0;
-    border-radius: 3px;
-    overflow: hidden;
+  height: 5px;
+  background-color: #eaeaf0;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .barra-progresso .preenchimento {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 1s ease;
+  height: 100%;
+  border-radius: 3px;
 }
 
 .secao-funcionalidades {
-    padding: 60px 0;
-    background-color: #FFFFFF;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 60px 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .card-funcionalidade {
-    background-color: #F5F5F8;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 28px 22px;
-    height: 100%;
-    transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.card-funcionalidade:hover {
-    border-color: rgba(247, 92, 3, 0.4);
-    transform: translateY(-3px);
+  background-color: #f5f5f8;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 28px 22px;
+  height: 100%;
 }
 
 .card-funcionalidade .func-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #1A1A2E;
-    margin-bottom: 8px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 8px;
 }
 
 .card-funcionalidade .func-desc {
-    font-size: 0.85rem;
-    color: #555570;
-    line-height: 1.65;
-    margin-bottom: 0;
+  font-size: 0.85rem;
+  color: #555570;
+  line-height: 1.65;
+  margin-bottom: 0;
 }
 
 .badge-logado {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #C17800;
-    background-color: rgba(193, 120, 0, 0.1);
-    border-radius: 20px;
-    padding: 3px 10px;
-    margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #c17800;
+  background-color: rgba(193, 120, 0, 0.1);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
 }
 
 .secao-cta {
-    padding: 72px 0;
-    text-align: center;
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 72px 0;
+  text-align: center;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .secao-cta .cta-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2.4rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 14px;
+  font-family: "Oswald", sans-serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 14px;
 }
 
 .secao-cta .cta-desc {
-    font-size: 0.95rem;
-    color: #555570;
-    max-width: 440px;
-    margin: 0 auto 30px;
+  font-size: 0.95rem;
+  color: #555570;
+  max-width: 440px;
+  margin: 0 auto 30px;
 }
 
 @media (max-width: 767px) {
-    .hero-titulo {
-        font-size: 2.4rem;
-    }
+  .hero-titulo {
+    font-size: 2.4rem;
+  }
 
-    .kpi-item {
-        padding: 8px 12px;
-        border-right: none;
-        border-bottom: 1px solid #D0D0E0;
-    }
+  .kpi-item {
+    padding: 8px 12px;
+    border-right: none;
+    border-bottom: 1px solid #d0d0e0;
+  }
 
-    .kpi-item:last-child {
-        border-bottom: none;
-    }
+  .kpi-item:last-child {
+    border-bottom: none;
+  }
 
-    .secao-cta .cta-titulo {
-        font-size: 1.8rem;
-    }
+  .secao-cta .cta-titulo {
+    font-size: 1.8rem;
+  }
 }

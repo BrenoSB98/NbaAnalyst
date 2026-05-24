@@ -1,8 +1,8 @@
-from datetime import datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
 import logging
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import delete, select, func
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 
 from app.config import config
@@ -11,6 +11,7 @@ from app.services.prediction_service import prever_multiplas_stats_jogador
 
 logger = logging.getLogger("manager_service")
 FUSO_SP = ZoneInfo("America/Sao_Paulo")
+
 
 def _converter_minutos(minutos_str):
     if not minutos_str:
@@ -30,6 +31,7 @@ def _converter_minutos(minutos_str):
         return float(minutos_limpo)
     except ValueError:
         return 0.0
+
 
 def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
     limiar = config.MIN_MINUTOS_PALPITE
@@ -74,6 +76,7 @@ def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
 
     return lista_titulares
 
+
 def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
     stmt = (
         select(Game)
@@ -114,6 +117,7 @@ def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
 
     return lista_ativos
 
+
 def _buscar_jogos_do_dia(db, season):
     agora_sp = datetime.now(FUSO_SP)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -128,6 +132,7 @@ def _buscar_jogos_do_dia(db, season):
         Game.date_start < fim_utc,
     )
     return db.execute(stmt).scalars().all()
+
 
 def _buscar_jogadores_do_time(db, team_id, season):
     stmt = select(PlayerTeamSeason).where(
@@ -151,7 +156,7 @@ def _predicao_ja_existe(db, player_id, game_id):
     stmt = select(Prediction).where(
         Prediction.player_id == player_id, Prediction.game_id == game_id
     )
-    existente = db.execute(stmt).scalar_one_or_none()
+    existente = db.execute(stmt).first()
     if existente:
         return True
     return False

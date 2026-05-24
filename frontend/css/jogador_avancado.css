@@ -1,354 +1,332 @@
 .cabecalho-jav {
-    padding: 32px 0 24px;
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 32px 0 24px;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .jav-avatar {
-    width: 64px;
-    height: 64px;
-    background-color: #F75C03;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background-color: #f75c03;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
 }
 
 .jav-nome {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
 }
 
 .jav-meta {
-    font-size: 0.82rem;
-    color: #555570;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
+  font-size: 0.82rem;
+  color: #555570;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
 }
 
 .jav-meta span {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .jav-meta i {
-    color: #F75C03;
-    font-size: 0.75rem;
+  color: #f75c03;
+  font-size: 0.75rem;
 }
 
 .barra-controles-jav {
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
-    padding: 12px 0;
-    position: sticky;
-    top: 64px;
-    z-index: 100;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
+  padding: 12px 0;
+  position: sticky;
+  top: 64px;
+  z-index: 100;
 }
 
 .abas-jav {
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
-    position: sticky;
-    top: 110px;
-    z-index: 99;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
+  position: sticky;
+  top: 110px;
+  z-index: 99;
 }
 
 .abas-jav .nav-link {
-    color: #555570;
-    font-size: 0.83rem;
-    font-weight: 600;
-    padding: 13px 18px;
-    border: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    background: none;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    white-space: nowrap;
-}
-
-.abas-jav .nav-link:hover {
-    color: #1A1A2E;
+  color: #555570;
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 13px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .abas-jav .nav-link.ativo {
-    color: #F75C03;
-    border-bottom-color: #F75C03;
+  color: #f75c03;
+  border-bottom-color: #f75c03;
 }
 
 .area-jav {
-    padding: 28px 0 48px;
+  padding: 28px 0 48px;
 }
 
 .card-kpi-jav {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    height: 100%;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-top: 3px solid transparent;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  height: 100%;
 }
 
 .card-kpi-jav .kv {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: #F75C03;
-    line-height: 1;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #f75c03;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 .card-kpi-jav .kr {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888899;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888899;
 }
 
 .card-pct {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .card-pct .pct-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    white-space: nowrap;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  white-space: nowrap;
 }
 
 .card-pct .pct-rotulo {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888899;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888899;
 }
 
 .card-pct .pct-barra {
-    flex: 1;
-    height: 4px;
-    background-color: #D0D0E0;
-    border-radius: 2px;
-    overflow: hidden;
+  flex: 1;
+  height: 4px;
+  background-color: #d0d0e0;
+  border-radius: 2px;
+  overflow: hidden;
 }
 
 .card-pct .pct-fill {
-    height: 100%;
-    border-radius: 2px;
-    background-color: #F75C03;
+  height: 100%;
+  border-radius: 2px;
+  background-color: #f75c03;
 }
 
 .tabela-jogos-jav {
-    width: 100%;
-    font-size: 0.82rem;
-    border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+  border-collapse: collapse;
 }
 
 .tabela-jogos-jav thead th {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #888899;
-    padding: 8px 12px;
-    border-bottom: 1px solid #D0D0E0;
-    background-color: #EAEAF0;
-    white-space: nowrap;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888899;
+  padding: 8px 12px;
+  border-bottom: 1px solid #d0d0e0;
+  background-color: #eaeaf0;
+  white-space: nowrap;
 }
 
 .tabela-jogos-jav tbody tr {
-    border-bottom: 1px solid #D0D0E0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .tabela-jogos-jav tbody tr:last-child {
-    border-bottom: none;
-}
-
-.tabela-jogos-jav tbody tr:hover {
-    background-color: #F0F0F7;
+  border-bottom: none;
 }
 
 .tabela-jogos-jav tbody td {
-    padding: 9px 12px;
-    color: #1A1A2E;
-    vertical-align: middle;
+  padding: 9px 12px;
+  color: #1a1a2e;
+  vertical-align: middle;
 }
 
 .tabela-jogos-jav .td-pts {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    color: #F75C03;
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+  color: #f75c03;
 }
 
 .tabela-jogos-jav .td-sec {
-    color: #555570;
+  color: #555570;
 }
 
 .grafico-container {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 20px;
-    overflow-x: auto;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
 }
 
 .grafico-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #888899;
-    margin-bottom: 14px;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888899;
+  margin-bottom: 14px;
 }
 
 .btn-stat {
-    background: #F0F0F7;
-    border: 1px solid #D0D0E0;
-    color: #555570;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.btn-stat:hover {
-    border-color: #F75C03;
-    color: #F75C03;
+  background: #f0f0f7;
+  border: 1px solid #d0d0e0;
+  color: #555570;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .btn-stat.ativo {
-    background: #F75C03;
-    border-color: #F75C03;
-    color: #fff;
+  background: #f75c03;
+  border-color: #f75c03;
+  color: #fff;
 }
 
 .btn-nj {
-    background: #F0F0F7;
-    border: 1px solid #D0D0E0;
-    color: #555570;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 5px 13px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.btn-nj:hover {
-    border-color: #F75C03;
-    color: #F75C03;
+  background: #f0f0f7;
+  border: 1px solid #d0d0e0;
+  color: #555570;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 13px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .btn-nj.ativo {
-    background: #F75C03;
-    border-color: #F75C03;
-    color: #fff;
+  background: #f75c03;
+  border-color: #f75c03;
+  color: #fff;
 }
 
 .sec-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin: 28px 0 14px;
-    letter-spacing: 0.02em;
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 28px 0 14px;
+  letter-spacing: 0.02em;
 }
 
 .acento {
-    width: 28px;
-    height: 3px;
-    background: #F75C03;
-    border-radius: 2px;
-    margin-bottom: 8px;
+  width: 28px;
+  height: 3px;
+  background: #f75c03;
+  border-radius: 2px;
+  margin-bottom: 8px;
 }
 
 .gc {
-    background: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 16px;
-    overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 16px;
+  overflow: hidden;
 }
 
 .gt {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888899;
-    margin-bottom: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888899;
+  margin-bottom: 10px;
 }
 
 .d3-tt {
-    position: fixed;
-    background: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 11px;
-    color: #1A1A2E;
-    pointer-events: none;
-    opacity: 0;
-    z-index: 9999;
-    line-height: 1.6;
-    max-width: 200px;
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #1a1a2e;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+  line-height: 1.6;
+  max-width: 200px;
 }
 
 .th-ord {
-    cursor: pointer;
-    user-select: none;
-}
-
-.th-ord:hover {
-    color: #1A1A2E !important;
+  cursor: pointer;
+  user-select: none;
 }
 
 .th-ord.asc::after {
-    content: " ▲";
-    font-size: 0.6em;
+  content: " ▲";
+  font-size: 0.6em;
 }
 
 .th-ord.desc::after {
-    content: " ▼";
-    font-size: 0.6em;
+  content: " ▼";
+  font-size: 0.6em;
 }
 
 .linha-dest {
-    background: #EAF0F8 !important;
+  background: #eaf0f8 !important;
 }
 
 @media (max-width: 767px) {
-    .jav-nome {
-        font-size: 1.35rem;
-    }
-    .abas-jav {
-        overflow-x: auto;
-    }
-    .abas-jav .d-flex {
-        flex-wrap: nowrap;
-    }
+  .jav-nome {
+    font-size: 1.35rem;
+  }
+
+  .abas-jav {
+    overflow-x: auto;
+  }
+
+  .abas-jav .d-flex {
+    flex-wrap: nowrap;
+  }
 }

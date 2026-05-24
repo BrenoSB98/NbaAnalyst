@@ -1,163 +1,163 @@
 .cabecalho-perfil {
-    padding: 40px 0 32px;
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 40px 0 32px;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .perfil-avatar {
-    width: 72px;
-    height: 72px;
-    background-color: #F75C03;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  background-color: #f75c03;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
 }
 
 .perfil-nome {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
 }
 
 .perfil-email {
-    font-size: 0.88rem;
-    color: #555570;
-    margin-bottom: 2px;
+  font-size: 0.88rem;
+  color: #555570;
+  margin-bottom: 2px;
 }
 
 .perfil-membro {
-    font-size: 0.78rem;
-    color: #888899;
-    margin: 0;
+  font-size: 0.78rem;
+  color: #888899;
+  margin: 0;
 }
 
 .secao-perfil {
-    padding: 32px 0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 32px 0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .secao-perfil:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .dado-cadastral-rotulo {
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888899;
-    margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888899;
+  margin-bottom: 6px;
 }
 
 .dado-cadastral-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #1A1A2E;
-    word-break: break-word;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  word-break: break-word;
 }
 
 .card-time-favorito {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    text-decoration: none;
-    max-width: 400px;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  max-width: 400px;
 }
 
 .card-time-favorito:hover {
-    background-color: #F0F0F7;
+  background-color: #f0f0f7;
 }
 
 .card-time-favorito .time-logo-fav {
-    width: 52px;
-    height: 52px;
-    object-fit: contain;
-    flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .card-time-favorito .time-placeholder-fav {
-    width: 52px;
-    height: 52px;
-    background-color: #D0D0E0;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #F75C03;
-    flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  background-color: #d0d0e0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f75c03;
+  flex-shrink: 0;
 }
 
 .card-time-favorito .time-nome-fav {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1A1A2E;
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
 }
 
 .card-time-favorito .time-label-fav {
-    font-size: 0.75rem;
-    color: #888899;
+  font-size: 0.75rem;
+  color: #888899;
 }
 
 .campo-perfil {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid #D0D0E0;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    color: #1A1A2E;
-    background-color: #F5F5F8;
-    outline: none;
-    transition: border-color 0.2s ease;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0d0e0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #1a1a2e;
+  background-color: #f5f5f8;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
 .campo-perfil:focus {
-    border-color: #F75C03;
-    background-color: #FFFFFF;
+  border-color: #f75c03;
+  background-color: #ffffff;
 }
 
 .alerta-erro {
-    background-color: rgba(255, 59, 92, 0.08);
-    border: 1px solid rgba(255, 59, 92, 0.25);
-    border-radius: 8px;
-    color: #FF3B5C;
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 10px 14px;
+  background-color: rgba(255, 59, 92, 0.08);
+  border: 1px solid rgba(255, 59, 92, 0.25);
+  border-radius: 8px;
+  color: #ff3b5c;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 10px 14px;
 }
 
 .alerta-sucesso {
-    background-color: rgba(0, 200, 150, 0.08);
-    border: 1px solid rgba(0, 200, 150, 0.25);
-    border-radius: 8px;
-    color: #00A878;
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 10px 14px;
+  background-color: rgba(0, 200, 150, 0.08);
+  border: 1px solid rgba(0, 200, 150, 0.25);
+  border-radius: 8px;
+  color: #00a878;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 10px 14px;
 }
 
 @media (max-width: 767px) {
-    .perfil-nome {
-        font-size: 1.4rem;
-    }
+  .perfil-nome {
+    font-size: 1.4rem;
+  }
 
-    .dado-cadastral-valor {
-        font-size: 0.92rem;
-    }
+  .dado-cadastral-valor {
+    font-size: 0.92rem;
+  }
 }

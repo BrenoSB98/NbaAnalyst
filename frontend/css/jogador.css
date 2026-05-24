@@ -1,191 +1,188 @@
 .cabecalho-jogador {
-    padding: 40px 0 32px;
-    background-color: #EAEAF0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 40px 0 32px;
+  background-color: #eaeaf0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .jogador-avatar {
-    width: 72px;
-    height: 72px;
-    background-color: #D0D0E0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #F75C03;
-    flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  background-color: #d0d0e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #f75c03;
+  flex-shrink: 0;
 }
 
 .jogador-nome {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 6px;
+  font-family: "Oswald", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
 }
 
 .jogador-info-basica {
-    font-size: 0.85rem;
-    color: #555570;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
+  font-size: 0.85rem;
+  color: #555570;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .jogador-info-basica span {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .jogador-info-basica i {
-    color: #F75C03;
-    font-size: 0.8rem;
+  color: #f75c03;
+  font-size: 0.8rem;
 }
 
 .secao-dados {
-    padding: 32px 0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 32px 0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .card-dado {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 10px;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .card-dado .dado-icone {
-    font-size: 1.2rem;
-    color: #F75C03;
-    width: 24px;
-    text-align: center;
-    flex-shrink: 0;
+  font-size: 1.2rem;
+  color: #f75c03;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .card-dado .dado-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1A1A2E;
-    line-height: 1.2;
+  font-family: "Oswald", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.2;
 }
 
 .card-dado .dado-rotulo {
-    font-size: 0.72rem;
-    color: #888899;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: #888899;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .secao-historico {
-    padding: 32px 0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 32px 0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .linha-time {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 0;
-    border-bottom: 1px solid #D0D0E0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .linha-time:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .linha-time .time-temporada {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #F75C03;
-    width: 48px;
-    flex-shrink: 0;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f75c03;
+  width: 48px;
+  flex-shrink: 0;
 }
 
 .linha-time .time-nome-link {
-    font-weight: 600;
-    color: #1A1A2E;
-    text-decoration: none;
-    flex: 1;
-}
-
-.linha-time .time-nome-link:hover {
-    color: #F75C03;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-decoration: none;
+  flex: 1;
 }
 
 .linha-time .time-posicao {
-    font-size: 0.78rem;
-    color: #555570;
+  font-size: 0.78rem;
+  color: #555570;
 }
 
 .linha-time .time-camisa {
-    font-size: 0.78rem;
-    color: #888899;
+  font-size: 0.78rem;
+  color: #888899;
 }
 
 .secao-medias {
-    padding: 32px 0;
-    border-bottom: 1px solid #D0D0E0;
+  padding: 32px 0;
+  border-bottom: 1px solid #d0d0e0;
 }
 
 .card-media {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-top: 3px solid transparent;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
 }
 
 .card-media .media-valor {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: #F75C03;
-    line-height: 1;
-    margin-bottom: 4px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #f75c03;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 .card-media .media-rotulo {
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #555570;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #555570;
 }
 
 .banner-login {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 28px 24px;
-    text-align: center;
-    margin: 32px 0;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  margin: 32px 0;
 }
 
 .banner-login .banner-titulo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1A1A2E;
-    margin-bottom: 6px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 6px;
 }
 
 .banner-login .banner-desc {
-    font-size: 0.85rem;
-    color: #555570;
-    margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #555570;
+  margin-bottom: 16px;
 }
 
 @media (max-width: 767px) {
-    .jogador-nome {
-        font-size: 1.6rem;
-    }
+  .jogador-nome {
+    font-size: 1.6rem;
+  }
 }

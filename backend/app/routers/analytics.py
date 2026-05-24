@@ -24,9 +24,9 @@ from app.schemas.analytics import (
     TendenciasTimeResponse,
 )
 from app.services.analytics_service import (
-    buscar_top_assistencias,
     buscar_top_arremessos_campo,
     buscar_top_arremessos_tres,
+    buscar_top_assistencias,
     buscar_top_bloqueios,
     buscar_top_faltas_pessoais,
     buscar_top_lances_livres,
@@ -506,7 +506,7 @@ def tendencias_time(
             pontos_feitos.append(pts_feitos)
             pontos_sofridos.append(pts_sofridos)
 
-            if pts_feitos > pts_sofridos: # type: ignore
+            if pts_feitos > pts_sofridos:  # type: ignore
                 vitorias = vitorias + 1
 
     num_jogos = len(pontos_feitos)
@@ -572,11 +572,16 @@ def lideres_publico(
             detail=f"Categoria inválida: {categoria}. Use: {list(CATEGORIAS.keys())}",
         )
 
+    media_expr = (func.sum(stat_field) / func.count(PlayerGameStats.game_id)).label(
+        "media_calc"
+    )
+
     stmt = (
         select(
             PlayerGameStats.player_id,
             func.sum(stat_field).label("total"),
             func.count(PlayerGameStats.game_id).label("jogos"),
+            media_expr,
         )
         .join(Game, PlayerGameStats.game_id == Game.id)
         .where(Game.status_short == 3, Game.stage != 1)
@@ -589,7 +594,10 @@ def lideres_publico(
         stmt = stmt.where(Game.stage == stage)
 
     stmt = (
-        stmt.group_by(PlayerGameStats.player_id).order_by(desc("total")).limit(limite)
+        stmt.group_by(PlayerGameStats.player_id)
+        .having(func.count(PlayerGameStats.game_id) >= 10)
+        .order_by(desc("media_calc"))
+        .limit(limite)
     )
     resultados = db.execute(stmt).all()
 
@@ -795,9 +803,10 @@ def evolucao_medias(
     for row in resultados:
         pid = row[0]
         valor = float(row[1] or 0)
+        data_str = row[2].strftime("%Y-%m-%d") if row[2] is not None else None
         if pid not in jogos_por_jogador:
             jogos_por_jogador[pid] = []
-        jogos_por_jogador[pid].append(valor)
+        jogos_por_jogador[pid].append({"data": data_str, "valor": valor})
 
     if not jogos_por_jogador:
         return {"categoria": categoria, "temporada": temporada, "jogadores": []}
@@ -808,8 +817,8 @@ def evolucao_medias(
         medias = []
         soma = 0.0
         for i in range(len(lista)):
-            soma = soma + lista[i]
-            medias.append(round(soma / (i + 1), 2))
+            soma = soma + lista[i]["valor"]
+            medias.append({"data": lista[i]["data"], "media": round(soma / (i + 1), 2)})
         medias_acumuladas[pid] = medias
 
     jogador_cache = {}
@@ -824,17 +833,15 @@ def evolucao_medias(
             else:
                 jogador_cache[pid] = "Desconhecido"
 
-        if medias_acumuladas[pid]:
-            media_final = medias_acumuladas[pid][-1]
-        else:
-            media_final = 0.0
+        serie = medias_acumuladas[pid]
+        media_final = serie[-1]["media"] if serie else 0.0
 
         item_jogador = {}
         item_jogador["player_id"] = pid
         item_jogador["player_name"] = jogador_cache[pid]
         item_jogador["media_final"] = media_final
-        item_jogador["total_jogos"] = len(medias_acumuladas[pid])
-        item_jogador["series"] = medias_acumuladas[pid]
+        item_jogador["total_jogos"] = len(serie)
+        item_jogador["series"] = serie
         resultado_jogadores.append(item_jogador)
 
     def chave_media_final(x):
@@ -842,15 +849,8 @@ def evolucao_medias(
 
     resultado_jogadores.sort(key=chave_media_final, reverse=True)
 
-    total_rodadas = 0
-    if medias_acumuladas:
-        for v in medias_acumuladas.values():
-            if len(v) > total_rodadas:
-                total_rodadas = len(v)
-
     return {
         "categoria": categoria,
         "temporada": temporada,
-        "total_rodadas": total_rodadas,
         "jogadores": resultado_jogadores,
     }

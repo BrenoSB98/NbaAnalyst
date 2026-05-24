@@ -1,60 +1,60 @@
 .pagina-cadastro {
-    background-color: #F5F5F8;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 40px 16px;
+  background-color: #f5f5f8;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 40px 16px;
 }
 
 .card-cadastro {
-    background-color: #FFFFFF;
-    border: 1px solid #D0D0E0;
-    border-radius: 12px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 520px;
-    margin: 0 auto;
+  background-color: #ffffff;
+  border: 1px solid #d0d0e0;
+  border-radius: 12px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
 .cadastro-logo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1A1A2E;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+  font-family: "Oswald", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .cadastro-logo i {
-    color: #F75C03;
-    font-size: 1.6rem;
+  color: #f75c03;
+  font-size: 1.6rem;
 }
 
 .cadastro-divisor {
-    border-color: #D0D0E0;
-    margin: 24px 0;
+  border-color: #d0d0e0;
+  margin: 24px 0;
 }
 
 .cadastro-rodape {
-    text-align: center;
-    font-size: 0.88rem;
-    color: #555570;
-    margin-top: 24px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #555570;
+  margin-top: 24px;
 }
 
 .cadastro-rodape a {
-    color: #F75C03;
-    font-weight: 600;
+  color: #f75c03;
+  font-weight: 600;
 }
 
 .cadastro-rodape a:hover {
-    color: #D94E00;
+  color: #d94e00;
 }
 
 @media (max-width: 576px) {
-    .card-cadastro {
-        padding: 28px 20px;
-    }
+  .card-cadastro {
+    padding: 28px 20px;
+  }
 }

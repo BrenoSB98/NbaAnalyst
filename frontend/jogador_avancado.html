@@ -1,173 +1,331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Estatísticas Privadas do Atleta</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/jogador_avancado.css">
-</head>
-<body>
-<div id="app-wrapper">
-    <nav id="navbar-principal"></nav>
-    <main id="conteudo-principal">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/jogador_avancado.css" />
+  </head>
 
-        <div id="pg-loading"><div class="spinner-nba" style="margin-top:80px;"><div class="bola-animada"></div><span>Carregando...</span></div></div>
-
-        <div id="pg-content" style="display:none;">
-            <div class="cabecalho-jav">
-                <div class="container">
-                    <div class="d-flex align-items-center gap-4 flex-wrap">
-                        <div class="jav-avatar" id="jav-avatar">?</div>
-                        <div style="flex:1;">
-                            <h1 class="jav-nome" id="jav-nome">—</h1>
-                            <div class="jav-meta" id="jav-meta"></div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <a href="javascript:history.back()" class="btn-nba-ghost btn-nba btn-sm"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
-                            <a id="btn-basico" href="#" class="btn-nba-outline btn-nba btn-sm"><i class="bi bi-person me-1"></i>Perfil</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="barra-controles-jav">
-                <div class="container">
-                    <div class="d-flex align-items-center gap-3 flex-wrap">
-
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Temporada</label>
-                            <select class="form-control-nba" id="sel-temp" style="max-width:175px;" onchange="recarregar()">
-                                <option value="">Todas as temporadas</option>
-                                <option value="2025" selected>2025</option>
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
-                                <option value="2022">2022</option>
-                                <option value="2021">2021</option>
-                                <option value="2020">2020</option>
-                                <option value="2019">2019</option>
-                                <option value="2018">2018</option>
-                                <option value="2017">2017</option>
-                                <option value="2016">2016</option>
-                                <option value="2015">2015</option>
-                            </select>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Últimos</label>
-                            <div class="d-flex gap-1" id="btns-nj">
-                                <button class="btn-nj" id="bn-5"  onclick="trocarN(5)">5</button>
-                                <button class="btn-nj ativo" id="bn-10" onclick="trocarN(10)">10</button>
-                                <button class="btn-nj" id="bn-15" onclick="trocarN(15)">15</button>
-                                <button class="btn-nj" id="bn-20" onclick="trocarN(20)">20</button>
-                                <button class="btn-nj" id="bn-50" onclick="trocarN(50)">Todos</button>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label-nba mb-0" style="font-size:.8rem;color:#666;white-space:nowrap;">Local</label>
-                            <select class="form-control-nba" id="sel-local" style="max-width:110px;" onchange="filtrarLocal()">
-                                <option value="todos">Todos</option>
-                                <option value="casa">Casa</option>
-                                <option value="fora">Fora</option>
-                            </select>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <div class="area-jav">
-                <div class="container">
-
-                    <div id="data-loading" style="padding:40px 0;"><div class="spinner-nba"><div class="bola-animada"></div><span>Carregando estatísticas...</span></div></div>
-
-                    <div id="data-content" style="display:none;">
-                        <div class="acento"></div>
-                        <div class="sec-titulo">Médias <span id="lbl-jogos" style="font-size:.75rem;color:#9999B0;font-family:'Karla',sans-serif;font-weight:400;"></span></div>
-                        <div class="row g-3 mb-4" id="grid-cards"></div>
-                        <div class="acento"></div>
-                        <div class="sec-titulo">Evolução por Jogo</div>
-                        <div class="gc mb-4">
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="linha-toggles"></div>
-                            <div id="g-linha"></div>
-                            <p style="font-size:.68rem;color:#9999B0;margin-top:8px;margin-bottom:0;">Clique na legenda ou na linha para mostrar/ocultar. Passe o mouse para ver os valores.</p>
-                        </div>
-
-                        <div class="row g-4 mb-4">
-                            <div class="col-12 col-lg-5">
-                                <div class="gc h-100">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <p class="gt mb-0">Eficiência de Arremesso</p>
-                                        <div class="d-flex gap-1">
-                                            <button class="btn-donut ativo-fg" id="btn-fg" onclick="trocarDonut('fg')">FG%</button>
-                                            <button class="btn-donut" id="btn-3p" onclick="trocarDonut('3p')">3P%</button>
-                                            <button class="btn-donut" id="btn-ft" onclick="trocarDonut('ft')">FT%</button>
-                                        </div>
-                                    </div>
-                                    <div id="g-donut"></div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-7">
-                                <div class="gc h-100">
-                                    <p class="gt">Tendência de Pontuação</p>
-                                    <div id="g-tendencia"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="acento"></div>
-                        <div class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2">
-                            <span>Histórico de Jogos</span>
-                            <span id="lbl-tabela" style="font-size:.75rem;color:#9999B0;font-family:'Karla',sans-serif;font-weight:400;"></span>
-                        </div>
-                        <div class="card-nba"><div style="overflow-x:auto;">
-                            <table class="tabela-jogos-jav" id="tab-jogos">
-                                <thead><tr>
-                                    <th>Adversário</th>
-                                    <th>Data</th>
-                                    <th class="td-pts">PTS</th>
-                                    <th>AST</th>
-                                    <th>REB</th>
-                                    <th class="td-sec">STL</th>
-                                    <th class="td-sec">BLK</th>
-                                    <th class="td-sec">TO</th>
-                                    <th class="td-sec">FG%</th>
-                                    <th class="td-sec">3P%</th>
-                                    <th class="td-sec">+/-</th>
-                                    <th class="td-sec">MIN</th>
-                                </tr></thead>
-                                <tbody id="tbody-jogos"></tbody>
-                            </table>
-                        </div></div>
-                        <div id="paginacao-tabela" class="mb-4"></div>
-
-                    </div>
-
-                    <div id="data-vazio" style="display:none;">
-                        <div class="estado-vazio"><i class="bi bi-bar-chart icone-vazio"></i><p class="titulo-vazio">Sem dados</p><p class="desc-vazio">Nenhuma estatística encontrada.</p></div>
-                    </div>
-
-                </div>
-            </div>
+  <body>
+    <div id="app-wrapper">
+      <nav id="navbar-principal"></nav>
+      <main id="conteudo-principal">
+        <div id="pg-loading">
+          <div class="spinner-nba" style="margin-top: 80px">
+            <div class="bola-animada"></div>
+            <span>Carregando...</span>
+          </div>
         </div>
 
-        <div id="pg-erro" style="display:none;">
-            <div class="estado-vazio" style="margin-top:80px;"><i class="bi bi-exclamation-circle icone-vazio"></i><p class="titulo-vazio">Jogador não encontrado</p></div>
+        <div id="pg-content" style="display: none">
+          <div class="cabecalho-jav">
+            <div class="container">
+              <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div class="jav-avatar" id="jav-avatar">?</div>
+                <div style="flex: 1">
+                  <h1 class="jav-nome" id="jav-nome">—</h1>
+                  <div class="jav-meta" id="jav-meta"></div>
+                </div>
+                <div class="d-flex gap-2">
+                  <a
+                    href="javascript:history.back()"
+                    class="btn-nba-ghost btn-nba btn-sm"
+                    ><i class="bi bi-arrow-left me-1"></i>Voltar</a
+                  >
+                  <a
+                    id="btn-basico"
+                    href="#"
+                    class="btn-nba-outline btn-nba btn-sm"
+                    ><i class="bi bi-person me-1"></i>Perfil</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="barra-controles-jav">
+            <div class="container">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                  <label
+                    class="form-label-nba mb-0"
+                    style="font-size: 0.8rem; color: #666; white-space: nowrap"
+                    >Temporada</label
+                  >
+                  <select
+                    class="form-control-nba"
+                    id="sel-temp"
+                    style="max-width: 175px"
+                    onchange="recarregar()"
+                  >
+                    <option value="">Todas as temporadas</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                    <option value="2016">2016</option>
+                    <option value="2015">2015</option>
+                  </select>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <label
+                    class="form-label-nba mb-0"
+                    style="font-size: 0.8rem; color: #666; white-space: nowrap"
+                    >Últimos N Jogos</label
+                  >
+                  <input
+                    type="number"
+                    id="inp-n-jogos"
+                    min="6"
+                    max="200"
+                    placeholder="N"
+                    style="width: 64px"
+                    class="form-control-nba"
+                    onkeydown="aoDigitarN(event)"
+                  />
+                  <button
+                    class="btn-nj ativo"
+                    id="bn-todos"
+                    onclick="trocarNTodos()"
+                  >
+                    Todos
+                  </button>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <label
+                    class="form-label-nba mb-0"
+                    style="font-size: 0.8rem; color: #666; white-space: nowrap"
+                    >Local do Jogo</label
+                  >
+                  <select
+                    class="form-control-nba"
+                    id="sel-local"
+                    style="max-width: 130px"
+                    onchange="filtrarLocal()"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="casa">Casa</option>
+                    <option value="fora">Fora</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="area-jav">
+            <div class="container">
+              <div id="data-loading" style="padding: 40px 0">
+                <div class="spinner-nba">
+                  <div class="bola-animada"></div>
+                  <span>Carregando estatísticas...</span>
+                </div>
+              </div>
+
+              <div id="data-content" style="display: none">
+                <div class="acento"></div>
+                <div class="sec-titulo">
+                  Médias
+                  <span
+                    id="lbl-jogos"
+                    style="
+                      font-size: 0.75rem;
+                      color: #9999b0;
+                      font-family: &quot;Karla&quot;, sans-serif;
+                      font-weight: 400;
+                    "
+                  ></span>
+                </div>
+                <div class="row g-3 mb-4" id="grid-cards"></div>
+                <div class="acento"></div>
+                <div class="sec-titulo">Evolução por Jogo</div>
+                <div class="gc mb-4">
+                  <div
+                    style="
+                      display: flex;
+                      gap: 8px;
+                      flex-wrap: wrap;
+                      margin-bottom: 10px;
+                    "
+                    id="linha-toggles"
+                  ></div>
+                  <div id="g-linha"></div>
+                  <p
+                    style="
+                      font-size: 0.68rem;
+                      color: #9999b0;
+                      margin-top: 8px;
+                      margin-bottom: 0;
+                    "
+                  >
+                    Clique na legenda ou na linha para mostrar/ocultar. Passe o
+                    mouse para ver os valores.
+                  </p>
+                </div>
+
+                <div class="row g-4 mb-4">
+                  <div class="col-12 col-lg-5">
+                    <div class="gc h-100">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-2"
+                      >
+                        <p class="gt mb-0">Eficiência de Arremesso</p>
+                        <div class="d-flex gap-1" id="donut-toggles">
+                          <button
+                            id="btn-fg"
+                            onclick="trocarDonut('fg')"
+                            style="
+                              background: #f75c03;
+                              border: 1px solid #f75c03;
+                              color: #fff;
+                              font-size: 0.68rem;
+                              font-weight: 700;
+                              padding: 4px 12px;
+                              border-radius: 6px;
+                              cursor: pointer;
+                              transition: all 0.2s;
+                              text-transform: uppercase;
+                              letter-spacing: 0.05em;
+                            "
+                          >
+                            FG%
+                          </button>
+                          <button
+                            id="btn-3p"
+                            onclick="trocarDonut('3p')"
+                            style="
+                              background: #f5f5fa;
+                              border: 1px solid #ccccdd;
+                              color: #3b9eff;
+                              font-size: 0.68rem;
+                              font-weight: 700;
+                              padding: 4px 12px;
+                              border-radius: 6px;
+                              cursor: pointer;
+                              transition: all 0.2s;
+                              text-transform: uppercase;
+                              letter-spacing: 0.05em;
+                            "
+                          >
+                            3P%
+                          </button>
+                          <button
+                            id="btn-ft"
+                            onclick="trocarDonut('ft')"
+                            style="
+                              background: #f5f5fa;
+                              border: 1px solid #ccccdd;
+                              color: #00c896;
+                              font-size: 0.68rem;
+                              font-weight: 700;
+                              padding: 4px 12px;
+                              border-radius: 6px;
+                              cursor: pointer;
+                              transition: all 0.2s;
+                              text-transform: uppercase;
+                              letter-spacing: 0.05em;
+                            "
+                          >
+                            FT%
+                          </button>
+                        </div>
+                      </div>
+                      <div id="g-donut"></div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-lg-7">
+                    <div class="gc h-100">
+                      <p class="gt">Tendência de Pontuação</p>
+                      <div id="g-tendencia"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="acento"></div>
+                <div
+                  class="sec-titulo d-flex align-items-center justify-content-between flex-wrap gap-2"
+                >
+                  <span>Histórico de Jogos</span>
+                  <span
+                    id="lbl-tabela"
+                    style="
+                      font-size: 0.75rem;
+                      color: #9999b0;
+                      font-family: &quot;Karla&quot;, sans-serif;
+                      font-weight: 400;
+                    "
+                  ></span>
+                </div>
+                <div class="card-nba">
+                  <div style="overflow-x: auto">
+                    <table class="tabela-jogos-jav" id="tab-jogos">
+                      <thead>
+                        <tr>
+                          <th>Adversário</th>
+                          <th>Data</th>
+                          <th class="td-pts">PTS</th>
+                          <th>AST</th>
+                          <th>REB</th>
+                          <th class="td-sec">STL</th>
+                          <th class="td-sec">BLK</th>
+                          <th class="td-sec">TO</th>
+                          <th class="td-sec">FG%</th>
+                          <th class="td-sec">3P%</th>
+                          <th class="td-sec">+/-</th>
+                          <th class="td-sec">MIN</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbody-jogos"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="paginacao-tabela" class="mb-4"></div>
+              </div>
+
+              <div id="data-vazio" style="display: none">
+                <div class="estado-vazio">
+                  <i class="bi bi-bar-chart icone-vazio"></i>
+                  <p class="titulo-vazio">Sem dados</p>
+                  <p class="desc-vazio">Nenhuma estatística encontrada.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-    </main>
-    <footer id="rodape-principal"></footer>
-</div>
+        <div id="pg-erro" style="display: none">
+          <div class="estado-vazio" style="margin-top: 80px">
+            <i class="bi bi-exclamation-circle icone-vazio"></i>
+            <p class="titulo-vazio">Jogador não encontrado</p>
+          </div>
+        </div>
+      </main>
+      <footer id="rodape-principal"></footer>
+    </div>
 
-<div class="d3-tt" id="tt"></div>
+    <div class="d3-tt" id="tt"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/componentes.js"></script>
-<script src="js/jogador_avancado.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/componentes.js"></script>
+    <script src="js/jogador_avancado.js"></script>
+  </body>
 </html>

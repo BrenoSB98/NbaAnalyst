@@ -34,11 +34,6 @@
   font-weight: 600;
   padding: 14px 20px;
   cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.aba-btn:hover {
-  color: #1a1a2e;
 }
 
 .aba-btn.ativo {
@@ -50,7 +45,6 @@
   padding: 32px 0 48px;
 }
 
-/* ===== INSIGHTS ===== */
 .insights-box {
   background-color: #fffff8;
   border: 1px solid #e8e8c0;
@@ -90,30 +84,25 @@
   flex-shrink: 0;
 }
 
-/* ===== CARDS LÍDERES ===== */
 .card-lider {
   display: block;
   background-color: #ffffff;
   border: 1px solid #d0d0e0;
   border-radius: 12px;
-  padding: 18px 14px;
+  padding: 16px 14px;
   text-align: center;
   text-decoration: none;
   color: inherit;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
   height: 100%;
 }
 
 .card-lider:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   text-decoration: none;
   color: inherit;
 }
 
 .card-lider-stat {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -122,20 +111,11 @@
 
 .card-lider-nome {
   font-family: "Oswald", sans-serif;
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-
-.card-lider-inicial {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #888899;
-}
-
-.card-lider-sobrenome {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1a1a2e;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .card-lider-valor {
@@ -147,20 +127,10 @@
 }
 
 .card-lider-sub {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #888899;
 }
 
-.badge-lider {
-  background-color: #f75c03;
-  color: #ffffff;
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-/* ===== GRÁFICOS ===== */
 .grafico-container {
   background-color: #ffffff;
   border: 1px solid #d0d0e0;
@@ -205,7 +175,6 @@
   white-space: nowrap;
 }
 
-/* ===== TABELA DE RECORDES ===== */
 .tabela-recordes {
   display: flex;
   flex-direction: column;
@@ -219,11 +188,6 @@
   padding: 10px 8px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.linha-recorde:hover {
-  background-color: #f5f5f8;
 }
 
 .recorde-pos {
@@ -271,7 +235,6 @@
   color: #888899;
 }
 
-/* ===== TOOLTIP ===== */
 .d3-tooltip {
   position: fixed;
   background: #ffffff;
@@ -285,25 +248,8 @@
   z-index: 9999;
   line-height: 1.6;
   max-width: 240px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-@media (max-width: 576px) {
-  .card-lider-valor {
-    font-size: 1.6rem;
-  }
-
-  .aba-btn {
-    padding: 12px 14px;
-    font-size: 0.82rem;
-  }
-
-  .recorde-valor {
-    font-size: 1.1rem;
-  }
-}
-
-/* ===== SLIDER DE RODADAS ===== */
 .slider-area {
   background-color: #f5f5f8;
   border-radius: 8px;
@@ -343,7 +289,6 @@
   border-radius: 50%;
   background-color: #f75c03;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   pointer-events: all;
   cursor: pointer;
 }
@@ -373,24 +318,27 @@
   white-space: nowrap;
 }
 
-/* ===== LEGENDA DO GRÁFICO DE LINHAS ===== */
 .legenda-linhas {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .legenda-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
+  gap: 3px;
+  font-size: 0.6rem;
   color: #555570;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .legenda-cor {
-  width: 16px;
-  height: 3px;
+  width: 10px;
+  height: 2px;
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -414,11 +362,6 @@
   cursor: pointer;
   flex-shrink: 0;
   font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-}
-
-.btn-player:hover {
-  background-color: #d94e00;
 }
 
 .btn-filtro-pos {
@@ -430,19 +373,25 @@
   font-weight: 600;
   padding: 4px 12px;
   cursor: pointer;
-  transition:
-    border-color 0.2s,
-    color 0.2s,
-    background-color 0.2s;
-}
-
-.btn-filtro-pos:hover {
-  border-color: #f75c03;
-  color: #f75c03;
 }
 
 .btn-filtro-pos.ativo {
   background-color: #f75c03;
   border-color: #f75c03;
   color: #ffffff;
+}
+
+@media (max-width: 576px) {
+  .card-lider-valor {
+    font-size: 1.6rem;
+  }
+
+  .aba-btn {
+    padding: 12px 14px;
+    font-size: 0.82rem;
+  }
+
+  .recorde-valor {
+    font-size: 1.1rem;
+  }
 }
