@@ -120,6 +120,7 @@ def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
 
 def _buscar_jogos_do_dia(db, season):
     agora_sp = datetime.now(FUSO_SP)
+    agora_utc = agora_sp.astimezone(timezone.utc)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
     fim_sp = inicio_sp + timedelta(days=1)
     inicio_utc = inicio_sp.astimezone(timezone.utc)
@@ -130,8 +131,13 @@ def _buscar_jogos_do_dia(db, season):
         Game.stage != 1,
         Game.date_start >= inicio_utc,
         Game.date_start < fim_utc,
+        Game.date_start > agora_utc,
     )
-    return db.execute(stmt).scalars().all()
+    jogos = db.execute(stmt).scalars().all()
+    logger.warning(
+        f"Jogos agendados encontrados para hoje: total={len(jogos)}, temporada={season}, agora_sp={agora_sp.strftime('%H:%M')}"
+    )
+    return jogos
 
 
 def _buscar_jogadores_do_time(db, team_id, season):

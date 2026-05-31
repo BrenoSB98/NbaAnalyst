@@ -35,22 +35,22 @@ def nba_predicoes_retroativas():
         from app.db.db_utils import get_db
         from app.services.manager_service import deletar_todas_predicoes
 
-        logger.warning(f"Deletando todas as predicoes: temporada={TEMPORADA_ATUAL}")
+        logger.info(f"Deletando todas as predicoes: temporada={TEMPORADA_ATUAL}")
         total = 0
         for db in get_db():
             total = deletar_todas_predicoes(db=db, season=TEMPORADA_ATUAL)
-        logger.warning(f"Predicoes deletadas: total={total}, temporada={TEMPORADA_ATUAL}")
+        logger.info(f"Predicoes deletadas: total={total}, temporada={TEMPORADA_ATUAL}")
 
     @task()
     def gerar_retroativo():
         from app.db.db_utils import get_db
         from app.services.manager_service import gerar_predicoes_retroativas
 
-        logger.warning(f"Gerando predicoes retroativas: temporada={TEMPORADA_ATUAL}")
+        logger.info(f"Gerando predicoes retroativas: temporada={TEMPORADA_ATUAL}")
         total = 0
         for db in get_db():
             total = gerar_predicoes_retroativas(db=db, season=TEMPORADA_ATUAL)
-        logger.warning(f"Predicoes retroativas concluidas: total={total}, temporada={TEMPORADA_ATUAL}")
+        logger.info(f"Predicoes retroativas concluidas: total={total}, temporada={TEMPORADA_ATUAL}")
 
     op_deletar = deletar_predicoes()
     op_gerar = gerar_retroativo()

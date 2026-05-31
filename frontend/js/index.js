@@ -35,18 +35,12 @@ function renderizarCardsModelo(dados) {
 
   var campos = ["pontos", "assistencias", "rebotes", "roubos", "bloqueios"];
   var labels = ["Pontos", "Assistências", "Rebotes", "Roubos", "Bloqueios"];
-  var margens = [
-    "± 3.0 pts",
-    "± 1.5 ast",
-    "± 2.0 reb",
-    "± 1.0 stl",
-    "± 1.0 blk",
-  ];
+  var sufixos = ["pts", "ast", "reb", "stl", "blk"];
 
   for (var i = 0; i < campos.length; i++) {
     var campo = campos[i];
     var label = labels[i];
-    var margem = margens[i];
+    var sufixo = sufixos[i];
     var info = dados[campo];
 
     if (!info) {
@@ -61,6 +55,11 @@ function renderizarCardsModelo(dados) {
       cor = "#FFD600";
     }
 
+    var margem = "—";
+    if (info.mae_medio !== null && info.mae_medio !== undefined) {
+      margem = "± " + parseFloat(info.mae_medio).toFixed(1) + " " + sufixo;
+    }
+
     html = html + '<div class="col-6 col-sm-4 col-xl">';
     html = html + '<div class="card-stat-modelo">';
     html =
@@ -72,15 +71,6 @@ function renderizarCardsModelo(dados) {
       "%</div>";
     html = html + '<div class="stat-nome">' + label + "</div>";
     html = html + '<div class="stat-margem">' + margem + "</div>";
-    html = html + '<div class="barra-progresso">';
-    html =
-      html +
-      '<div class="preenchimento" style="width:' +
-      wr +
-      "%; background-color:" +
-      cor +
-      ';"></div>';
-    html = html + "</div>";
     html = html + "</div>";
     html = html + "</div>";
   }

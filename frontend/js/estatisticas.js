@@ -3,23 +3,10 @@ var recordesCarregados = false;
 var dadosEvolucao = null;
 var todasDatas = [];
 var seriesPreenchidas = {};
-var totalRodasEvolucao = 0;
 var playerInterval = null;
 var dadosScatterPtsAst = [];
 var dadosScatterRebBlk = [];
 
-var CORES_LINHAS = [
-  "#C8102E",
-  "#1D428A",
-  "#007A33",
-  "#F9A01B",
-  "#552583",
-  "#00838A",
-  "#E56020",
-  "#860038",
-  "#006BB6",
-  "#008348",
-];
 
 var tt = document.getElementById("tt");
 

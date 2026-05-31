@@ -1,26 +1,26 @@
 function renderizarMenu() {
-    var elementoNavbar = document.getElementById("navbar-principal");
+  var elementoNavbar = document.getElementById("navbar-principal");
 
-    if (!elementoNavbar) {
-        return;
+  if (!elementoNavbar) {
+    return;
+  }
+
+  var usuarioLogado = estaLogado();
+  var dadosUsuario = obterUsuario();
+  var paginaAtual = window.location.pathname;
+
+  function classeLinkAtivo(caminhos) {
+    for (var i = 0; i < caminhos.length; i++) {
+      if (paginaAtual.indexOf(caminhos[i]) !== -1) {
+        return "ativo";
+      }
     }
+    return "";
+  }
 
-    var usuarioLogado = estaLogado();
-    var dadosUsuario = obterUsuario();
-    var paginaAtual = window.location.pathname;
-
-    function classeLinkAtivo(caminhos) {
-        for (var i = 0; i < caminhos.length; i++) {
-            if (paginaAtual.indexOf(caminhos[i]) !== -1) {
-                return "ativo";
-            }
-        }
-        return "";
-    }
-
-    var linksLogados = "";
-    if (usuarioLogado) {
-        linksLogados = `
+  var linksLogados = "";
+  if (usuarioLogado) {
+    linksLogados = `
             <li class="nav-item">
                 <a class="nav-link ${classeLinkAtivo(["predicoes"])} d-flex align-items-center gap-2" href="/predicoes.html">
                     <i class="bi bi-graph-up-arrow"></i> Palpites
@@ -37,14 +37,14 @@ function renderizarMenu() {
                 </a>
             </li>
         `;
-    }
+  }
 
-    var blocoAuth = "";
-    if (usuarioLogado && dadosUsuario) {
-        var iniciais = obterInicialNome(dadosUsuario.full_name);
-        var primeiroNome = obterPrimeiroNome(dadosUsuario.full_name);
+  var blocoAuth = "";
+  if (usuarioLogado && dadosUsuario) {
+    var iniciais = obterInicialNome(dadosUsuario.full_name);
+    var primeiroNome = obterPrimeiroNome(dadosUsuario.full_name);
 
-        blocoAuth = `
+    blocoAuth = `
             <div class="dropdown">
                 <button class="btn d-flex align-items-center gap-2 btn-nba-ghost btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="avatar-usuario">${iniciais}</div>
@@ -70,8 +70,8 @@ function renderizarMenu() {
                 </ul>
             </div>
         `;
-    } else {
-        blocoAuth = `
+  } else {
+    blocoAuth = `
             <a href="/login.html" class="btn-nba-ghost btn-nba btn-sm d-flex align-items-center gap-2">
                 <i class="bi bi-box-arrow-in-right"></i> Entrar
             </a>
@@ -79,9 +79,9 @@ function renderizarMenu() {
                 <i class="bi bi-person-plus"></i> Cadastrar
             </a>
         `;
-    }
+  }
 
-    var htmlNavbar = `
+  var htmlNavbar = `
         <div class="container-fluid px-3 px-lg-4">
 
             <a class="navbar-brand" href="/index.html">
@@ -123,20 +123,20 @@ function renderizarMenu() {
         </div>
     `;
 
-    elementoNavbar.innerHTML = htmlNavbar;
-    elementoNavbar.classList.add("navbar", "navbar-expand-lg", "fixed-top");
+  elementoNavbar.innerHTML = htmlNavbar;
+  elementoNavbar.classList.add("navbar", "navbar-expand-lg", "fixed-top");
 }
 
 function renderizarRodape() {
-    var elementoRodape = document.getElementById("rodape-principal");
+  var elementoRodape = document.getElementById("rodape-principal");
 
-    if (!elementoRodape) {
-        return;
-    }
+  if (!elementoRodape) {
+    return;
+  }
 
-    var anoAtual = new Date().getFullYear();
+  var anoAtual = new Date().getFullYear();
 
-    var htmlRodape = `
+  var htmlRodape = `
         <div class="container">
             <div class="row gy-4">
                 <div class="col-12 col-md-4">
@@ -170,74 +170,10 @@ function renderizarRodape() {
             </div>
         </div>
     `;
-    elementoRodape.innerHTML = htmlRodape;
-}
-
-function exibirAlerta(idElemento, mensagem, tipo) {
-    var elemento = document.getElementById(idElemento);
-
-    if (!elemento) {
-        return;
-    }
-
-    var tipoFinal = tipo || "erro";
-
-    var icone = "bi-exclamation-triangle-fill";
-    if (tipoFinal === "sucesso") {
-        icone = "bi-check-circle-fill";
-    } else if (tipoFinal === "aviso") {
-        icone = "bi-exclamation-circle-fill";
-    }
-
-    elemento.innerHTML = `
-        <div class="alerta-nba ${tipoFinal}">
-            <i class="bi ${icone}"></i>
-            <span>${mensagem}</span>
-        </div>
-    `;
-
-    setTimeout(function() {
-        elemento.innerHTML = "";
-    }, 5000);
-}
-
-function exibirSpinner(idElemento, mensagem) {
-    var elemento = document.getElementById(idElemento);
-
-    if (!elemento) {
-        return;
-    }
-
-    var textoBaixo = mensagem || "Carregando...";
-
-    elemento.innerHTML = `
-        <div class="spinner-nba">
-            <div class="bola-animada"></div>
-            <span>${textoBaixo}</span>
-        </div>
-    `;
-}
-
-function exibirEstadoVazio(idElemento, titulo, descricao, icone) {
-    var elemento = document.getElementById(idElemento);
-
-    if (!elemento) {
-        return;
-    }
-
-    var iconeUsado = icone || "bi-dribbble";
-    var descricaoHtml = descricao ? `<p class="desc-vazio">${descricao}</p>` : "";
-
-    elemento.innerHTML = `
-        <div class="estado-vazio">
-            <i class="bi ${iconeUsado} icone-vazio"></i>
-            <p class="titulo-vazio">${titulo}</p>
-            ${descricaoHtml}
-        </div>
-    `;
+  elementoRodape.innerHTML = htmlRodape;
 }
 
 function inicializarPagina() {
-    renderizarMenu();
-    renderizarRodape();
+  renderizarMenu();
+  renderizarRodape();
 }
