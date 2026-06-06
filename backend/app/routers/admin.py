@@ -1,11 +1,9 @@
-import os
 import logging
+import os
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
 
-from app.db.db_utils import get_db
 from app.routers.auth import obter_usuario_admin
 from app.services.relatorio_service import carregar_metadados_anterior
 
@@ -13,9 +11,12 @@ logger = logging.getLogger("admin_router")
 
 router = APIRouter()
 
+
 def _pasta_relatorios():
     from app.config import config
+
     return config.PASTA_RELATORIOS
+
 
 def _listar_pdfs():
     pasta = _pasta_relatorios()
@@ -44,6 +45,7 @@ def _listar_pdfs():
     pdfs.sort(key=lambda x: x["data_modificacao"], reverse=True)
     return pdfs
 
+
 @router.get("/relatorios")
 def listar_relatorios(usuario=Depends(obter_usuario_admin)):
     pdfs = _listar_pdfs()
@@ -58,6 +60,7 @@ def listar_relatorios(usuario=Depends(obter_usuario_admin)):
 
     return {"relatorios": lista, "total": len(lista)}
 
+
 @router.get("/relatorios/ultimo")
 def baixar_ultimo_relatorio(usuario=Depends(obter_usuario_admin)):
     pdfs = _listar_pdfs()
@@ -69,7 +72,10 @@ def baixar_ultimo_relatorio(usuario=Depends(obter_usuario_admin)):
     pasta = _pasta_relatorios()
     caminho = os.path.join(pasta, mais_recente["nome"])
 
-    return FileResponse(path=caminho, filename=mais_recente["nome"], media_type="application/pdf")
+    return FileResponse(
+        path=caminho, filename=mais_recente["nome"], media_type="application/pdf"
+    )
+
 
 @router.get("/relatorios/download/{nome_arquivo}")
 def baixar_relatorio(nome_arquivo: str, usuario=Depends(obter_usuario_admin)):
@@ -85,7 +91,10 @@ def baixar_relatorio(nome_arquivo: str, usuario=Depends(obter_usuario_admin)):
     if not os.path.exists(caminho):
         raise HTTPException(status_code=404, detail="Relatorio nao encontrado")
 
-    return FileResponse(path=caminho, filename=nome_arquivo, media_type="application/pdf")
+    return FileResponse(
+        path=caminho, filename=nome_arquivo, media_type="application/pdf"
+    )
+
 
 def _executar_retreino_background(season):
     from app.db.session import SessionLocal
@@ -98,15 +107,27 @@ def _executar_retreino_background(season):
         resultado = retreinar_todos_modelos(db=db, season=season)
 
         logger.warning(f"Gerando relatorio PDF: temporada={season}")
-        caminho_pdf = gerar_e_salvar_relatorio(db=db, season=season, total_registros_db=resultado["total_registros_db"], total_jogadores_treino=resultado["total_jogadores_treino"], total_modelos_salvos=resultado["total_salvos"], total_erros=resultado["total_erros"])
+        caminho_pdf = gerar_e_salvar_relatorio(
+            db=db,
+            season=season,
+            total_registros_db=resultado["total_registros_db"],
+            total_jogadores_treino=resultado["total_jogadores_treino"],
+            total_modelos_salvos=resultado["total_salvos"],
+            total_erros=resultado["total_erros"],
+        )
         logger.warning(f"Relatorio gerado: {caminho_pdf}")
     except Exception as erro:
-        logger.warning(f"Erro no retreinamento em background: temporada={season}: {erro}")
+        logger.warning(
+            f"Erro no retreinamento em background: temporada={season}: {erro}"
+        )
     finally:
         db.close()
 
+
 @router.post("/retreinar")
-def retreinar_manualmente(background_tasks: BackgroundTasks, usuario=Depends(obter_usuario_admin)):
+def retreinar_manualmente(
+    background_tasks: BackgroundTasks, usuario=Depends(obter_usuario_admin)
+):
     from app.config import config
 
     season = config.NBA_SEASON
@@ -118,10 +139,12 @@ def retreinar_manualmente(background_tasks: BackgroundTasks, usuario=Depends(obt
         "em_andamento": True,
     }
 
+
 @router.get("/info")
 def obter_info_admin(usuario=Depends(obter_usuario_admin)):
-    from app.config import config
     import glob
+
+    from app.config import config
 
     pasta_modelos = config.PASTA_MODELOS
     total_modelos = 0

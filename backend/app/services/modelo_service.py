@@ -1,7 +1,7 @@
-import os
 import logging
-import numpy as np
+import os
 
+import numpy as np
 from sqlalchemy import select
 
 from app.config import config
@@ -399,17 +399,9 @@ def _extrair_features_em_memoria(
         for j in jogos_jogador[inicio_10:idx]:
             valores_minutos.append(j["minutes"])
 
-        minutos_3 = []
-        for j in jogos_jogador[inicio_3:idx]:
-            minutos_3.append(j["minutes"])
-
         valores_fgp_5 = []
         for j in jogos_jogador[inicio_5:idx]:
             valores_fgp_5.append(j["fgp"])
-
-        valores_ftp_5 = []
-        for j in jogos_jogador[inicio_5:idx]:
-            valores_ftp_5.append(j["ftp"])
 
         soma_fga = 0.0
         soma_fta = 0.0
@@ -435,30 +427,15 @@ def _extrair_features_em_memoria(
         else:
             media_temporada = 0.0
 
-        if valores_10:
-            media_10 = sum(valores_10) / len(valores_10)
-        else:
-            media_10 = 0.0
-
         if valores_minutos:
             media_minutos = sum(valores_minutos) / len(valores_minutos)
         else:
             media_minutos = 0.0
 
-        if minutos_3:
-            media_minutos_3 = sum(minutos_3) / len(minutos_3)
-        else:
-            media_minutos_3 = 0.0
-
         if valores_fgp_5:
             fgp_media_5 = sum(valores_fgp_5) / len(valores_fgp_5)
         else:
             fgp_media_5 = 0.0
-
-        if valores_ftp_5:
-            ftp_media_5 = sum(valores_ftp_5) / len(valores_ftp_5)
-        else:
-            ftp_media_5 = 0.0
 
         soma_pesos_3 = 0.0
         soma_ponderada_3 = 0.0
@@ -492,46 +469,16 @@ def _extrair_features_em_memoria(
             inclinacao = 0.0
             variancia = 0.0
 
-        is_home = jogo_atual["is_home"]
         opponent_id = jogo_atual["opponent_id"]
 
         defesa_adversaria = mapa_defesa.get(stat_name, {}).get(opponent_id, 0.0)
         pace_adversario = mapa_pace.get(opponent_id, 0.0)
-
-        pos_jogador = jogo_atual.get("pos", None)
-        if pos_jogador is not None:
-            chave_pos = (opponent_id, pos_jogador, stat_name)
-            defesa_adversaria_posicao = mapa_defesa_posicao.get(
-                chave_pos, defesa_adversaria
-            )
-        else:
-            defesa_adversaria_posicao = defesa_adversaria
 
         media_vs_adv = _calcular_media_vs_adversario(
             jogos_jogador[:idx], opponent_id, stat_name
         )
         if media_vs_adv is None:
             media_vs_adv = ema_ponderada
-
-        if idx >= 1:
-            data_anterior = jogos_jogador[idx - 1]["data"]
-            data_atual = jogo_atual["data"]
-            if data_anterior is not None and data_atual is not None:
-                dias_descanso = min((data_atual - data_anterior).days, 7)
-            else:
-                dias_descanso = 3
-        else:
-            dias_descanso = 3
-
-        if dias_descanso <= 1:
-            back_to_back = 1
-        else:
-            back_to_back = 0
-
-        if media_minutos > 0:
-            taxa_participacao = media_minutos_3 / media_minutos
-        else:
-            taxa_participacao = 1.0
 
         vetor = [
             ema_ponderada,

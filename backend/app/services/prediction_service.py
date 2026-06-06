@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timezone
 
 import numpy as np
 from sqlalchemy import func, select
@@ -410,44 +409,21 @@ def _montar_vetor_previsao(
     for stat, jogo in historico_recente_10:
         valores_minutos.append(converter_minutos_para_float(stat.minutes))
 
-    minutos_3 = []
-    for stat, jogo in historico_recente_3:
-        minutos_3.append(converter_minutos_para_float(stat.minutes))
-
     valores_fgp_5 = []
     for stat, jogo in historico_recente_5:
         valores_fgp_5.append(float(stat.fgp or 0))
 
-    valores_ftp_5 = []
-    for stat, jogo in historico_recente_5:
-        valores_ftp_5.append(float(stat.ftp or 0))
-
     ema_ponderada = calcular_media_multi_janela(valores_3, valores_10, media_temporada)
-
-    if valores_10:
-        media_10 = float(np.mean(valores_10))
-    else:
-        media_10 = media_temporada
 
     if valores_minutos:
         media_minutos = float(np.mean(valores_minutos))
     else:
         media_minutos = 0.0
 
-    if minutos_3:
-        media_minutos_3 = float(np.mean(minutos_3))
-    else:
-        media_minutos_3 = 0.0
-
     if valores_fgp_5:
         fgp_media_5 = float(np.mean(valores_fgp_5))
     else:
         fgp_media_5 = 0.0
-
-    if valores_ftp_5:
-        ftp_media_5 = float(np.mean(valores_ftp_5))
-    else:
-        ftp_media_5 = 0.0
 
     if len(valores_3) >= 2:
         eixo_x = np.arange(len(valores_3))
@@ -470,34 +446,6 @@ def _montar_vetor_previsao(
     )
     if media_vs_adversario is None:
         media_vs_adversario = ema_ponderada
-
-    if data_corte is not None:
-        agora = data_corte
-    else:
-        agora = datetime.now(timezone.utc)
-
-    if historico:
-        data_ultimo = historico[-1][1].date_start
-        if data_ultimo is not None:
-            if data_ultimo.tzinfo is None:
-                data_ultimo = data_ultimo.replace(tzinfo=timezone.utc)
-            if agora.tzinfo is None:
-                agora = agora.replace(tzinfo=timezone.utc)
-            dias_descanso = min((agora - data_ultimo).days, 7)
-        else:
-            dias_descanso = 3
-    else:
-        dias_descanso = 3
-
-    if dias_descanso <= 1:
-        back_to_back = 1
-    else:
-        back_to_back = 0
-
-    if media_minutos > 0:
-        taxa_participacao = media_minutos_3 / media_minutos
-    else:
-        taxa_participacao = 1.0
 
     vetor = [
         ema_ponderada,

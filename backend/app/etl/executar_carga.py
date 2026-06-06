@@ -2,46 +2,60 @@ import argparse
 import logging
 import sys
 
-from sqlalchemy import select
-
-from app.core.logging_config import configurar_logging
-from app.etl.carregar_ligas import carregar_ligas
-from app.etl.carregar_temporadas import carregar_temporadas
 from app.etl.carregar_franquias import carregar_times
 from app.etl.carregar_jogadores import carregar_jogadores
 from app.etl.carregar_jogadores_franquias import carregar_jogadores_franquias
+from app.etl.carregar_ligas import carregar_ligas
 from app.etl.carregar_partidas import carregar_partidas
-from app.etl.carregar_stats_jogadores import carregar_stats_jogador, carregar_stats_todos_jogadores
-from app.etl.carregar_stats_times import carregar_stats_times_jogo, carregar_stats_todos_times
+from app.etl.carregar_stats_jogadores import (
+    carregar_stats_jogador,
+    carregar_stats_todos_jogadores,
+)
+from app.etl.carregar_stats_times import (
+    carregar_stats_times_jogo,
+    carregar_stats_todos_times,
+)
+from app.etl.carregar_temporadas import carregar_temporadas
 
-configurar_logging()
 logger = logging.getLogger(__name__)
 
-def upsert(db, modelo, filtro, dados):
-    stmt = select(modelo)
-    for campo, valor in filtro.items():
-        stmt = stmt.where(getattr(modelo, campo) == valor)
-    registro = db.execute(stmt).scalar_one_or_none()
-
-    if registro:
-        for campo, valor in dados.items():
-            setattr(registro, campo, valor)
-    else:
-        todos_campos = {}
-        todos_campos.update(filtro)
-        todos_campos.update(dados)
-        novo = modelo(**todos_campos)
-        db.add(novo)
-
-    db.commit()
 
 def main():
-    parser = argparse.ArgumentParser(description="Script para executar cargas de dados na base de dados NBA.")
+    parser = argparse.ArgumentParser(
+        description="Script para executar cargas de dados na base de dados NBA."
+    )
     parser.add_argument("--season", type=int, required=False, help="Ano da temporada")
-    parser.add_argument("--load", type=str, choices=["temporadas", "ligas", "times", "jogadores", "jogadores_times", "partidas", "stats_jogador", "stats_jogador_massa", "stats_times", "stats_times_massa", "all"], required=True, help="Escolha o tipo de dado a ser carregado")
-    parser.add_argument("--team_id", dest="team_id", type=int, required=False, help="ID do time")
-    parser.add_argument("--date", type=str, required=False, help="Data para carregar jogos (formato: YYYY-MM-DD).")
-    parser.add_argument("--game_id", dest="game_id", type=int, required=False, help="ID do jogo.")
+    parser.add_argument(
+        "--load",
+        type=str,
+        choices=[
+            "temporadas",
+            "ligas",
+            "times",
+            "jogadores",
+            "jogadores_times",
+            "partidas",
+            "stats_jogador",
+            "stats_jogador_massa",
+            "stats_times",
+            "stats_times_massa",
+            "all",
+        ],
+        required=True,
+        help="Escolha o tipo de dado a ser carregado",
+    )
+    parser.add_argument(
+        "--team_id", dest="team_id", type=int, required=False, help="ID do time"
+    )
+    parser.add_argument(
+        "--date",
+        type=str,
+        required=False,
+        help="Data para carregar jogos (formato: YYYY-MM-DD).",
+    )
+    parser.add_argument(
+        "--game_id", dest="game_id", type=int, required=False, help="ID do jogo."
+    )
 
     args = parser.parse_args()
 
@@ -64,7 +78,7 @@ def main():
         if not args.season:
             logger.error("Para carregar jogadores por time, informe --season.")
             sys.exit(1)
-        carregar_jogadores_franquias(season=args.season)
+        carregar_jogadores_franquias(season=args.season)  # type: ignore
 
     elif args.load == "partidas":
         if not args.season:
@@ -103,10 +117,11 @@ def main():
         carregar_temporadas()
         carregar_ligas()
         carregar_times()
-        carregar_jogadores_franquias(season=args.season)
+        carregar_jogadores_franquias(season=args.season)  # type: ignore
         carregar_partidas(season=args.season, date=args.date, team_id=args.team_id)
         carregar_stats_todos_jogadores(season=args.season)
         carregar_stats_todos_times(season=args.season)
+
 
 if __name__ == "__main__":
     main()

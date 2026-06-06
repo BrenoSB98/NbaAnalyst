@@ -12,8 +12,6 @@ python-multipart==0.0.27
 email-validator==2.3.0
 bcrypt==4.2.1
 
-apscheduler==3.11.2
-
 streamlit==1.57.0
 
 langchain==1.2.18
