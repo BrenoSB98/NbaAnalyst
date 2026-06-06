@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    TIMESTAMP,
     Boolean,
     CheckConstraint,
     Column,
@@ -8,7 +9,6 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
-    TIMESTAMP,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -16,10 +16,12 @@ from sqlalchemy.sql import func
 
 from app.db.base import Base
 
+
 class Season(Base):
     __tablename__ = "seasons"
 
     season = Column(Integer, primary_key=True)
+
 
 class League(Base):
     __tablename__ = "leagues"
@@ -29,6 +31,7 @@ class League(Base):
     description = Column(Text)
 
     teams_info = relationship("TeamLeagueInfo", back_populates="league")
+
 
 class Team(Base):
     __tablename__ = "teams"
@@ -43,27 +46,37 @@ class Team(Base):
     nba_franchise = Column(Boolean, nullable=False, default=False)
 
     leagues_info = relationship("TeamLeagueInfo", back_populates="team")
-    home_games = relationship("Game", back_populates="home_team", foreign_keys="Game.home_team_id")
-    away_games = relationship("Game", back_populates="away_team", foreign_keys="Game.away_team_id")
+    home_games = relationship(
+        "Game", back_populates="home_team", foreign_keys="Game.home_team_id"
+    )
+    away_games = relationship(
+        "Game", back_populates="away_team", foreign_keys="Game.away_team_id"
+    )
     team_season_stats = relationship("TeamSeasonStats", back_populates="team")
     game_scores = relationship("GameTeamScore", back_populates="team")
     game_stats = relationship("GameTeamStats", back_populates="team")
     player_team_seasons = relationship("PlayerTeamSeason", back_populates="team")
     player_game_stats = relationship("PlayerGameStats", back_populates="team")
 
+
 class TeamLeagueInfo(Base):
     __tablename__ = "team_league_info"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
-    league_id = Column(Integer, ForeignKey("leagues.id", ondelete="CASCADE"), nullable=False)
+    team_id = Column(
+        Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
+    )
+    league_id = Column(
+        Integer, ForeignKey("leagues.id", ondelete="CASCADE"), nullable=False
+    )
     conference = Column(Text)
     division = Column(Text)
 
-    __table_args__ = (UniqueConstraint("team_id", "league_id", name="uq_team_league"), )
+    __table_args__ = (UniqueConstraint("team_id", "league_id", name="uq_team_league"),)
 
     team = relationship("Team", back_populates="leagues_info")
     league = relationship("League", back_populates="teams_info")
+
 
 class Game(Base):
     __tablename__ = "games"
@@ -90,19 +103,30 @@ class Game(Base):
     home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
 
-    __table_args__ = (CheckConstraint("home_team_id <> away_team_id", name="chk_game_teams_different"), )
+    __table_args__ = (
+        CheckConstraint(
+            "home_team_id <> away_team_id", name="chk_game_teams_different"
+        ),
+    )
 
-    home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_games")
-    away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_games")
+    home_team = relationship(
+        "Team", foreign_keys=[home_team_id], back_populates="home_games"
+    )
+    away_team = relationship(
+        "Team", foreign_keys=[away_team_id], back_populates="away_games"
+    )
     scores = relationship("GameTeamScore", back_populates="game")
     stats = relationship("GameTeamStats", back_populates="game")
     player_game_stats = relationship("PlayerGameStats", back_populates="game")
     predictions = relationship("Prediction", back_populates="game")
 
+
 class GameTeamScore(Base):
     __tablename__ = "game_team_scores"
 
-    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True)
+    game_id = Column(
+        Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
     team_id = Column(Integer, ForeignKey("teams.id"), primary_key=True)
     is_home = Column(Boolean, nullable=False)
     win = Column(Integer)
@@ -115,14 +139,17 @@ class GameTeamScore(Base):
     linescore_q3 = Column(Integer)
     linescore_q4 = Column(Integer)
 
-    __table_args__ = (UniqueConstraint("game_id", "is_home", name="uq_game_side"), )
+    __table_args__ = (UniqueConstraint("game_id", "is_home", name="uq_game_side"),)
     game = relationship("Game", back_populates="scores")
     team = relationship("Team", back_populates="game_scores")
+
 
 class GameTeamStats(Base):
     __tablename__ = "game_team_stats"
 
-    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True)
+    game_id = Column(
+        Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
     team_id = Column(Integer, ForeignKey("teams.id"), primary_key=True)
     fast_break_points = Column(Integer)
     points_in_paint = Column(Integer)
@@ -154,10 +181,13 @@ class GameTeamStats(Base):
     game = relationship("Game", back_populates="stats")
     team = relationship("Team", back_populates="game_stats")
 
+
 class TeamSeasonStats(Base):
     __tablename__ = "team_season_stats"
 
-    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True)
+    team_id = Column(
+        Integer, ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True
+    )
     season = Column(Integer, ForeignKey("seasons.season"), primary_key=True)
     games = Column(Integer)
     fast_break_points = Column(Integer)
@@ -188,6 +218,7 @@ class TeamSeasonStats(Base):
 
     team = relationship("Team", back_populates="team_season_stats")
 
+
 class Player(Base):
     __tablename__ = "players"
 
@@ -210,29 +241,47 @@ class Player(Base):
     game_stats = relationship("PlayerGameStats", back_populates="player")
     predictions = relationship("Prediction", back_populates="player")
 
+
 class PlayerTeamSeason(Base):
     __tablename__ = "player_team_season"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    player_id = Column(Integer, ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
-    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    player_id = Column(
+        Integer, ForeignKey("players.id", ondelete="CASCADE"), nullable=False
+    )
+    team_id = Column(
+        Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
+    )
     season = Column(Integer, ForeignKey("seasons.season"), nullable=False)
     league_code = Column(String, nullable=False)
     jersey = Column(Integer)
     active = Column(Boolean, nullable=False)
     pos = Column(String)
 
-    __table_args__ = (UniqueConstraint("player_id", "team_id", "season", "league_code", name="uq_player_team_season_league"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "player_id",
+            "team_id",
+            "season",
+            "league_code",
+            name="uq_player_team_season_league",
+        ),
+    )
 
     player = relationship("Player", back_populates="team_seasons")
     team = relationship("Team", back_populates="player_team_seasons")
     season_rel = relationship("Season")
 
+
 class PlayerGameStats(Base):
     __tablename__ = "player_game_stats"
 
-    player_id = Column(Integer, ForeignKey("players.id", ondelete="CASCADE"), primary_key=True)
-    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True)
+    player_id = Column(
+        Integer, ForeignKey("players.id", ondelete="CASCADE"), primary_key=True
+    )
+    game_id = Column(
+        Integer, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     season = Column(Integer, ForeignKey("seasons.season"))
     pos = Column(String)
@@ -263,12 +312,17 @@ class PlayerGameStats(Base):
     team = relationship("Team", back_populates="player_game_stats")
     season_rel = relationship("Season")
 
+
 class Prediction(Base):
     __tablename__ = "predictions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    player_id = Column(Integer, ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
-    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    player_id = Column(
+        Integer, ForeignKey("players.id", ondelete="CASCADE"), nullable=False
+    )
+    game_id = Column(
+        Integer, ForeignKey("games.id", ondelete="CASCADE"), nullable=False
+    )
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     opponent_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     season = Column(Integer, ForeignKey("seasons.season"), nullable=False)
@@ -278,14 +332,22 @@ class Prediction(Base):
     predicted_rebounds = Column(Numeric(6, 2))
     predicted_steals = Column(Numeric(6, 2))
     predicted_blocks = Column(Numeric(6, 2))
+    linha_points = Column(Numeric(6, 2))
+    linha_assists = Column(Numeric(6, 2))
+    linha_rebounds = Column(Numeric(6, 2))
+    linha_steals = Column(Numeric(6, 2))
+    linha_blocks = Column(Numeric(6, 2))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
-    __table_args__ = (UniqueConstraint("player_id", "game_id", name="uq_prediction_player_game"),)
+    __table_args__ = (
+        UniqueConstraint("player_id", "game_id", name="uq_prediction_player_game"),
+    )
 
     player = relationship("Player", back_populates="predictions")
     game = relationship("Game", back_populates="predictions")
     team = relationship("Team", foreign_keys=[team_id])
     opponent_team = relationship("Team", foreign_keys=[opponent_team_id])
+
 
 class User(Base):
     __tablename__ = "users"

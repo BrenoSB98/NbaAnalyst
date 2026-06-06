@@ -8,6 +8,7 @@ from app.services.formatar_palpites import verificar_acerto_linha
 
 logger = logging.getLogger(__name__)
 
+
 def _jogador_teve_minutos(stat_real):
     minutos = stat_real.minutes
     if not minutos:
@@ -21,7 +22,8 @@ def _jogador_teve_minutos(stat_real):
             return False
     return True
 
-def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real):
+
+def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, campo_linha):
     total = 0
     acertos = 0
     soma_erros = 0.0
@@ -35,21 +37,24 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real):
 
         valor_previsto = getattr(palpite, campo_predicao, None)
         valor_real = getattr(stat_real, campo_real, None)
+        linha = getattr(palpite, campo_linha, None)
 
-        if valor_previsto is None or valor_real is None:
+        if valor_previsto is None or valor_real is None or linha is None:
             continue
 
         total = total + 1
         erro = abs(float(valor_previsto) - float(valor_real))
         soma_erros = soma_erros + erro
-        soma_erros_quadraticos = soma_erros_quadraticos + (erro ** 2)
+        soma_erros_quadraticos = soma_erros_quadraticos + (erro**2)
 
-        acertou = verificar_acerto_linha(valor_previsto, valor_real)
+        acertou = verificar_acerto_linha(valor_previsto, valor_real, float(linha))
         if acertou:
             acertos = acertos + 1
 
     if ignorados_sem_minutos > 0:
-        logger.warning(f"Palpites ignorados por falta de minutos, total={ignorados_sem_minutos}, campo={campo_real}")
+        logger.info(
+            f"Palpites ignorados por falta de minutos, total={ignorados_sem_minutos}, campo={campo_real}"
+        )
 
     if total == 0:
         return {
@@ -74,10 +79,16 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real):
 
 
 def calcular_win_rate(db, temporada):
-    stmt = (select(Prediction, PlayerGameStats)
-            .join(PlayerGameStats, (PlayerGameStats.player_id == Prediction.player_id) & (PlayerGameStats.game_id == Prediction.game_id))
-            .join(Game, Game.id == Prediction.game_id)
-            .where(Prediction.season == temporada, Game.status_short == 3))
+    stmt = (
+        select(Prediction, PlayerGameStats)
+        .join(
+            PlayerGameStats,
+            (PlayerGameStats.player_id == Prediction.player_id)
+            & (PlayerGameStats.game_id == Prediction.game_id),
+        )
+        .join(Game, Game.id == Prediction.game_id)
+        .where(Prediction.season == temporada, Game.status_short == 3)
+    )
 
     palpites_com_real = db.execute(stmt).all()
 
@@ -85,13 +96,29 @@ def calcular_win_rate(db, temporada):
         logger.warning(f"Nenhum palpite avaliavel, temporada={temporada}")
         return None
 
-    desempenho_pontos = _calcular_win_rate_stat(palpites_com_real, "predicted_points", "points")
-    desempenho_assistencias = _calcular_win_rate_stat(palpites_com_real, "predicted_assists", "assists")
-    desempenho_rebotes = _calcular_win_rate_stat(palpites_com_real, "predicted_rebounds", "tot_reb")
-    desempenho_roubos = _calcular_win_rate_stat(palpites_com_real, "predicted_steals", "steals")
-    desempenho_bloqueios = _calcular_win_rate_stat(palpites_com_real, "predicted_blocks", "blocks")
+    desempenho_pontos = _calcular_win_rate_stat(
+        palpites_com_real, "predicted_points", "points", "linha_points"
+    )
+    desempenho_assistencias = _calcular_win_rate_stat(
+        palpites_com_real, "predicted_assists", "assists", "linha_assists"
+    )
+    desempenho_rebotes = _calcular_win_rate_stat(
+        palpites_com_real, "predicted_rebounds", "tot_reb", "linha_rebounds"
+    )
+    desempenho_roubos = _calcular_win_rate_stat(
+        palpites_com_real, "predicted_steals", "steals", "linha_steals"
+    )
+    desempenho_bloqueios = _calcular_win_rate_stat(
+        palpites_com_real, "predicted_blocks", "blocks", "linha_blocks"
+    )
 
-    lista_desempenhos = [desempenho_pontos, desempenho_assistencias, desempenho_rebotes, desempenho_roubos, desempenho_bloqueios]
+    lista_desempenhos = [
+        desempenho_pontos,
+        desempenho_assistencias,
+        desempenho_rebotes,
+        desempenho_roubos,
+        desempenho_bloqueios,
+    ]
 
     soma_win_rates = 0.0
     soma_maes = 0.0

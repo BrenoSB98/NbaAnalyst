@@ -42,7 +42,11 @@ class Config:
     MARGEM_ROUBOS = float(os.getenv("MARGEM_ROUBOS", "1.5"))
     MARGEM_BLOQUEIOS = float(os.getenv("MARGEM_BLOQUEIOS", "1.0"))
 
-    MIN_MINUTOS_PALPITE = float(os.getenv("MIN_MINUTOS_PALPITE", "15.0"))
+    MIN_MINUTOS_PALPITE = float(os.getenv("MIN_MINUTOS_PALPITE", "20.0"))
+    JANELA_JOGOS_RECENTES = int(os.getenv("JANELA_JOGOS_RECENTES", "15"))
+    JOGOS_CHECAGEM_ATIVIDADE = int(os.getenv("JOGOS_CHECAGEM_ATIVIDADE", "10"))
+    MIN_MINUTOS_JOGO_RECENTE = float(os.getenv("MIN_MINUTOS_JOGO_RECENTE", "2.0"))
+    COEF_VARIACAO_MAXIMO = float(os.getenv("COEF_VARIACAO_MAXIMO", "0.75"))
 
     PASTA_MODELOS = os.getenv("PASTA_MODELOS", "/opt/airflow/modelos_ml")
     PASTA_RELATORIOS = os.getenv("PASTA_RELATORIOS", "/opt/airflow/relatorios_ml")

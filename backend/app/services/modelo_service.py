@@ -5,21 +5,21 @@ import numpy as np
 from sqlalchemy import select
 
 from app.config import config
-from app.db.models import Game, GameTeamStats, PlayerGameStats
+from app.db.models import Game, GameTeamStats, PlayerGameStats, PlayerTeamSeason
 
 logger = logging.getLogger(__name__)
 
 STATS_PARA_TREINAR = ["points", "assists", "tot_reb", "steals", "blocks"]
 PROPORCAO_TREINO = 0.7
-TEMPORADAS_HISTORICAS = 5
+TEMPORADAS_HISTORICAS = 1
 MIN_AMOSTRAS_TREINO = 20
 
 LIMIARES_TREINO = {}
-LIMIARES_TREINO["points"] = 5.0
-LIMIARES_TREINO["assists"] = 1.2
-LIMIARES_TREINO["tot_reb"] = 2.5
-LIMIARES_TREINO["steals"] = 0.5
-LIMIARES_TREINO["blocks"] = 0.4
+LIMIARES_TREINO["points"] = 8.0
+LIMIARES_TREINO["assists"] = 2.0
+LIMIARES_TREINO["tot_reb"] = 3.5
+LIMIARES_TREINO["steals"] = 0.9
+LIMIARES_TREINO["blocks"] = 0.8
 
 CONFIG_STATS = {}
 CONFIG_STATS["points"] = {
@@ -208,6 +208,13 @@ def _pre_carregar_dados_temporadas(db, temporadas):
         item["minutes"] = _converter_minutos(stat.minutes)
         item["fgp"] = float(stat.fgp or 0)
         item["ftp"] = float(stat.ftp or 0)
+        item["fga"] = float(stat.fga or 0)
+        item["fta"] = float(stat.fta or 0)
+        item["turnovers"] = float(stat.turnovers or 0)
+        if stat.pos:
+            item["pos"] = stat.pos.split("-")[0]
+        else:
+            item["pos"] = None
         item["data"] = jogo.date_start
         item["is_home"] = is_home
         item["opponent_id"] = opponent_id
@@ -266,6 +273,48 @@ def _pre_calcular_defesa_por_time(db, temporadas):
     return mapa_defesa
 
 
+def _pre_calcular_defesa_por_posicao(db, temporadas):
+    logger.info(f"Calculando defesa por posicao: temporadas={temporadas}")
+    mapa = {}
+
+    stmt_stats = (
+        select(PlayerGameStats, Game)
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(Game.season.in_(temporadas), Game.status_short == 3, Game.stage != 1)
+    )
+
+    resultados = db.execute(stmt_stats).all()
+
+    acumulado = {}
+    contagem = {}
+    for stat, jogo in resultados:
+        if not stat.pos:
+            continue
+        pos = stat.pos.split("-")[0]
+        if stat.team_id == jogo.home_team_id:
+            opponent_id = jogo.away_team_id
+        else:
+            opponent_id = jogo.home_team_id
+
+        for stat_name in STATS_PARA_TREINAR:
+            valor = float(getattr(stat, stat_name, 0) or 0)
+            chave = (opponent_id, pos, stat_name)
+            if chave not in acumulado:
+                acumulado[chave] = 0.0
+                contagem[chave] = 0
+            acumulado[chave] = acumulado[chave] + valor
+            contagem[chave] = contagem[chave] + 1
+
+    for chave in acumulado:
+        if contagem[chave] > 0:
+            mapa[chave] = acumulado[chave] / contagem[chave]
+        else:
+            mapa[chave] = 0.0
+
+    logger.info(f"Defesa por posicao calculada: combinacoes={len(mapa)}")
+    return mapa
+
+
 def _pre_calcular_pace_por_time(db, temporadas):
     logger.info(f"Calculando pace por time: temporadas={temporadas}")
     mapa_pace = {}
@@ -314,11 +363,16 @@ def _calcular_media_vs_adversario(jogos_anteriores, opponent_id, stat_name):
     return soma / len(valores)
 
 
-def _extrair_features_em_memoria(jogos_jogador, stat_name, mapa_defesa, mapa_pace):
+def _extrair_features_em_memoria(
+    jogos_jogador, stat_name, mapa_defesa, mapa_pace, mapa_defesa_posicao
+):
     if len(jogos_jogador) < 5:
         return None, None
 
     qtd_treino = int(len(jogos_jogador) * PROPORCAO_TREINO)
+    minimo_treino = MIN_AMOSTRAS_TREINO + 5
+    if qtd_treino < minimo_treino:
+        qtd_treino = min(minimo_treino, len(jogos_jogador))
     if qtd_treino < 5:
         return None, None
 
@@ -356,6 +410,21 @@ def _extrair_features_em_memoria(jogos_jogador, stat_name, mapa_defesa, mapa_pac
         valores_ftp_5 = []
         for j in jogos_jogador[inicio_5:idx]:
             valores_ftp_5.append(j["ftp"])
+
+        soma_fga = 0.0
+        soma_fta = 0.0
+        soma_tov = 0.0
+        soma_min_usage = 0.0
+        for j in jogos_jogador[inicio_10:idx]:
+            soma_fga = soma_fga + j["fga"]
+            soma_fta = soma_fta + j["fta"]
+            soma_tov = soma_tov + j["turnovers"]
+            soma_min_usage = soma_min_usage + j["minutes"]
+        posses = soma_fga + (0.44 * soma_fta) + soma_tov
+        if soma_min_usage > 0:
+            usage_rate = round(posses / soma_min_usage, 3)
+        else:
+            usage_rate = 0.0
 
         todos_anteriores = []
         for j in jogos_jogador[:idx]:
@@ -429,6 +498,15 @@ def _extrair_features_em_memoria(jogos_jogador, stat_name, mapa_defesa, mapa_pac
         defesa_adversaria = mapa_defesa.get(stat_name, {}).get(opponent_id, 0.0)
         pace_adversario = mapa_pace.get(opponent_id, 0.0)
 
+        pos_jogador = jogo_atual.get("pos", None)
+        if pos_jogador is not None:
+            chave_pos = (opponent_id, pos_jogador, stat_name)
+            defesa_adversaria_posicao = mapa_defesa_posicao.get(
+                chave_pos, defesa_adversaria
+            )
+        else:
+            defesa_adversaria_posicao = defesa_adversaria
+
         media_vs_adv = _calcular_media_vs_adversario(
             jogos_jogador[:idx], opponent_id, stat_name
         )
@@ -457,20 +535,14 @@ def _extrair_features_em_memoria(jogos_jogador, stat_name, mapa_defesa, mapa_pac
 
         vetor = [
             ema_ponderada,
-            is_home,
-            defesa_adversaria,
-            dias_descanso,
-            media_minutos,
-            inclinacao,
-            media_vs_adv,
-            variancia,
-            back_to_back,
             media_temporada,
-            media_10,
+            media_minutos,
+            defesa_adversaria,
+            inclinacao,
+            variancia,
             pace_adversario,
-            taxa_participacao,
             fgp_media_5,
-            ftp_media_5,
+            usage_rate,
         ]
         lista_features.append(vetor)
         lista_alvos.append(alvo)
@@ -481,12 +553,55 @@ def _extrair_features_em_memoria(jogos_jogador, stat_name, mapa_defesa, mapa_pac
     return lista_features, lista_alvos
 
 
+def _buscar_posicoes_jogadores(db, season, player_ids):
+    mapa_posicao = {}
+    if not player_ids:
+        return mapa_posicao
+    stmt = (
+        select(PlayerTeamSeason)
+        .where(
+            PlayerTeamSeason.season == season,
+            PlayerTeamSeason.player_id.in_(player_ids),
+        )
+        .order_by(PlayerTeamSeason.active.desc())
+    )
+    vinculos = db.execute(stmt).scalars().all()
+    for vinculo in vinculos:
+        pid = vinculo.player_id
+        if pid in mapa_posicao:
+            continue
+        if not vinculo.pos:
+            mapa_posicao[pid] = "N/D"
+        else:
+            mapa_posicao[pid] = vinculo.pos.split("-")[0]
+    return mapa_posicao
+
+
+def _contar_cobertura_por_posicao(mapa_posicao, player_ids_com_modelo):
+    contagem = {}
+    contagem["PG"] = 0
+    contagem["SG"] = 0
+    contagem["SF"] = 0
+    contagem["PF"] = 0
+    contagem["C"] = 0
+    contagem["N/D"] = 0
+    for pid in player_ids_com_modelo:
+        pos = mapa_posicao.get(pid, "N/D")
+        if pos in contagem:
+            contagem[pos] = contagem[pos] + 1
+        else:
+            contagem["N/D"] = contagem["N/D"] + 1
+    return contagem
+
+
 def retreinar_todos_modelos(db, season):
     limiar_minutos = config.MIN_MINUTOS_PALPITE
+    janela = config.JANELA_JOGOS_RECENTES
     temporadas = _listar_temporadas(season)
 
     dados_por_jogador = _pre_carregar_dados_temporadas(db, temporadas)
     mapa_defesa = _pre_calcular_defesa_por_time(db, temporadas)
+    mapa_defesa_posicao = _pre_calcular_defesa_por_posicao(db, temporadas)
     mapa_pace = _pre_calcular_pace_por_time(db, temporadas)
 
     ids_jogadores = []
@@ -494,19 +609,21 @@ def retreinar_todos_modelos(db, season):
         jogos = dados_por_jogador[pid]
         if len(jogos) == 0:
             continue
+        jogos_recentes = jogos[-janela:]
         soma_minutos = 0.0
-        for j in jogos:
+        for j in jogos_recentes:
             soma_minutos = soma_minutos + j["minutes"]
-        media_minutos = soma_minutos / len(jogos)
+        media_minutos = soma_minutos / len(jogos_recentes)
         if media_minutos >= limiar_minutos:
             ids_jogadores.append(pid)
 
     total_jogadores = len(ids_jogadores)
     total_salvos = 0
     total_erros = 0
+    jogadores_com_modelo = set()
 
     logger.info(
-        f"Retreinamento iniciado: jogadores={total_jogadores}, temporadas={temporadas}, proporcao_treino={PROPORCAO_TREINO}, min_amostras={MIN_AMOSTRAS_TREINO}"
+        f"Retreinamento iniciado: jogadores={total_jogadores}, temporadas={temporadas}, proporcao_treino={PROPORCAO_TREINO}, min_amostras={MIN_AMOSTRAS_TREINO}, janela_minutos={janela}, limiar_minutos={limiar_minutos}"
     )
 
     for player_id in ids_jogadores:
@@ -532,7 +649,11 @@ def retreinar_todos_modelos(db, season):
                 continue
             try:
                 lista_features, lista_alvos = _extrair_features_em_memoria(
-                    jogos_jogador, stat_name, mapa_defesa, mapa_pace
+                    jogos_jogador,
+                    stat_name,
+                    mapa_defesa,
+                    mapa_pace,
+                    mapa_defesa_posicao,
                 )
                 modelo = _treinar_modelo_jogador(
                     player_id=player_id,
@@ -544,6 +665,7 @@ def retreinar_todos_modelos(db, season):
                     continue
                 salvar_modelo(modelo=modelo, player_id=player_id, stat_name=stat_name)
                 total_salvos = total_salvos + 1
+                jogadores_com_modelo.add(player_id)
             except Exception as erro:
                 total_erros = total_erros + 1
                 logger.error(
@@ -562,9 +684,21 @@ def retreinar_todos_modelos(db, season):
             f"Retreinamento concluido com {total_erros} erro(s): verifique os logs de erro acima"
         )
 
+    mapa_posicao = _buscar_posicoes_jogadores(db, season, list(jogadores_com_modelo))
+    cobertura_posicao = _contar_cobertura_por_posicao(
+        mapa_posicao, jogadores_com_modelo
+    )
+
     resultado = {}
     resultado["total_salvos"] = total_salvos
     resultado["total_erros"] = total_erros
     resultado["total_jogadores_treino"] = total_jogadores
+    resultado["total_jogadores_com_modelo"] = len(jogadores_com_modelo)
     resultado["total_registros_db"] = total_registros_db
+    resultado["cobertura_posicao"] = cobertura_posicao
+    resultado["temporadas"] = temporadas
+    resultado["proporcao_treino"] = PROPORCAO_TREINO
+    resultado["limiar_minutos"] = limiar_minutos
+    resultado["min_amostras"] = MIN_AMOSTRAS_TREINO
+    resultado["limiares_treino"] = dict(LIMIARES_TREINO)
     return resultado

@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /opt/airflow/modelos_ml /opt/airflow/relatorios_ml \
+    && chown -R airflow:root /opt/airflow/modelos_ml /opt/airflow/relatorios_ml \
+    && chmod -R 775 /opt/airflow/modelos_ml /opt/airflow/relatorios_ml
+
 USER airflow
 
 COPY requirements.txt /requirements.txt

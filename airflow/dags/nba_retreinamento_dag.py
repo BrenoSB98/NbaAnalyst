@@ -1,10 +1,11 @@
+import logging
 import os
 import sys
-import logging
 
 sys.path.insert(0, os.environ.get("AIRFLOW_BACKEND_PATH", "/opt/airflow/backend"))
 
 from datetime import datetime, timedelta
+
 from airflow.decorators import dag, task
 from app.config import config
 
@@ -21,11 +22,12 @@ args_padrao = {
     "email_on_retry": False,
 }
 
+
 @dag(
     dag_id="nba_retreinamento",
     default_args=args_padrao,
-    description="Retreina todos os modelos do zero a cada 3 dias e gera relatorio PDF",
-    schedule_interval="0 7 */3 * *",
+    description="Retreina todos os modelos do zero diariamente e gera relatorio PDF",
+    schedule_interval="0 7 * * *",
     start_date=datetime(2026, 1, 1),
     catchup=False,
     tags=["nba", "ml", "retreinamento"],
@@ -37,7 +39,7 @@ def nba_retreinamento():
         from app.services.modelo_service import retreinar_todos_modelos
         from app.services.relatorio_service import gerar_e_salvar_relatorio
 
-        logger.warning(f"Iniciando retreinamento completo: temporada={TEMPORADA_ATUAL}")
+        logger.info(f"Iniciando retreinamento completo: temporada={TEMPORADA_ATUAL}")
 
         resultado = None
         for db in get_db():
@@ -52,15 +54,26 @@ def nba_retreinamento():
         total_jogadores = resultado["total_jogadores_treino"]
         total_registros = resultado["total_registros_db"]
 
-        logger.warning(f"Retreinamento concluido: salvos={total_salvos}, erros={total_erros}, temporada={TEMPORADA_ATUAL}")
+        logger.info(
+            f"Retreinamento concluido: salvos={total_salvos}, erros={total_erros}, temporada={TEMPORADA_ATUAL}"
+        )
 
         try:
             for db in get_db():
-                caminho_pdf = gerar_e_salvar_relatorio(db=db, season=TEMPORADA_ATUAL, total_registros_db=total_registros, total_jogadores_treino=total_jogadores, total_modelos_salvos=total_salvos, total_erros=total_erros)
-                logger.warning(f"Relatorio gerado: {caminho_pdf}")
+                caminho_pdf = gerar_e_salvar_relatorio(
+                    db=db,
+                    season=TEMPORADA_ATUAL,
+                    total_registros_db=total_registros,
+                    total_jogadores_treino=total_jogadores,
+                    total_modelos_salvos=total_salvos,
+                    total_erros=total_erros,
+                    config_treino=resultado,
+                )
+                logger.info(f"Relatorio gerado: {caminho_pdf}")
         except Exception as erro:
-            logger.warning(f"Falha ao gerar relatorio: {erro}")
+            logger.error(f"Falha ao gerar relatorio: {erro}")
 
     executar_treino()
+
 
 dag_instance = nba_retreinamento()

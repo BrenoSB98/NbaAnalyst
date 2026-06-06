@@ -209,9 +209,9 @@ def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
         mae = dados.get("mae_medio", None)
         rmse = dados.get("rmse", None)
 
-        if win_rate >= 60:
+        if win_rate >= 58:
             cor_wr = VERDE
-        elif win_rate >= 55:
+        elif win_rate >= 54:
             cor_wr = LARANJA
         else:
             cor_wr = VERMELHO
@@ -288,6 +288,57 @@ def _tabela_stats(c, x, y, largura, dados_stats, dados_anteriores=None):
     return altura_total
 
 
+def _desenhar_tabela_posicao(c, x, y, largura, cobertura):
+    from reportlab.lib.colors import Color
+
+    nomes_pos = ["PG", "SG", "SF", "PF", "C", "N/D"]
+    labels_pos = [
+        "Armador (PG)",
+        "Ala-armador (SG)",
+        "Ala (SF)",
+        "Ala-pivo (PF)",
+        "Pivo (C)",
+        "Nao definido",
+    ]
+    altura_linha = 24
+    altura_header = 26
+
+    c.setFillColor(Color(CINZA_ESCURO[0], CINZA_ESCURO[1], CINZA_ESCURO[2]))
+    c.rect(x, y - altura_header, largura, altura_header, fill=1, stroke=0)
+
+    c.setFillColor(Color(BRANCO[0], BRANCO[1], BRANCO[2]))
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(x + 12, y - altura_header + 9, "POSICAO")
+    c.drawString(x + largura - 120, y - altura_header + 9, "JOGADORES COM MODELO")
+
+    for idx in range(len(nomes_pos)):
+        pos = nomes_pos[idx]
+        label = labels_pos[idx]
+        linha_y = y - altura_header - (idx + 1) * altura_linha
+
+        if idx % 2 == 0:
+            c.setFillColor(Color(0.97, 0.97, 0.99))
+        else:
+            c.setFillColor(Color(BRANCO[0], BRANCO[1], BRANCO[2]))
+        c.rect(x, linha_y, largura, altura_linha, fill=1, stroke=0)
+
+        c.setStrokeColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
+        c.line(x, linha_y, x + largura, linha_y)
+
+        c.setFillColor(Color(CINZA_ESCURO[0], CINZA_ESCURO[1], CINZA_ESCURO[2]))
+        c.setFont("Helvetica", 9)
+        c.drawString(x + 12, linha_y + 8, label)
+
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(x + largura - 120, linha_y + 8, str(cobertura.get(pos, 0)))
+
+    altura_total = altura_header + len(nomes_pos) * altura_linha
+    c.setStrokeColor(Color(CINZA_CLARO[0], CINZA_CLARO[1], CINZA_CLARO[2]))
+    c.setLineWidth(1)
+    c.roundRect(x, y - altura_total, largura, altura_total, 4, fill=0, stroke=1)
+    return altura_total
+
+
 def gerar_relatorio_treinamento(
     season,
     total_registros_db,
@@ -296,6 +347,7 @@ def gerar_relatorio_treinamento(
     total_erros,
     dados_win_rate,
     dados_win_rate_anterior=None,
+    config_treino=None,
 ):
     from reportlab.lib.colors import Color
     from reportlab.lib.pagesizes import A4
@@ -332,13 +384,59 @@ def gerar_relatorio_treinamento(
     _linha_divisoria(c, margem, y, area_util)
 
     y = y - 24
+    _titulo_secao(c, margem, y, "Configuracao do Treinamento")
+
+    y = y - 20
+    c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
+    c.setFont("Helvetica", 9)
+
+    if config_treino is not None:
+        temporadas = config_treino.get("temporadas", [])
+        proporcao = config_treino.get("proporcao_treino", 0.7)
+        limiar_min = config_treino.get("limiar_minutos", 0)
+        min_amostras = config_treino.get("min_amostras", 0)
+        temporadas_str = ", ".join(str(t) for t in temporadas)
+        pct_treino = int(proporcao * 100)
+        pct_teste = 100 - pct_treino
+
+        linha_cfg1 = (
+            "Modelo: XGBoost Regressor (um modelo por jogador e por estatistica)"
+        )
+        linha_cfg2 = f"Temporadas utilizadas: {temporadas_str}"
+        linha_cfg3 = f"Divisao treino/teste: {pct_treino}% treino / {pct_teste}% teste (split temporal por jogador)"
+        linha_cfg4 = f"Criterio de inclusao: media >= {limiar_min} minutos nos jogos recentes  |  minimo de {min_amostras} amostras por modelo"
+
+        c.drawString(margem, y, linha_cfg1)
+        y = y - 14
+        c.drawString(margem, y, linha_cfg2)
+        y = y - 14
+        c.drawString(margem, y, linha_cfg3)
+        y = y - 14
+        c.drawString(margem, y, linha_cfg4)
+    else:
+        c.drawString(margem, y, "Configuracao nao disponivel.")
+
+    y = y - 24
+    _linha_divisoria(c, margem, y, area_util)
+
+    y = y - 24
     _titulo_secao(c, margem, y, "Dados do Treinamento")
 
     y = y - 80
     larg_bloco = (area_util - 16) / 4
+
+    if config_treino is not None:
+        limiar_min_bloco = config_treino.get("limiar_minutos", 0)
+    else:
+        limiar_min_bloco = 0
+
     blocos = [
-        ("Registros no Banco", str(total_registros_db), "jogos na temporada"),
-        ("Jogadores Treinados", str(total_jogadores_treino), f"acima de {15} min/jogo"),
+        ("Registros Jogador-Jogo", str(total_registros_db), "amostras historicas"),
+        (
+            "Jogadores Treinados",
+            str(total_jogadores_treino),
+            f"acima de {limiar_min_bloco} min/jogo",
+        ),
         ("Modelos Salvos", str(total_modelos_salvos), "arquivos .pkl gerados"),
         ("Erros de Treino", str(total_erros), "falhas registradas"),
     ]
@@ -367,9 +465,9 @@ def gerar_relatorio_treinamento(
         if dados_win_rate_anterior is not None:
             wr_anterior = dados_win_rate_anterior.get("win_rate_geral", None)
 
-        if win_rate_geral >= 60:
+        if win_rate_geral >= 58:
             cor_wr = VERDE
-        elif win_rate_geral >= 55:
+        elif win_rate_geral >= 54:
             cor_wr = LARANJA
         else:
             cor_wr = VERMELHO
@@ -401,7 +499,6 @@ def gerar_relatorio_treinamento(
             f"{win_rate_geral}%",
             f"{total_avaliadas} palpites avaliados",
             cor_wr,
-            progresso=win_rate_geral,
         )
 
         mae_str = str(mae_geral) if mae_geral is not None else "—"
@@ -442,18 +539,18 @@ def gerar_relatorio_treinamento(
 
         y = y - 20
 
-        if win_rate_geral >= 60:
-            badge_texto = "MODELO DENTRO DA META  (meta: >= 60%)"
+        if win_rate_geral >= 58:
+            badge_texto = "MODELO DENTRO DA META  (meta: >= 58%)"
             badge_cor_fundo = (0.9, 0.97, 0.93)
             badge_cor_borda = (0, 0.6, 0.25)
             badge_cor_texto = VERDE
-        elif win_rate_geral >= 55:
-            badge_texto = "MODELO PROXIMO DA META  (meta: >= 60%)"
+        elif win_rate_geral >= 54:
+            badge_texto = "MODELO PROXIMO DA META  (meta: >= 58%)"
             badge_cor_fundo = (1.0, 0.97, 0.88)
             badge_cor_borda = (0.85, 0.55, 0.0)
             badge_cor_texto = LARANJA
         else:
-            badge_texto = "MODELO ABAIXO DA META  (meta: >= 60%)"
+            badge_texto = "MODELO ABAIXO DA META  (meta: >= 58%)"
             badge_cor_fundo = (0.98, 0.92, 0.93)
             badge_cor_borda = (0.7, 0.05, 0.15)
             badge_cor_texto = VERMELHO
@@ -516,6 +613,30 @@ def gerar_relatorio_treinamento(
 
         y = y - 20
         _tabela_stats(c, margem, y, area_util, stats_map, stats_anteriores_map)
+
+        if config_treino is not None:
+            cobertura = config_treino.get("cobertura_posicao", None)
+            total_com_modelo = config_treino.get("total_jogadores_com_modelo", None)
+            if cobertura is not None:
+                c.showPage()
+                _desenhar_cabecalho(c, width, height)
+                _desenhar_rodape(c, width, 2, season)
+
+                y_pag2 = height - 110
+                _titulo_secao(c, margem, y_pag2, "Cobertura de Modelos por Posicao")
+
+                y_pag2 = y_pag2 - 18
+                c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
+                c.setFont("Helvetica", 9)
+                if total_com_modelo is not None:
+                    c.drawString(
+                        margem,
+                        y_pag2,
+                        f"Total de {total_com_modelo} jogadores com pelo menos um modelo treinado, distribuidos por posicao:",
+                    )
+
+                y_pag2 = y_pag2 - 30
+                _desenhar_tabela_posicao(c, margem, y_pag2, area_util, cobertura)
     else:
         y = y - 30
         c.setFillColor(Color(CINZA_MEDIO[0], CINZA_MEDIO[1], CINZA_MEDIO[2]))
@@ -525,7 +646,7 @@ def gerar_relatorio_treinamento(
         )
 
     c.save()
-    logger.warning(f"Relatorio gerado: {caminho_pdf}")
+    logger.info(f"Relatorio gerado: {caminho_pdf}")
     return caminho_pdf
 
 
@@ -536,6 +657,7 @@ def gerar_e_salvar_relatorio(
     total_jogadores_treino,
     total_modelos_salvos,
     total_erros,
+    config_treino=None,
 ):
     from app.services.win_rate_service import calcular_win_rate
 
@@ -555,6 +677,7 @@ def gerar_e_salvar_relatorio(
         total_erros=total_erros,
         dados_win_rate=dados_win_rate,
         dados_win_rate_anterior=dados_win_rate_anterior,
+        config_treino=config_treino,
     )
 
     if dados_win_rate is not None:

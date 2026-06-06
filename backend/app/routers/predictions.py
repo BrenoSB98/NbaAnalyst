@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -10,18 +10,30 @@ from app.core.dependencies import obter_temporada
 from app.db.db_utils import get_db
 from app.db.models import Game, Player, PlayerGameStats, Prediction, Team
 from app.routers.auth import obter_usuario_atual
-from app.services.manager_service import salvar_predicoes_dia_atual, salvar_predicoes_temporada
-from app.services.prediction_service import prever_performance_jogador, prever_multiplas_stats_jogador
 from app.services.formatar_palpites import formatar_palpite
+from app.services.manager_service import (
+    salvar_predicoes_dia_atual,
+    salvar_predicoes_temporada,
+)
+from app.services.prediction_service import (
+    prever_multiplas_stats_jogador,
+    prever_performance_jogador,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 def _validar_jogador(db, player_id):
-    jogador = db.execute(select(Player).where(Player.id == player_id)).scalar_one_or_none()
+    jogador = db.execute(
+        select(Player).where(Player.id == player_id)
+    ).scalar_one_or_none()
     if not jogador:
-        raise HTTPException(status_code=404, detail=f"Jogador {player_id} não encontrado.")
+        raise HTTPException(
+            status_code=404, detail=f"Jogador {player_id} não encontrado."
+        )
     return jogador
+
 
 def _validar_time(db, team_id):
     time = db.execute(select(Team).where(Team.id == team_id)).scalar_one_or_none()
@@ -29,18 +41,30 @@ def _validar_time(db, team_id):
         raise HTTPException(status_code=404, detail=f"Time {team_id} não encontrado.")
     return time
 
+
 def _validar_jogo(db, game_id):
     jogo = db.execute(select(Game).where(Game.id == game_id)).scalar_one_or_none()
     if not jogo:
         raise HTTPException(status_code=404, detail=f"Jogo {game_id} não encontrado.")
     return jogo
 
+
 @router.get("/prever/jogador/{jogador_id}/vs/{time_adversario_id}")
-def get_predicao(jogador_id: int, time_adversario_id: int, temporada: int = Query(...), estatistica: str = Query(default="points"), eh_casa: int = Query(default=1, ge=0, le=1), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_predicao(
+    jogador_id: int,
+    time_adversario_id: int,
+    temporada: int = Query(...),
+    estatistica: str = Query(default="points"),
+    eh_casa: int = Query(default=1, ge=0, le=1),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
     time_adversario = _validar_time(db, time_adversario_id)
 
-    previsao = prever_performance_jogador(db, jogador_id, time_adversario_id, temporada, estatistica, eh_casa)
+    previsao = prever_performance_jogador(
+        db, jogador_id, time_adversario_id, temporada, estatistica, eh_casa
+    )
 
     return {
         "jogador_id": jogador_id,
@@ -53,12 +77,22 @@ def get_predicao(jogador_id: int, time_adversario_id: int, temporada: int = Quer
         "previsao": previsao,
     }
 
+
 @router.get("/prever/jogador/{jogador_id}/vs/{time_adversario_id}/multiplas")
-def get_predicao_multiplas(jogador_id: int, time_adversario_id: int, temporada: int = Query(...), eh_casa: int = Query(default=1, ge=0, le=1), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def get_predicao_multiplas(
+    jogador_id: int,
+    time_adversario_id: int,
+    temporada: int = Query(...),
+    eh_casa: int = Query(default=1, ge=0, le=1),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
     time_adversario = _validar_time(db, time_adversario_id)
 
-    previsoes = prever_multiplas_stats_jogador(db, jogador_id, time_adversario_id, temporada, eh_casa)
+    previsoes = prever_multiplas_stats_jogador(
+        db, jogador_id, time_adversario_id, temporada, eh_casa
+    )
 
     return {
         "jogador_id": jogador_id,
@@ -70,8 +104,11 @@ def get_predicao_multiplas(jogador_id: int, time_adversario_id: int, temporada: 
         "previsoes": previsoes,
     }
 
+
 @router.get("/contagem-hoje")
-def contar_palpites_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db)):
+def contar_palpites_hoje(
+    temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db)
+):
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     agora_sp = datetime.now(fuso_sp)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -90,11 +127,18 @@ def contar_palpites_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
     if not jogos_hoje:
         return {"total_palpites": 0}
 
-    total = db.execute(select(func.count(Prediction.id)).where(Prediction.game_id.in_(jogos_hoje))).scalar()
+    total = db.execute(
+        select(func.count(Prediction.id)).where(Prediction.game_id.in_(jogos_hoje))
+    ).scalar()
     return {"total_palpites": total}
 
+
 @router.get("/hoje")
-def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def listar_predicoes_hoje(
+    temporada_alvo: int = Depends(obter_temporada),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     agora_sp = datetime.now(fuso_sp)
     inicio_sp = agora_sp.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -129,7 +173,11 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
     for jogo in jogos_hoje:
         ids_jogos_hoje.append(jogo.id)
 
-    predicoes = (db.execute(select(Prediction).where(Prediction.game_id.in_(ids_jogos_hoje))).scalars().all())
+    predicoes = (
+        db.execute(select(Prediction).where(Prediction.game_id.in_(ids_jogos_hoje)))
+        .scalars()
+        .all()
+    )
 
     ids_players = []
     for pred in predicoes:
@@ -220,13 +268,21 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
         item_resultado["media_rebotes"] = medias_jogador.get("rebotes", 0.0)
         item_resultado["media_roubos"] = medias_jogador.get("roubos", 0.0)
         item_resultado["media_bloqueios"] = medias_jogador.get("bloqueios", 0.0)
-        item_resultado["palpite_pontos"] = formatar_palpite(pred.predicted_points)
-        item_resultado["palpite_assistencias"] = formatar_palpite(
-            pred.predicted_assists
+        item_resultado["palpite_pontos"] = formatar_palpite(
+            pred.predicted_points, pred.linha_points
         )
-        item_resultado["palpite_rebotes"] = formatar_palpite(pred.predicted_rebounds)
-        item_resultado["palpite_roubos"] = formatar_palpite(pred.predicted_steals)
-        item_resultado["palpite_bloqueios"] = formatar_palpite(pred.predicted_blocks)
+        item_resultado["palpite_assistencias"] = formatar_palpite(
+            pred.predicted_assists, pred.linha_assists
+        )
+        item_resultado["palpite_rebotes"] = formatar_palpite(
+            pred.predicted_rebounds, pred.linha_rebounds
+        )
+        item_resultado["palpite_roubos"] = formatar_palpite(
+            pred.predicted_steals, pred.linha_steals
+        )
+        item_resultado["palpite_bloqueios"] = formatar_palpite(
+            pred.predicted_blocks, pred.linha_blocks
+        )
         item_resultado["jogos_na_temporada"] = contagem_jogos_map.get(pred.player_id, 0)
         item_resultado["criado_em"] = pred.created_at
         lista_resultado.append(item_resultado)
@@ -241,20 +297,34 @@ def listar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Se
 
 
 @router.get("/jogo/{jogo_id}")
-def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def listar_predicoes_por_jogo(
+    jogo_id: int,
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogo = _validar_jogo(db, jogo_id)
 
-    predicoes = (db.execute(select(Prediction).where(Prediction.game_id == jogo_id)).scalars().all())
+    predicoes = (
+        db.execute(select(Prediction).where(Prediction.game_id == jogo_id))
+        .scalars()
+        .all()
+    )
 
     if not predicoes:
         return {"game_id": jogo_id, "total_predicoes": 0, "predicoes": []}
 
-    time_casa = db.execute(select(Team).where(Team.id == jogo.home_team_id)).scalar_one_or_none()
-    time_visitante = db.execute(select(Team).where(Team.id == jogo.away_team_id)).scalar_one_or_none()
+    time_casa = db.execute(
+        select(Team).where(Team.id == jogo.home_team_id)
+    ).scalar_one_or_none()
+    time_visitante = db.execute(
+        select(Team).where(Team.id == jogo.away_team_id)
+    ).scalar_one_or_none()
 
     lista_resultado = []
     for pred in predicoes:
-        jogador = db.execute(select(Player).where(Player.id == pred.player_id)).scalar_one_or_none()
+        jogador = db.execute(
+            select(Player).where(Player.id == pred.player_id)
+        ).scalar_one_or_none()
         if jogador:
             nome_jogador = f"{jogador.firstname} {jogador.lastname}"
         else:
@@ -272,11 +342,21 @@ def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuar
                 "rebotes_previstos": pred.predicted_rebounds,
                 "roubos_previstos": pred.predicted_steals,
                 "bloqueios_previstos": pred.predicted_blocks,
-                "palpite_pontos": formatar_palpite(pred.predicted_points),
-                "palpite_assistencias": formatar_palpite(pred.predicted_assists),
-                "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
-                "palpite_roubos": formatar_palpite(pred.predicted_steals),
-                "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
+                "palpite_pontos": formatar_palpite(
+                    pred.predicted_points, pred.linha_points
+                ),
+                "palpite_assistencias": formatar_palpite(
+                    pred.predicted_assists, pred.linha_assists
+                ),
+                "palpite_rebotes": formatar_palpite(
+                    pred.predicted_rebounds, pred.linha_rebounds
+                ),
+                "palpite_roubos": formatar_palpite(
+                    pred.predicted_steals, pred.linha_steals
+                ),
+                "palpite_bloqueios": formatar_palpite(
+                    pred.predicted_blocks, pred.linha_blocks
+                ),
                 "criado_em": pred.created_at,
             }
         )
@@ -290,8 +370,15 @@ def listar_predicoes_por_jogo(jogo_id: int, db: Session = Depends(get_db), usuar
         "predicoes": lista_resultado,
     }
 
+
 @router.get("/jogador/{jogador_id}")
-def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(obter_temporada), limite: int = Query(default=10, ge=1, le=100), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def listar_predicoes_por_jogador(
+    jogador_id: int,
+    temporada_alvo: int = Depends(obter_temporada),
+    limite: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     jogador = _validar_jogador(db, jogador_id)
     predicoes = (
         db.execute(
@@ -308,8 +395,12 @@ def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(
 
     lista_resultado = []
     for pred in predicoes:
-        jogo = db.execute(select(Game).where(Game.id == pred.game_id)).scalar_one_or_none()
-        adversario = db.execute(select(Team).where(Team.id == pred.opponent_team_id)).scalar_one_or_none()
+        jogo = db.execute(
+            select(Game).where(Game.id == pred.game_id)
+        ).scalar_one_or_none()
+        adversario = db.execute(
+            select(Team).where(Team.id == pred.opponent_team_id)
+        ).scalar_one_or_none()
 
         lista_resultado.append(
             {
@@ -323,11 +414,21 @@ def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(
                 "rebotes_previstos": pred.predicted_rebounds,
                 "roubos_previstos": pred.predicted_steals,
                 "bloqueios_previstos": pred.predicted_blocks,
-                "palpite_pontos": formatar_palpite(pred.predicted_points),
-                "palpite_assistencias": formatar_palpite(pred.predicted_assists),
-                "palpite_rebotes": formatar_palpite(pred.predicted_rebounds),
-                "palpite_roubos": formatar_palpite(pred.predicted_steals),
-                "palpite_bloqueios": formatar_palpite(pred.predicted_blocks),
+                "palpite_pontos": formatar_palpite(
+                    pred.predicted_points, pred.linha_points
+                ),
+                "palpite_assistencias": formatar_palpite(
+                    pred.predicted_assists, pred.linha_assists
+                ),
+                "palpite_rebotes": formatar_palpite(
+                    pred.predicted_rebounds, pred.linha_rebounds
+                ),
+                "palpite_roubos": formatar_palpite(
+                    pred.predicted_steals, pred.linha_steals
+                ),
+                "palpite_bloqueios": formatar_palpite(
+                    pred.predicted_blocks, pred.linha_blocks
+                ),
                 "criado_em": pred.created_at,
             }
         )
@@ -340,13 +441,20 @@ def listar_predicoes_por_jogador(jogador_id: int, temporada_alvo: int = Depends(
         "predicoes": lista_resultado,
     }
 
+
 @router.post("/gerar/hoje")
-def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def gerar_predicoes_hoje(
+    temporada_alvo: int = Depends(obter_temporada),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     try:
         total = salvar_predicoes_dia_atual(db=db, season=temporada_alvo)
     except Exception as erro:
         logger.error(f"Falha ao gerar palpites do dia: {erro}")
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}"
+        )
 
     return {
         "mensagem": "Palpites gerados com sucesso.",
@@ -354,13 +462,20 @@ def gerar_predicoes_hoje(temporada_alvo: int = Depends(obter_temporada), db: Ses
         "total_predicoes_geradas": total,
     }
 
+
 @router.post("/gerar/temporada")
-def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
+def gerar_predicoes_temporada(
+    temporada: int = Query(...),
+    db: Session = Depends(get_db),
+    usuario_atual=Depends(obter_usuario_atual),
+):
     try:
         total = salvar_predicoes_temporada(db=db, season=temporada)
     except Exception as erro:
         logger.error(f"Falha ao gerar palpites da temporada {temporada}: {erro}")
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao gerar palpites: {str(erro)}"
+        )
 
     return {
         "mensagem": f"Palpites da temporada {temporada} geradas com sucesso.",
@@ -370,9 +485,14 @@ def gerar_predicoes_temporada(temporada: int = Query(...), db: Session = Depends
 
 
 @router.post("/retroativo")
-def gerar_predicoes_retroativo(db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)):
-    from app.services.manager_service import deletar_todas_predicoes, gerar_predicoes_retroativas
+def gerar_predicoes_retroativo(
+    db: Session = Depends(get_db), usuario_atual=Depends(obter_usuario_atual)
+):
     from app.config import config
+    from app.services.manager_service import (
+        deletar_todas_predicoes,
+        gerar_predicoes_retroativas,
+    )
 
     season = config.NBA_SEASON
     try:
@@ -380,7 +500,9 @@ def gerar_predicoes_retroativo(db: Session = Depends(get_db), usuario_atual=Depe
         total = gerar_predicoes_retroativas(db=db, season=season)
     except Exception as erro:
         logger.error(f"Falha ao gerar predicoes retroativas: {erro}")
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar predicoes retroativas: {str(erro)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao gerar predicoes retroativas: {str(erro)}"
+        )
 
     return {
         "mensagem": "Predicoes retroativas geradas com sucesso.",

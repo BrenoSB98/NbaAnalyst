@@ -35,31 +35,38 @@ def _converter_minutos(minutos_str):
 
 def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
     limiar = config.MIN_MINUTOS_PALPITE
-    stmt = select(PlayerGameStats).where(
-        PlayerGameStats.team_id == team_id, PlayerGameStats.season == season
+    janela = config.JANELA_JOGOS_RECENTES
+    stmt = (
+        select(PlayerGameStats, Game)
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(
+            PlayerGameStats.team_id == team_id,
+            PlayerGameStats.season == season,
+            Game.status_short == 3,
+        )
     )
     if data_corte is not None:
-        stmt = stmt.join(Game, PlayerGameStats.game_id == Game.id).where(
-            Game.date_start < data_corte
-        )
-    stats = db.execute(stmt).scalars().all()
+        stmt = stmt.where(Game.date_start < data_corte)
+    stmt = stmt.order_by(Game.date_start.desc())
+    resultados = db.execute(stmt).all()
 
-    soma_minutos = {}
-    contagem_jogos = {}
-    for stat in stats:
+    jogos_por_jogador = {}
+    for stat, jogo in resultados:
         pid = stat.player_id
-        minutos = _converter_minutos(stat.minutes)
-        if pid not in soma_minutos:
-            soma_minutos[pid] = 0.0
-            contagem_jogos[pid] = 0
-        soma_minutos[pid] = soma_minutos[pid] + minutos
-        contagem_jogos[pid] = contagem_jogos[pid] + 1
+        if pid not in jogos_por_jogador:
+            jogos_por_jogador[pid] = []
+        if len(jogos_por_jogador[pid]) < janela:
+            jogos_por_jogador[pid].append(_converter_minutos(stat.minutes))
 
     lista_titulares = []
-    for pid in soma_minutos:
-        if contagem_jogos[pid] == 0:
+    for pid in jogos_por_jogador:
+        jogos = jogos_por_jogador[pid]
+        if len(jogos) == 0:
             continue
-        media = soma_minutos[pid] / contagem_jogos[pid]
+        soma = 0.0
+        for m in jogos:
+            soma = soma + m
+        media = soma / len(jogos)
         if media >= limiar:
             lista_titulares.append(pid)
 
@@ -78,6 +85,8 @@ def _buscar_jogadores_titulares(db, team_id, season, data_corte=None):
 
 
 def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
+    qtd_jogos = config.JOGOS_CHECAGEM_ATIVIDADE
+    limiar_minutos_recente = config.MIN_MINUTOS_JOGO_RECENTE
     stmt = (
         select(Game)
         .where(
@@ -86,7 +95,7 @@ def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
             (Game.home_team_id == team_id) | (Game.away_team_id == team_id),
         )
         .order_by(Game.date_start.desc())
-        .limit(5)
+        .limit(qtd_jogos)
     )
     ultimos_jogos = db.execute(stmt).scalars().all()
 
@@ -106,7 +115,7 @@ def _filtrar_jogadores_ativos(db, player_ids, team_id, season):
         stats_recentes = db.execute(stmt_stats).scalars().all()
         for stat in stats_recentes:
             minutos = _converter_minutos(stat.minutes)
-            if minutos > 0:
+            if minutos >= limiar_minutos_recente:
                 jogou_recentemente.add(pid)
                 break
 
@@ -134,7 +143,7 @@ def _buscar_jogos_do_dia(db, season):
         Game.date_start > agora_utc,
     )
     jogos = db.execute(stmt).scalars().all()
-    logger.warning(
+    logger.info(
         f"Jogos agendados encontrados para hoje: total={len(jogos)}, temporada={season}, agora_sp={agora_sp.strftime('%H:%M')}"
     )
     return jogos
@@ -168,6 +177,22 @@ def _predicao_ja_existe(db, player_id, game_id):
     return False
 
 
+def _aplicar_filtro_confianca(item_previsao):
+    if item_previsao is None:
+        return None, None
+    coef_maximo = config.COEF_VARIACAO_MAXIMO
+    valor = item_previsao.get("valor", None)
+    linha = item_previsao.get("linha", None)
+    coef = item_previsao.get("coef_variacao", None)
+    if valor is None:
+        return None, None
+    if coef is None:
+        return valor, linha
+    if coef > coef_maximo:
+        return None, None
+    return valor, linha
+
+
 def _gerar_predicao(
     db, player_id, game_id, team_id, opponent_team_id, is_home, season, data_corte=None
 ):
@@ -180,11 +205,33 @@ def _gerar_predicao(
         data_corte=data_corte,
     )
 
-    pontos_previstos = previsoes.get("points", 0.0)
-    assist_previstos = previsoes.get("assists", 0.0)
-    rebotes_previstos = previsoes.get("rebounds", 0.0)
-    roubos_previstos = previsoes.get("steals", 0.0)
-    bloqueios_previstos = previsoes.get("blocks", 0.0)
+    pontos_previstos, linha_pontos = _aplicar_filtro_confianca(
+        previsoes.get("points", None)
+    )
+    assist_previstos, linha_assist = _aplicar_filtro_confianca(
+        previsoes.get("assists", None)
+    )
+    rebotes_previstos, linha_rebotes = _aplicar_filtro_confianca(
+        previsoes.get("rebounds", None)
+    )
+    roubos_previstos, linha_roubos = _aplicar_filtro_confianca(
+        previsoes.get("steals", None)
+    )
+    bloqueios_previstos, linha_bloqueios = _aplicar_filtro_confianca(
+        previsoes.get("blocks", None)
+    )
+
+    if (
+        pontos_previstos is None
+        and assist_previstos is None
+        and rebotes_previstos is None
+        and roubos_previstos is None
+        and bloqueios_previstos is None
+    ):
+        logger.debug(
+            f"Nenhuma previsao confiavel: player_id={player_id}, game_id={game_id}"
+        )
+        return None
 
     nova_predicao = Prediction(
         player_id=player_id,
@@ -198,6 +245,11 @@ def _gerar_predicao(
         predicted_rebounds=rebotes_previstos,
         predicted_steals=roubos_previstos,
         predicted_blocks=bloqueios_previstos,
+        linha_points=linha_pontos,
+        linha_assists=linha_assist,
+        linha_rebounds=linha_rebotes,
+        linha_steals=linha_roubos,
+        linha_blocks=linha_bloqueios,
         created_at=datetime.now(timezone.utc),
     )
 
@@ -222,7 +274,7 @@ def _processar_jogo(db, jogo, season, total_geradas, total_erros, data_corte=Non
             continue
         try:
             with db.begin_nested():
-                _gerar_predicao(
+                predicao = _gerar_predicao(
                     db=db,
                     player_id=player_id,
                     game_id=game_id,
@@ -232,7 +284,8 @@ def _processar_jogo(db, jogo, season, total_geradas, total_erros, data_corte=Non
                     season=season,
                     data_corte=data_corte,
                 )
-            total_geradas = total_geradas + 1
+            if predicao is not None:
+                total_geradas = total_geradas + 1
         except IntegrityError:
             logger.warning(
                 f"Predicao ja existe (ignorado): player_id={player_id}, game_id={game_id}"
@@ -248,7 +301,7 @@ def _processar_jogo(db, jogo, season, total_geradas, total_erros, data_corte=Non
             continue
         try:
             with db.begin_nested():
-                _gerar_predicao(
+                predicao = _gerar_predicao(
                     db=db,
                     player_id=player_id,
                     game_id=game_id,
@@ -258,7 +311,8 @@ def _processar_jogo(db, jogo, season, total_geradas, total_erros, data_corte=Non
                     season=season,
                     data_corte=data_corte,
                 )
-            total_geradas = total_geradas + 1
+            if predicao is not None:
+                total_geradas = total_geradas + 1
         except IntegrityError:
             logger.warning(
                 f"Predicao ja existe (ignorado): player_id={player_id}, game_id={game_id}"
@@ -276,7 +330,7 @@ def salvar_predicoes_dia_atual(db, season):
     jogos_do_dia = _buscar_jogos_do_dia(db=db, season=season)
 
     if not jogos_do_dia:
-        logger.warning(f"Nenhum jogo encontrado para hoje: temporada={season}")
+        logger.info(f"Nenhum jogo encontrado para hoje: temporada={season}")
         return 0
 
     total_geradas = 0
@@ -288,7 +342,7 @@ def salvar_predicoes_dia_atual(db, season):
         )
 
     db.commit()
-    logger.warning(
+    logger.info(
         f"Predicoes do dia geradas: total={total_geradas}, erros={total_erros}, temporada={season}"
     )
     return total_geradas
@@ -299,7 +353,7 @@ def deletar_todas_predicoes(db, season):
     resultado = db.execute(stmt)
     total = resultado.rowcount
     db.commit()
-    logger.warning(f"Predicoes deletadas: total={total}, temporada={season}")
+    logger.info(f"Predicoes deletadas: total={total}, temporada={season}")
     return total
 
 
@@ -335,12 +389,12 @@ def gerar_predicoes_retroativas(db, season):
 
         if contador % 10 == 0:
             db.commit()
-            logger.warning(
+            logger.info(
                 f"Progresso retroativo: jogos={contador}, predicoes={total_geradas}, erros={total_erros}, temporada={season}"
             )
 
     db.commit()
-    logger.warning(
+    logger.info(
         f"Predicoes retroativas concluidas: total={total_geradas}, erros={total_erros}, temporada={season}"
     )
     return total_geradas
@@ -385,12 +439,12 @@ def salvar_predicoes_temporada(db, season):
 
         if contador % 10 == 0:
             db.commit()
-            logger.warning(
+            logger.info(
                 f"Progresso: jogos={contador}, predicoes={total_geradas}, erros={total_erros}, temporada={season}"
             )
 
     db.commit()
-    logger.warning(
+    logger.info(
         f"Predicoes da temporada concluidas: total={total_geradas}, erros={total_erros}, temporada={season}"
     )
     return total_geradas

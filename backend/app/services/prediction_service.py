@@ -19,59 +19,59 @@ LIMIARES_MINIMOS["blocks"] = 0.4
 FATOR_POSICAO = {}
 FATOR_POSICAO["PG"] = {
     "points": 1.0,
-    "assists": 0.7,
+    "assists": 0.6,
     "steals": 0.7,
-    "tot_reb": 1.3,
-    "blocks": 1.5,
+    "tot_reb": 1.4,
+    "blocks": 2.0,
 }
 FATOR_POSICAO["SG"] = {
     "points": 1.0,
-    "assists": 0.9,
+    "assists": 0.8,
     "steals": 0.8,
-    "tot_reb": 1.2,
-    "blocks": 1.4,
+    "tot_reb": 1.3,
+    "blocks": 1.8,
 }
 FATOR_POSICAO["SF"] = {
     "points": 1.0,
     "assists": 1.0,
-    "steals": 1.0,
-    "tot_reb": 0.9,
-    "blocks": 1.1,
+    "steals": 0.9,
+    "tot_reb": 1.0,
+    "blocks": 1.2,
 }
 FATOR_POSICAO["PF"] = {
     "points": 1.0,
     "assists": 1.2,
-    "steals": 1.1,
-    "tot_reb": 0.8,
+    "steals": 1.0,
+    "tot_reb": 0.7,
     "blocks": 0.8,
 }
 FATOR_POSICAO["C"] = {
     "points": 1.0,
-    "assists": 1.3,
-    "steals": 1.2,
-    "tot_reb": 0.7,
+    "assists": 1.4,
+    "steals": 1.1,
+    "tot_reb": 0.6,
     "blocks": 0.6,
 }
 FATOR_POSICAO["G"] = {
     "points": 1.0,
     "assists": 0.7,
     "steals": 0.7,
-    "tot_reb": 1.3,
-    "blocks": 1.5,
+    "tot_reb": 1.4,
+    "blocks": 2.0,
 }
 FATOR_POSICAO["F"] = {
     "points": 1.0,
-    "assists": 1.0,
-    "steals": 1.0,
-    "tot_reb": 0.9,
-    "blocks": 1.1,
+    "assists": 1.1,
+    "steals": 0.9,
+    "tot_reb": 0.8,
+    "blocks": 1.0,
 }
 FATOR_POSICAO["GF"] = {
     "points": 1.0,
-    "assists": 0.8,
+    "assists": 0.9,
     "steals": 0.8,
-    "tot_reb": 1.1,
-    "blocks": 1.3,
+    "tot_reb": 1.0,
+    "blocks": 1.4,
 }
 
 
@@ -165,6 +165,14 @@ def _calcular_medias_temporada_por_stat(db, player_id, season, data_corte=None):
     return medias
 
 
+COBERTURA_ELITE = {}
+COBERTURA_ELITE["points"] = 18.0
+COBERTURA_ELITE["assists"] = 5.0
+COBERTURA_ELITE["tot_reb"] = 8.0
+COBERTURA_ELITE["steals"] = 1.3
+COBERTURA_ELITE["blocks"] = 1.2
+
+
 def _stats_relevantes_para_jogador(pos_normalizada, medias_por_stat):
     if pos_normalizada is not None:
         fatores = FATOR_POSICAO.get(pos_normalizada, {})
@@ -177,7 +185,10 @@ def _stats_relevantes_para_jogador(pos_normalizada, medias_por_stat):
         fator = fatores.get(stat_name, 1.0)
         limiar_ajustado = limiar_base * fator
         media = medias_por_stat.get(stat_name, 0.0)
+        limiar_elite = COBERTURA_ELITE.get(stat_name, 9999.0)
         if media >= limiar_ajustado:
+            stats_incluidas.append(stat_name)
+        elif media >= limiar_elite:
             stats_incluidas.append(stat_name)
 
     return stats_incluidas
@@ -201,6 +212,70 @@ def _carregar_historico_jogador(db, player_id, season, data_corte=None):
     stmt = stmt.order_by(Game.date_start.asc())
     resultados = db.execute(stmt).all()
     return resultados
+
+
+def _calcular_usage_rate(historico_recente):
+    soma_fga = 0.0
+    soma_fta = 0.0
+    soma_tov = 0.0
+    soma_min = 0.0
+    for stat, jogo in historico_recente:
+        soma_fga = soma_fga + float(stat.fga or 0)
+        soma_fta = soma_fta + float(stat.fta or 0)
+        soma_tov = soma_tov + float(stat.turnovers or 0)
+        soma_min = soma_min + converter_minutos_para_float(stat.minutes)
+    posses = soma_fga + (0.44 * soma_fta) + soma_tov
+    if soma_min > 0:
+        return round(posses / soma_min, 3)
+    return 0.0
+
+
+def _calcular_defesa_adversaria_por_posicao(
+    db, opponent_team_id, season, stat_name, pos_jogador, data_corte=None
+):
+    if pos_jogador is None:
+        return _calcular_defesa_adversaria(
+            db, opponent_team_id, season, stat_name, data_corte
+        )
+
+    stmt = (
+        select(PlayerGameStats)
+        .join(Game, PlayerGameStats.game_id == Game.id)
+        .where(
+            Game.season == season,
+            Game.status_short == 3,
+            Game.stage != 1,
+            PlayerGameStats.team_id != opponent_team_id,
+            (Game.home_team_id == opponent_team_id)
+            | (Game.away_team_id == opponent_team_id),
+        )
+    )
+
+    if data_corte is not None:
+        stmt = stmt.where(Game.date_start < data_corte)
+
+    stats_sofridas = db.execute(stmt).scalars().all()
+    if not stats_sofridas:
+        return _calcular_defesa_adversaria(
+            db, opponent_team_id, season, stat_name, data_corte
+        )
+
+    total_stat = 0.0
+    contagem = 0
+    for s in stats_sofridas:
+        if not s.pos:
+            continue
+        pos_s = s.pos.split("-")[0]
+        if pos_s == pos_jogador:
+            total_stat = total_stat + float(getattr(s, stat_name, 0) or 0)
+            contagem = contagem + 1
+
+    if contagem == 0:
+        return _calcular_defesa_adversaria(
+            db, opponent_team_id, season, stat_name, data_corte
+        )
+
+    return round(total_stat / contagem, 2)
 
 
 def _calcular_defesa_adversaria(
@@ -299,162 +374,6 @@ def _calcular_media_vs_adversario(historico_jogador, opponent_team_id, stat_name
     return soma / len(stats_vs)
 
 
-def extrair_features_avancadas_jogador(
-    db, player_id, season, stat_name, data_corte=None
-):
-    jogos_com_data = _carregar_historico_jogador(db, player_id, season, data_corte)
-
-    if len(jogos_com_data) < 5:
-        return None, None
-
-    lista_features = []
-    lista_alvos = []
-
-    for idx in range(5, len(jogos_com_data)):
-        stat_atual = jogos_com_data[idx][0]
-        jogo_atual = jogos_com_data[idx][1]
-        alvo = float(getattr(stat_atual, stat_name) or 0)
-
-        inicio_10 = max(0, idx - 10)
-        inicio_5 = max(0, idx - 5)
-        inicio_3 = max(0, idx - 3)
-
-        valores_10 = []
-        for j in jogos_com_data[inicio_10:idx]:
-            valores_10.append(float(getattr(j[0], stat_name) or 0))
-
-        valores_3 = []
-        for j in jogos_com_data[inicio_3:idx]:
-            valores_3.append(float(getattr(j[0], stat_name) or 0))
-
-        valores_minutos = []
-        for j in jogos_com_data[inicio_10:idx]:
-            valores_minutos.append(converter_minutos_para_float(j[0].minutes))
-
-        minutos_3 = []
-        for j in jogos_com_data[inicio_3:idx]:
-            minutos_3.append(converter_minutos_para_float(j[0].minutes))
-
-        valores_fgp_5 = []
-        for j in jogos_com_data[inicio_5:idx]:
-            valores_fgp_5.append(float(j[0].fgp or 0))
-
-        valores_ftp_5 = []
-        for j in jogos_com_data[inicio_5:idx]:
-            valores_ftp_5.append(float(j[0].ftp or 0))
-
-        todos_anteriores = []
-        for j in jogos_com_data[:idx]:
-            todos_anteriores.append(float(getattr(j[0], stat_name) or 0))
-
-        if todos_anteriores:
-            media_temporada = float(np.mean(todos_anteriores))
-        else:
-            media_temporada = 0.0
-
-        ema_ponderada = calcular_media_multi_janela(
-            valores_3, valores_10, media_temporada
-        )
-
-        if valores_10:
-            media_10 = float(np.mean(valores_10))
-        else:
-            media_10 = 0.0
-
-        if valores_minutos:
-            media_minutos = float(np.mean(valores_minutos))
-        else:
-            media_minutos = 0.0
-
-        if minutos_3:
-            media_minutos_3 = float(np.mean(minutos_3))
-        else:
-            media_minutos_3 = 0.0
-
-        if valores_fgp_5:
-            fgp_media_5 = float(np.mean(valores_fgp_5))
-        else:
-            fgp_media_5 = 0.0
-
-        if valores_ftp_5:
-            ftp_media_5 = float(np.mean(valores_ftp_5))
-        else:
-            ftp_media_5 = 0.0
-
-        if len(valores_3) >= 2:
-            eixo_x = np.arange(len(valores_3))
-            inclinacao = float(np.polyfit(eixo_x, np.array(valores_3), 1)[0])
-            variancia = float(np.std(valores_3))
-        else:
-            inclinacao = 0.0
-            variancia = 0.0
-
-        if stat_atual.team_id == jogo_atual.home_team_id:
-            is_home = 1
-            opponent_id = jogo_atual.away_team_id
-        else:
-            is_home = 0
-            opponent_id = jogo_atual.home_team_id
-
-        defesa_adversaria = _calcular_defesa_adversaria(
-            db, opponent_id, season, stat_name, jogo_atual.date_start
-        )
-        pace_adversario = _calcular_pace_adversario(
-            db, opponent_id, season, jogo_atual.date_start
-        )
-
-        media_vs_adv = _calcular_media_vs_adversario(
-            jogos_com_data[:idx], opponent_id, stat_name
-        )
-        if media_vs_adv is None:
-            media_vs_adv = ema_ponderada
-
-        if idx >= 1:
-            data_atual = jogo_atual.date_start
-            data_anterior = jogos_com_data[idx - 1][1].date_start
-            if data_atual is not None and data_anterior is not None:
-                dias_descanso = min((data_atual - data_anterior).days, 7)
-            else:
-                dias_descanso = 3
-        else:
-            dias_descanso = 3
-
-        if dias_descanso <= 1:
-            back_to_back = 1
-        else:
-            back_to_back = 0
-
-        if media_minutos > 0:
-            taxa_participacao = media_minutos_3 / media_minutos
-        else:
-            taxa_participacao = 1.0
-
-        vetor = [
-            ema_ponderada,
-            is_home,
-            defesa_adversaria,
-            dias_descanso,
-            media_minutos,
-            inclinacao,
-            media_vs_adv,
-            variancia,
-            back_to_back,
-            media_temporada,
-            media_10,
-            pace_adversario,
-            taxa_participacao,
-            fgp_media_5,
-            ftp_media_5,
-        ]
-        lista_features.append(vetor)
-        lista_alvos.append(alvo)
-
-    if len(lista_features) < 5:
-        return None, None
-
-    return lista_features, lista_alvos
-
-
 def _montar_vetor_previsao(
     db,
     player_id,
@@ -463,6 +382,7 @@ def _montar_vetor_previsao(
     stat_name,
     em_casa,
     media_temporada,
+    pos_jogador=None,
     data_corte=None,
 ):
     limiar = LIMIARES_MINIMOS.get(stat_name, 0.0)
@@ -537,12 +457,13 @@ def _montar_vetor_previsao(
         inclinacao = 0.0
         variancia = 0.0
 
-    defesa_adversaria = _calcular_defesa_adversaria(
+    defesa_adversaria_geral = _calcular_defesa_adversaria(
         db, opponent_team_id, season, stat_name, data_corte
     )
     pace_adversario = _calcular_pace_adversario(
         db, opponent_team_id, season, data_corte
     )
+    usage_rate = _calcular_usage_rate(historico_recente_10)
 
     media_vs_adversario = _calcular_media_vs_adversario(
         historico, opponent_team_id, stat_name
@@ -580,20 +501,14 @@ def _montar_vetor_previsao(
 
     vetor = [
         ema_ponderada,
-        em_casa,
-        defesa_adversaria,
-        dias_descanso,
-        media_minutos,
-        inclinacao,
-        media_vs_adversario,
-        variancia,
-        back_to_back,
         media_temporada,
-        media_10,
+        media_minutos,
+        defesa_adversaria_geral,
+        inclinacao,
+        variancia,
         pace_adversario,
-        taxa_participacao,
         fgp_media_5,
-        ftp_media_5,
+        usage_rate,
     ]
     return np.array([vetor])
 
@@ -606,43 +521,14 @@ def prever_performance_jogador_ml(
     stat_name,
     em_casa,
     media_temporada,
+    pos_jogador=None,
     data_corte=None,
 ):
-    from xgboost import XGBRegressor
-
-    from app.services.modelo_service import CONFIG_STATS, MIN_AMOSTRAS_TREINO
-
     modelo = modelo_service.carregar_modelo(player_id=player_id, stat_name=stat_name)
 
     if modelo is None:
-        lista_features, lista_alvos = extrair_features_avancadas_jogador(
-            db, player_id, season, stat_name, data_corte
-        )
-        if lista_features is None or len(lista_features) < MIN_AMOSTRAS_TREINO:
-            logger.debug(
-                f"Dados insuficientes para previsao: player_id={player_id}, stat={stat_name}, amostras={len(lista_features) if lista_features else 0}"
-            )
-            return None
-        logger.info(
-            f"Modelo ausente, treinando fallback em tempo de inferencia: player_id={player_id}, stat={stat_name}, amostras={len(lista_features)}"
-        )
-        cfg = CONFIG_STATS.get(stat_name, CONFIG_STATS["points"])
-        modelo = XGBRegressor(
-            n_estimators=cfg["n_estimators"],
-            max_depth=cfg["max_depth"],
-            learning_rate=cfg["learning_rate"],
-            subsample=cfg["subsample"],
-            colsample_bytree=cfg["colsample_bytree"],
-            min_child_weight=cfg["min_child_weight"],
-            gamma=cfg["gamma"],
-            reg_alpha=cfg["reg_alpha"],
-            reg_lambda=cfg["reg_lambda"],
-            random_state=42,
-            objective="reg:squarederror",
-            n_jobs=-1,
-        )
-        modelo.fit(np.array(lista_features), np.array(lista_alvos))
-        modelo_service.salvar_modelo(modelo, player_id, stat_name)
+        logger.debug(f"Modelo ausente: player_id={player_id}, stat={stat_name}")
+        return None
 
     vetor_previsao = _montar_vetor_previsao(
         db,
@@ -652,6 +538,7 @@ def prever_performance_jogador_ml(
         stat_name,
         em_casa,
         media_temporada,
+        pos_jogador,
         data_corte,
     )
 
@@ -669,9 +556,39 @@ def prever_performance_jogador_ml(
     return valor_final
 
 
+def _calcular_coef_variacao(db, player_id, season, stat_name, data_corte=None):
+    historico = _carregar_historico_jogador(db, player_id, season, data_corte)
+    if not historico:
+        return None
+    valores = []
+    for stat, jogo in historico[-15:]:
+        valores.append(float(getattr(stat, stat_name, 0) or 0))
+    if len(valores) < 3:
+        return None
+    media = float(np.mean(valores))
+    if media <= 0:
+        return None
+    desvio = float(np.std(valores))
+    return desvio / media
+
+
+def _calcular_media_recente(db, player_id, season, stat_name, data_corte=None):
+    historico = _carregar_historico_jogador(db, player_id, season, data_corte)
+    if not historico:
+        return None
+    valores = []
+    for stat, jogo in historico[-15:]:
+        valores.append(float(getattr(stat, stat_name, 0) or 0))
+    if len(valores) == 0:
+        return None
+    return float(np.mean(valores))
+
+
 def prever_multiplas_stats_jogador(
     db, player_id, opponent_team_id, season, is_home, data_corte=None
 ):
+    from app.services.formatar_palpites import calcular_linha_referencia
+
     pos_normalizada = _obter_posicao_jogador(db, player_id, season)
     medias_por_stat = _calcular_medias_temporada_por_stat(
         db, player_id, season, data_corte
@@ -700,12 +617,26 @@ def prever_multiplas_stats_jogador(
             stat_name=stat_name,
             em_casa=is_home,
             media_temporada=media_temporada,
+            pos_jogador=pos_normalizada,
             data_corte=data_corte,
         )
+        if previsao is None:
+            continue
+        media_recente = _calcular_media_recente(
+            db, player_id, season, stat_name, data_corte
+        )
+        linha = calcular_linha_referencia(media_recente)
+        if linha is None:
+            continue
+        coef = _calcular_coef_variacao(db, player_id, season, stat_name, data_corte)
+        item = {}
+        item["valor"] = previsao
+        item["linha"] = linha
+        item["coef_variacao"] = coef
         if stat_name == "tot_reb":
-            previsoes["rebounds"] = previsao
+            previsoes["rebounds"] = item
         else:
-            previsoes[stat_name] = previsao
+            previsoes[stat_name] = item
 
     return previsoes
 

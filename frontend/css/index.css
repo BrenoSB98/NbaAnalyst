@@ -166,24 +166,6 @@
   margin-bottom: 2px;
 }
 
-.card-stat-modelo .stat-margem {
-  font-size: 0.68rem;
-  color: #888899;
-  margin-bottom: 10px;
-}
-
-.barra-progresso {
-  height: 5px;
-  background-color: #eaeaf0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.barra-progresso .preenchimento {
-  height: 100%;
-  border-radius: 3px;
-}
-
 .secao-funcionalidades {
   padding: 60px 0;
   background-color: #ffffff;

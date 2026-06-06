@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nba_password}
       POSTGRES_DB: ${POSTGRES_DB:-nba_score_db}
     ports:
-    - 5432:5432
+      - 5432:5432
     volumes:
-    - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
-    - nba_network
+      - nba_network
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: nba_score_pgadmin
@@ -21,11 +21,11 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@nbascore.local}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
     ports:
-    - 5050:80
+      - 5050:80
     depends_on:
-    - postgres
+      - postgres
     networks:
-    - nba_network
+      - nba_network
   backend:
     build:
       context: ./backend
@@ -33,7 +33,7 @@ services:
     container_name: nba_score_backend
     restart: unless-stopped
     env_file:
-    - .env
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nba_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nba_password}
@@ -46,24 +46,24 @@ services:
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
     ports:
-    - 8000:8000
+      - 8000:8000
     depends_on:
-    - postgres
+      - postgres
     volumes:
-    - ./backend:/app
-    - ./chat:/app/chat
+      - ./backend:/app
+      - ./chat:/app/chat
     networks:
-    - nba_network
+      - nba_network
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
   frontend:
     image: nginx:alpine
     container_name: nba_frontend
     ports:
-    - 3000:80
+      - 3000:80
     volumes:
-    - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend:/usr/share/nginx/html:ro
     networks:
-    - nba_network
+      - nba_network
     restart: unless-stopped
   airflow-init:
     build:
@@ -71,9 +71,9 @@ services:
       dockerfile: Dockerfile.airflow
     container_name: nba_score_airflow_init
     depends_on:
-    - postgres
+      - postgres
     env_file:
-    - .env
+      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
@@ -88,12 +88,15 @@ services:
       NBA_SEASON: ${NBA_SEASON:-2025}
       AIRFLOW_BACKEND_PATH: /opt/airflow/backend
     volumes:
-    - ./airflow/dags:/opt/airflow/dags
-    - ./backend:/opt/airflow/backend
-    - airflow_logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+      - relatorios_ml:/opt/airflow/relatorios_ml
     networks:
-    - nba_network
-    command: 'bash -c "airflow db migrate && airflow users create --username ${AIRFLOW_ADMIN_USERNAME}
+      - nba_network
+    command:
+      'bash -c "airflow db migrate && airflow users create --username ${AIRFLOW_ADMIN_USERNAME}
       --password ${AIRFLOW_ADMIN_PASSWORD} --firstname Admin --lastname NBA --role
       Admin --email ${AIRFLOW_ADMIN_EMAIL}"
 
@@ -106,10 +109,10 @@ services:
     container_name: nba_score_airflow_webserver
     restart: unless-stopped
     depends_on:
-    - postgres
-    - airflow-init
+      - postgres
+      - airflow-init
     env_file:
-    - .env
+      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
@@ -124,13 +127,15 @@ services:
       NBA_SEASON: ${NBA_SEASON:-2025}
       AIRFLOW_BACKEND_PATH: /opt/airflow/backend
     ports:
-    - 8080:8080
+      - 8080:8080
     volumes:
-    - ./airflow/dags:/opt/airflow/dags
-    - ./backend:/opt/airflow/backend
-    - airflow_logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+      - relatorios_ml:/opt/airflow/relatorios_ml
     networks:
-    - nba_network
+      - nba_network
     command: airflow webserver
   airflow-scheduler:
     build:
@@ -139,10 +144,10 @@ services:
     container_name: nba_score_airflow_scheduler
     restart: unless-stopped
     depends_on:
-    - postgres
-    - airflow-init
+      - postgres
+      - airflow-init
     env_file:
-    - .env
+      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
@@ -157,15 +162,19 @@ services:
       NBA_SEASON: ${NBA_SEASON:-2025}
       AIRFLOW_BACKEND_PATH: /opt/airflow/backend
     volumes:
-    - ./airflow/dags:/opt/airflow/dags
-    - ./backend:/opt/airflow/backend
-    - airflow_logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend:/opt/airflow/backend
+      - airflow_logs:/opt/airflow/logs
+      - modelos_ml:/opt/airflow/modelos_ml
+      - relatorios_ml:/opt/airflow/relatorios_ml
     networks:
-    - nba_network
+      - nba_network
     command: airflow scheduler
 volumes:
   postgres_data: null
   airflow_logs: null
+  modelos_ml: null
+  relatorios_ml: null
 networks:
   nba_network:
     driver: bridge
