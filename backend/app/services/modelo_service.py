@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 
 STATS_PARA_TREINAR = ["points", "assists", "tot_reb", "steals", "blocks"]
 PROPORCAO_TREINO = 0.7
-TEMPORADAS_HISTORICAS = 1
+TEMPORADAS_HISTORICAS = 3
 MIN_AMOSTRAS_TREINO = 20
+FATOR_DECAIMENTO_RECENCIA = 0.7
 
 LIMIARES_TREINO = {}
 LIMIARES_TREINO["points"] = 8.0
@@ -131,7 +132,7 @@ def carregar_modelo(player_id, stat_name):
         return None
 
 
-def _treinar_modelo_novo(lista_features, lista_alvos, stat_name):
+def _treinar_modelo_novo(lista_features, lista_alvos, stat_name, lista_pesos=None):
     from xgboost import XGBRegressor
 
     matriz = np.array(lista_features)
@@ -151,11 +152,17 @@ def _treinar_modelo_novo(lista_features, lista_alvos, stat_name):
         objective="reg:squarederror",
         n_jobs=-1,
     )
-    modelo.fit(matriz, alvos)
+    if lista_pesos is not None:
+        pesos = np.array(lista_pesos)
+        modelo.fit(matriz, alvos, sample_weight=pesos)
+    else:
+        modelo.fit(matriz, alvos)
     return modelo
 
 
-def _treinar_modelo_jogador(player_id, stat_name, lista_features, lista_alvos):
+def _treinar_modelo_jogador(
+    player_id, stat_name, lista_features, lista_alvos, lista_pesos=None
+):
     if lista_features is None or len(lista_features) < MIN_AMOSTRAS_TREINO:
         logger.debug(
             f"Amostras insuficientes para treinar: player_id={player_id}, stat={stat_name}, amostras={len(lista_features) if lista_features else 0}, minimo={MIN_AMOSTRAS_TREINO}"
@@ -164,7 +171,7 @@ def _treinar_modelo_jogador(player_id, stat_name, lista_features, lista_alvos):
     logger.debug(
         f"Treinando: player_id={player_id}, stat={stat_name}, amostras={len(lista_features)}"
     )
-    return _treinar_modelo_novo(lista_features, lista_alvos, stat_name)
+    return _treinar_modelo_novo(lista_features, lista_alvos, stat_name, lista_pesos)
 
 
 def _listar_temporadas(temporada_atual):
@@ -364,20 +371,26 @@ def _calcular_media_vs_adversario(jogos_anteriores, opponent_id, stat_name):
 
 
 def _extrair_features_em_memoria(
-    jogos_jogador, stat_name, mapa_defesa, mapa_pace, mapa_defesa_posicao
+    jogos_jogador,
+    stat_name,
+    mapa_defesa,
+    mapa_pace,
+    mapa_defesa_posicao,
+    temporada_mais_recente,
 ):
     if len(jogos_jogador) < 5:
-        return None, None
+        return None, None, None
 
     qtd_treino = int(len(jogos_jogador) * PROPORCAO_TREINO)
     minimo_treino = MIN_AMOSTRAS_TREINO + 5
     if qtd_treino < minimo_treino:
         qtd_treino = min(minimo_treino, len(jogos_jogador))
     if qtd_treino < 5:
-        return None, None
+        return None, None, None
 
     lista_features = []
     lista_alvos = []
+    lista_pesos = []
 
     for idx in range(5, qtd_treino):
         alvo = jogos_jogador[idx][stat_name]
@@ -480,6 +493,23 @@ def _extrair_features_em_memoria(
         if media_vs_adv is None:
             media_vs_adv = ema_ponderada
 
+        data_atual = jogo_atual["data"]
+        data_anterior = jogos_jogador[idx - 1]["data"]
+        if data_atual is not None and data_anterior is not None:
+            dias_descanso = (data_atual - data_anterior).days
+        else:
+            dias_descanso = 3
+        if dias_descanso <= 1:
+            back_to_back = 1
+        else:
+            back_to_back = 0
+
+        season_jogo = jogo_atual["season"]
+        distancia_temporada = temporada_mais_recente - season_jogo
+        if distancia_temporada < 0:
+            distancia_temporada = 0
+        peso_recencia = FATOR_DECAIMENTO_RECENCIA**distancia_temporada
+
         vetor = [
             ema_ponderada,
             media_temporada,
@@ -490,14 +520,16 @@ def _extrair_features_em_memoria(
             pace_adversario,
             fgp_media_5,
             usage_rate,
+            back_to_back,
         ]
         lista_features.append(vetor)
         lista_alvos.append(alvo)
+        lista_pesos.append(peso_recencia)
 
     if len(lista_features) < 5:
-        return None, None
+        return None, None, None
 
-    return lista_features, lista_alvos
+    return lista_features, lista_alvos, lista_pesos
 
 
 def _buscar_posicoes_jogadores(db, season, player_ids):
@@ -595,18 +627,20 @@ def retreinar_todos_modelos(db, season):
                 )
                 continue
             try:
-                lista_features, lista_alvos = _extrair_features_em_memoria(
+                lista_features, lista_alvos, lista_pesos = _extrair_features_em_memoria(
                     jogos_jogador,
                     stat_name,
                     mapa_defesa,
                     mapa_pace,
                     mapa_defesa_posicao,
+                    season,
                 )
                 modelo = _treinar_modelo_jogador(
                     player_id=player_id,
                     stat_name=stat_name,
                     lista_features=lista_features,
                     lista_alvos=lista_alvos,
+                    lista_pesos=lista_pesos,
                 )
                 if modelo is None:
                     continue

@@ -447,6 +447,15 @@ def _montar_vetor_previsao(
     if media_vs_adversario is None:
         media_vs_adversario = ema_ponderada
 
+    back_to_back = 0
+    if data_corte is not None and historico:
+        ultimo_stat, ultimo_jogo = historico[-1]
+        data_ultimo = ultimo_jogo.date_start
+        if data_ultimo is not None:
+            dias_descanso = (data_corte - data_ultimo).days
+            if dias_descanso <= 1:
+                back_to_back = 1
+
     vetor = [
         ema_ponderada,
         media_temporada,
@@ -457,6 +466,7 @@ def _montar_vetor_previsao(
         pace_adversario,
         fgp_media_5,
         usage_rate,
+        back_to_back,
     ]
     return np.array([vetor])
 

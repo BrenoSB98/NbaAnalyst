@@ -35,50 +35,6 @@
   padding: 32px 0 64px;
 }
 
-.card-admin-kpi {
-  background-color: #ffffff;
-  border: 1px solid #d0d0e0;
-  border-radius: 12px;
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 3px solid #d0d0e0;
-}
-
-.card-admin-kpi.kpi-laranja {
-  border-top-color: #f75c03;
-}
-
-.card-admin-kpi.kpi-vermelho {
-  border-top-color: #c8102e;
-}
-
-.card-admin-kpi.kpi-verde {
-  border-top-color: #007a33;
-}
-
-.kpi-icone {
-  font-size: 1.4rem;
-  color: #f75c03;
-}
-
-.kpi-valor {
-  font-family: "Oswald", sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  line-height: 1;
-}
-
-.kpi-rotulo {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #888899;
-}
-
 .secao-admin {
   background-color: #ffffff;
   border: 1px solid #d0d0e0;
@@ -93,104 +49,6 @@
   font-weight: 700;
   color: #1a1a2e;
   margin-bottom: 20px;
-}
-
-.acoes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.card-acao {
-  background-color: #f8f8fc;
-  border: 1px solid #d0d0e0;
-  border-radius: 10px;
-  padding: 20px;
-}
-
-.card-acao-perigo {
-  border-color: rgba(200, 16, 46, 0.25);
-  background-color: #fff8f8;
-}
-
-.aviso-perigo {
-  display: inline-flex;
-  align-items: center;
-  background-color: rgba(200, 16, 46, 0.08);
-  color: #c8102e;
-  border: 1px solid rgba(200, 16, 46, 0.2);
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-}
-
-.acao-titulo {
-  font-weight: 700;
-  color: #1a1a2e;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-}
-
-.acao-desc {
-  font-size: 0.8rem;
-  color: #555570;
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.btn-admin-acao {
-  background-color: #f75c03;
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 9px 16px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  transition: background-color 0.2s ease;
-}
-
-.btn-admin-acao:hover {
-  background-color: #d94e02;
-}
-
-.btn-admin-acao:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-admin-perigo {
-  background-color: #c8102e;
-}
-
-.btn-admin-perigo:hover {
-  background-color: #a00c24;
-}
-
-.acao-resultado {
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.acao-sucesso {
-  background-color: rgba(0, 122, 51, 0.1);
-  color: #007a33;
-  border: 1px solid rgba(0, 122, 51, 0.25);
-}
-
-.acao-erro {
-  background-color: rgba(200, 16, 46, 0.08);
-  color: #c8102e;
-  border: 1px solid rgba(200, 16, 46, 0.2);
 }
 
 .texto-carregando {
@@ -215,10 +73,6 @@
   border-bottom: 1px solid #eaeaf0;
   border-radius: 8px;
   transition: background-color 0.15s ease;
-}
-
-.linha-relatorio:hover {
-  background-color: #f8f8fc;
 }
 
 .linha-relatorio:last-child {
@@ -280,92 +134,4 @@
   align-items: center;
   transition: background-color 0.15s ease;
   flex-shrink: 0;
-}
-
-.btn-baixar:hover {
-  background-color: #d0d0e0;
-  color: #1a1a2e;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal-caixa {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 28px 32px;
-  max-width: 440px;
-  width: 90%;
-}
-
-.modal-icone-perigo {
-  font-size: 2rem;
-  color: #c8102e;
-  margin-bottom: 12px;
-}
-
-.modal-titulo {
-  font-family: "Oswald", sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 12px;
-}
-
-.modal-corpo {
-  font-size: 0.88rem;
-  color: #555570;
-  line-height: 1.6;
-  margin-bottom: 24px;
-}
-
-.modal-botoes {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.btn-modal-cancelar {
-  background: #eaeaf0;
-  border: 1px solid #d0d0e0;
-  border-radius: 8px;
-  color: #555570;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 9px 20px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.btn-modal-cancelar:hover {
-  background: #d0d0e0;
-}
-
-.btn-modal-confirmar {
-  background: #c8102e;
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 9px 20px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.btn-modal-confirmar:hover {
-  background: #a00c24;
-}
-
-@media (max-width: 576px) {
-  .acoes-grid {
-    grid-template-columns: 1fr;
-  }
 }

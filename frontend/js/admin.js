@@ -2,7 +2,6 @@ verificarAutenticacaoAdmin();
 
 document.addEventListener("DOMContentLoaded", function () {
   inicializarPagina();
-  carregarKpis();
   carregarRelatorios();
 });
 
@@ -10,32 +9,6 @@ function verificarAutenticacaoAdmin() {
   var token = localStorage.getItem("nba_token");
   if (!token) {
     window.location.href = "login.html";
-  }
-}
-
-async function carregarKpis() {
-  try {
-    var info = await chamarApiAutenticada("/admin/info");
-    document.getElementById("kpi-modelos").textContent =
-      info.total_modelos || 0;
-  } catch (e) {
-    document.getElementById("kpi-modelos").textContent = "—";
-  }
-
-  try {
-    var wr = await chamarApiAutenticada("/win_rate/desempenho");
-    document.getElementById("kpi-winrate").textContent =
-      Math.round(wr.win_rate_geral || 0) + "%";
-  } catch (e) {
-    document.getElementById("kpi-winrate").textContent = "—";
-  }
-
-  try {
-    var relatorios = await chamarApiAutenticada("/admin/relatorios");
-    document.getElementById("kpi-relatorios").textContent =
-      relatorios.total || 0;
-  } catch (e) {
-    document.getElementById("kpi-relatorios").textContent = "—";
   }
 }
 
@@ -52,8 +25,6 @@ async function carregarRelatorios() {
       document.getElementById("relatorios-vazio").style.display = "block";
       return;
     }
-
-    document.getElementById("kpi-relatorios").textContent = dados.total;
 
     var html = "";
     for (var i = 0; i < dados.relatorios.length; i++) {
@@ -147,84 +118,4 @@ async function baixarRelatorio(nomeArquivo, evento) {
 
   btnClicado.innerHTML = htmlOriginal;
   btnClicado.style.pointerEvents = "";
-}
-
-async function retreinarModelos() {
-  var btn = document.getElementById("btn-retreinar");
-  var resultado = document.getElementById("resultado-retreinar");
-
-  btn.disabled = true;
-  btn.innerHTML =
-    '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando...';
-  resultado.style.display = "none";
-
-  try {
-    var dados = await chamarApiAutenticada("/admin/retreinar", "POST");
-
-    resultado.style.display = "block";
-    resultado.className = "acao-resultado acao-sucesso";
-    resultado.innerHTML =
-      '<i class="bi bi-clock-history me-2"></i>Retreinamento iniciado. O relatório PDF será gerado ao final e aparecerá na lista abaixo. Isso pode levar alguns minutos.';
-
-    iniciarPollingRelatorios();
-  } catch (erro) {
-    resultado.style.display = "block";
-    resultado.className = "acao-resultado acao-erro";
-    resultado.innerHTML =
-      '<i class="bi bi-x-circle-fill me-2"></i>Erro ao iniciar o retreinamento.';
-  }
-
-  btn.disabled = false;
-  btn.innerHTML =
-    '<i class="bi bi-arrow-repeat me-2"></i>Iniciar Retreinamento';
-}
-
-function iniciarPollingRelatorios() {
-  var tentativas = 0;
-  var totalTentativas = 40;
-  var intervalId = setInterval(function () {
-    tentativas = tentativas + 1;
-    carregarRelatorios();
-    carregarKpis();
-    if (tentativas >= totalTentativas) {
-      clearInterval(intervalId);
-    }
-  }, 30000);
-}
-
-function confirmarRetroativo() {
-  document.getElementById("modal-confirmacao").style.display = "flex";
-}
-
-function fecharModal() {
-  document.getElementById("modal-confirmacao").style.display = "none";
-}
-
-async function executarRetroativo() {
-  fecharModal();
-  var btn = document.getElementById("btn-retroativo");
-  var resultado = document.getElementById("resultado-retroativo");
-
-  btn.disabled = true;
-  btn.innerHTML =
-    '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
-  resultado.style.display = "none";
-
-  try {
-    var dados = await chamarApiAutenticada("/predicoes/retroativo", "POST");
-    resultado.style.display = "block";
-    resultado.className = "acao-resultado acao-sucesso";
-    resultado.innerHTML =
-      '<i class="bi bi-check-circle-fill me-2"></i>Predições retroativas geradas: ' +
-      (dados.total || 0) +
-      " palpites.";
-  } catch (erro) {
-    resultado.style.display = "block";
-    resultado.className = "acao-resultado acao-erro";
-    resultado.innerHTML =
-      '<i class="bi bi-x-circle-fill me-2"></i>Erro ao gerar predições retroativas.';
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="bi bi-clock-history me-2"></i>Gerar Retroativo';
 }

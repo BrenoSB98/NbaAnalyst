@@ -23,6 +23,33 @@ def _jogador_teve_minutos(stat_real):
     return True
 
 
+def _calcular_baseline_stat(predicoes_reais, campo_real, campo_linha):
+    total = 0
+    acertos = 0
+
+    for palpite, stat_real in predicoes_reais:
+        if not _jogador_teve_minutos(stat_real):
+            continue
+
+        valor_real = getattr(stat_real, campo_real, None)
+        linha = getattr(palpite, campo_linha, None)
+
+        if valor_real is None or linha is None:
+            continue
+
+        total = total + 1
+        previsao_baseline = float(linha)
+        acertou = verificar_acerto_linha(previsao_baseline, valor_real, float(linha))
+        if acertou:
+            acertos = acertos + 1
+
+    if total == 0:
+        return {"total_avaliadas": 0, "total_acertos": 0, "win_rate": 0.0}
+
+    win_rate = round((acertos / total) * 100, 2)
+    return {"total_avaliadas": total, "total_acertos": acertos, "win_rate": win_rate}
+
+
 def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, campo_linha):
     total = 0
     acertos = 0
@@ -153,10 +180,48 @@ def calcular_win_rate(db, temporada):
     else:
         rmse_geral = None
 
+    baseline_pontos = _calcular_baseline_stat(
+        palpites_com_real, "points", "linha_points"
+    )
+    baseline_assistencias = _calcular_baseline_stat(
+        palpites_com_real, "assists", "linha_assists"
+    )
+    baseline_rebotes = _calcular_baseline_stat(
+        palpites_com_real, "tot_reb", "linha_rebounds"
+    )
+    baseline_roubos = _calcular_baseline_stat(
+        palpites_com_real, "steals", "linha_steals"
+    )
+    baseline_bloqueios = _calcular_baseline_stat(
+        palpites_com_real, "blocks", "linha_blocks"
+    )
+
+    lista_baselines = [
+        baseline_pontos,
+        baseline_assistencias,
+        baseline_rebotes,
+        baseline_roubos,
+        baseline_bloqueios,
+    ]
+
+    soma_baseline = 0.0
+    qtd_baseline = 0
+    for b in lista_baselines:
+        if b["total_avaliadas"] > 0:
+            soma_baseline = soma_baseline + b["win_rate"]
+            qtd_baseline = qtd_baseline + 1
+
+    if qtd_baseline > 0:
+        baseline_geral = round(soma_baseline / qtd_baseline, 2)
+    else:
+        baseline_geral = 0.0
+
     return {
         "temporada": temporada,
         "total_predicoes_avaliadas": len(palpites_com_real),
         "win_rate_geral": win_rate_geral,
+        "baseline_geral": baseline_geral,
+        "ganho_sobre_baseline": round(win_rate_geral - baseline_geral, 2),
         "mae_medio_geral": mae_geral,
         "rmse_geral": rmse_geral,
         "pontos": desempenho_pontos,
@@ -164,4 +229,9 @@ def calcular_win_rate(db, temporada):
         "rebotes": desempenho_rebotes,
         "roubos": desempenho_roubos,
         "bloqueios": desempenho_bloqueios,
+        "baseline_pontos": baseline_pontos,
+        "baseline_assistencias": baseline_assistencias,
+        "baseline_rebotes": baseline_rebotes,
+        "baseline_roubos": baseline_roubos,
+        "baseline_bloqueios": baseline_bloqueios,
     }
