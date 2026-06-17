@@ -236,6 +236,7 @@ class Player(Base):
     weight_kilograms = Column(Numeric(5, 2))
     college = Column(Text)
     affiliation = Column(Text)
+    pos = Column(String)
 
     team_seasons = relationship("PlayerTeamSeason", back_populates="player")
     game_stats = relationship("PlayerGameStats", back_populates="player")

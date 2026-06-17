@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from sqlalchemy import func, select
 
-from app.db.models import Game, GameTeamStats, PlayerGameStats, PlayerTeamSeason
+from app.db.models import Game, GameTeamStats, PlayerGameStats
 from app.services import modelo_service
 
 logger = logging.getLogger(__name__)
@@ -107,21 +107,16 @@ def calcular_media_multi_janela(valores_3, valores_10, media_temporada):
 
 
 def _obter_posicao_jogador(db, player_id, season):
-    stmt = (
-        select(PlayerTeamSeason)
-        .where(
-            PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.season == season
-        )
-        .order_by(PlayerTeamSeason.active.desc())
-        .limit(1)
-    )
-    vinculo = db.execute(stmt).scalar_one_or_none()
-    if vinculo is None:
+    from app.db.models import Player
+
+    jogador = db.execute(
+        select(Player).where(Player.id == player_id)
+    ).scalar_one_or_none()
+    if jogador is None:
         return None
-    if not vinculo.pos:
+    if not jogador.pos:
         return None
-    pos_normalizada = vinculo.pos.split("-")[0]
-    return pos_normalizada
+    return jogador.pos
 
 
 def _calcular_medias_temporada_por_stat(db, player_id, season, data_corte=None):

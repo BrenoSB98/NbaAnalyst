@@ -105,7 +105,7 @@ def _calcular_win_rate_stat(predicoes_reais, campo_predicao, campo_real, campo_l
     }
 
 
-def calcular_win_rate(db, temporada):
+def calcular_win_rate(db, temporada=None):
     stmt = (
         select(Prediction, PlayerGameStats)
         .join(
@@ -114,13 +114,17 @@ def calcular_win_rate(db, temporada):
             & (PlayerGameStats.game_id == Prediction.game_id),
         )
         .join(Game, Game.id == Prediction.game_id)
-        .where(Prediction.season == temporada, Game.status_short == 3)
+        .where(Game.status_short == 3)
     )
+    if temporada is not None:
+        stmt = stmt.where(Prediction.season == temporada)
 
     palpites_com_real = db.execute(stmt).all()
 
     if not palpites_com_real:
-        logger.warning(f"Nenhum palpite avaliavel, temporada={temporada}")
+        logger.warning(
+            f"Nenhum palpite avaliavel, temporada={temporada if temporada is not None else 'todas'}"
+        )
         return None
 
     desempenho_pontos = _calcular_win_rate_stat(
@@ -217,7 +221,7 @@ def calcular_win_rate(db, temporada):
         baseline_geral = 0.0
 
     return {
-        "temporada": temporada,
+        "temporada": temporada if temporada is not None else "todas",
         "total_predicoes_avaliadas": len(palpites_com_real),
         "win_rate_geral": win_rate_geral,
         "baseline_geral": baseline_geral,

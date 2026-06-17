@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ class Baseline(BaseModel):
 
 
 class WinRateResponse(BaseModel):
-    temporada: int
+    temporada: Union[int, str]
     total_predicoes_avaliadas: int
     win_rate_geral: float
     baseline_geral: Optional[float] = None

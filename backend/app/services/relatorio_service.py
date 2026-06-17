@@ -154,7 +154,7 @@ def gerar_relatorio_treinamento(
 
     y = y - 30
     _escrever_linha(
-        c, margem, y, "Desempenho do Modelo (Win-Rate Over/Under)", "Helvetica-Bold", 12
+        c, margem, y, "Desempenho do Modelo", "Helvetica-Bold", 12
     )
     y = y - 18
 
@@ -327,7 +327,7 @@ def gerar_e_salvar_relatorio(
 
     dados_win_rate = None
     try:
-        dados_win_rate = calcular_win_rate(db=db, temporada=season)
+        dados_win_rate = calcular_win_rate(db=db, temporada=None)
     except Exception as erro:
         logger.warning(f"Falha ao calcular win_rate para relatorio: {erro}")
 

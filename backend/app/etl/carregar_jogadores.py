@@ -1,13 +1,19 @@
 from datetime import datetime
+
+from app.core.logging_config import configurar_logger
+from app.db.db_utils import get_db
+from app.db.models import Player, PlayerTeamSeason
+from app.etl.func_normalize import (
+    _normalizar_decimal,
+    _normalizar_inteiro,
+    _normalizar_string,
+    normalizar_posicao, # type: ignore
+)
+from app.services import nba_api_client
 from sqlalchemy import select
 
-from app.services import nba_api_client
-from app.db.models import Player, PlayerTeamSeason
-from app.db.db_utils import get_db
-from app.etl.func_normalize import _normalizar_string, _normalizar_inteiro, _normalizar_decimal
-from app.core.logging_config import configurar_logger
-
 logger = configurar_logger(__name__)
+
 
 def carregar_jogadores(team_id=None, season=None):
     logger.info(f"Buscando jogadores: time={team_id} temp={season}...")
@@ -61,30 +67,57 @@ def carregar_jogadores(team_id=None, season=None):
             data_nascimento_obj = None
             if data_nascimento_str:
                 try:
-                    data_nascimento_obj = datetime.strptime(data_nascimento_str, "%Y-%m-%d").date()
+                    data_nascimento_obj = datetime.strptime(
+                        data_nascimento_str, "%Y-%m-%d"
+                    ).date()
                 except Exception:
                     data_nascimento_obj = None
 
-            jogador_existente = db.execute(select(Player).where(Player.id == player_id)).scalar_one_or_none()
+            dados_ligas_pos = item.get("leagues", {})
+            liga_standard_pos = dados_ligas_pos.get("standard", {})
+            posicao_crua = _normalizar_string(liga_standard_pos.get("pos"))
+            posicao_normalizada = normalizar_posicao(posicao_crua)
+
+            jogador_existente = db.execute(
+                select(Player).where(Player.id == player_id)
+            ).scalar_one_or_none()
             if jogador_existente:
                 logger.info(f"Atualiza jogador {player_id}.")
-                jogador_existente.firstname = firstname
-                jogador_existente.lastname = lastname
-                jogador_existente.birth_date = data_nascimento_obj
-                jogador_existente.birth_country = pais_nascimento
-                jogador_existente.nba_start = nba_start
-                jogador_existente.nba_pro = nba_pro
-                jogador_existente.height_feet = altura_pes
-                jogador_existente.height_inches = altura_polegadas
-                jogador_existente.height_meters = altura_metros
-                jogador_existente.weight_pounds = peso_libras
-                jogador_existente.weight_kilograms = peso_quilos
-                jogador_existente.college = faculdade
-                jogador_existente.affiliation = afiliacao
+                jogador_existente.firstname = firstname # type: ignore
+                jogador_existente.lastname = lastname # type: ignore
+                jogador_existente.birth_date = data_nascimento_obj # type: ignore
+                jogador_existente.birth_country = pais_nascimento # type: ignore
+                jogador_existente.nba_start = nba_start # type: ignore
+                jogador_existente.nba_pro = nba_pro # type: ignore
+                jogador_existente.height_feet = altura_pes # type: ignore
+                jogador_existente.height_inches = altura_polegadas # type: ignore
+                jogador_existente.height_meters = altura_metros # type: ignore
+                jogador_existente.weight_pounds = peso_libras # type: ignore
+                jogador_existente.weight_kilograms = peso_quilos # type: ignore
+                jogador_existente.college = faculdade # type: ignore
+                jogador_existente.affiliation = afiliacao # type: ignore
+                if not jogador_existente.pos and posicao_normalizada: # type: ignore
+                    jogador_existente.pos = posicao_normalizada # type: ignore
                 total_atualizados = total_atualizados + 1
             else:
                 logger.info(f"Insere jogador {player_id}: {firstname} {lastname}.")
-                novo_jogador = Player(id=player_id, firstname=firstname, lastname=lastname, birth_date=data_nascimento_obj, birth_country=pais_nascimento, nba_start=nba_start, nba_pro=nba_pro, height_feet=altura_pes, height_inches=altura_polegadas, height_meters=altura_metros, weight_pounds=peso_libras, weight_kilograms=peso_quilos, college=faculdade, affiliation=afiliacao)
+                novo_jogador = Player(
+                    id=player_id,
+                    firstname=firstname,
+                    lastname=lastname,
+                    birth_date=data_nascimento_obj,
+                    birth_country=pais_nascimento,
+                    nba_start=nba_start,
+                    nba_pro=nba_pro,
+                    height_feet=altura_pes,
+                    height_inches=altura_polegadas,
+                    height_meters=altura_metros,
+                    weight_pounds=peso_libras,
+                    weight_kilograms=peso_quilos,
+                    college=faculdade,
+                    affiliation=afiliacao,
+                    pos=posicao_normalizada,
+                )
                 db.add(novo_jogador)
                 total_inseridos = total_inseridos + 1
 
@@ -98,19 +131,34 @@ def carregar_jogadores(team_id=None, season=None):
             posicao = _normalizar_string(liga_standard.get("pos"))
             codigo_liga = "standard"
 
-            vinculo_existente = db.execute(select(PlayerTeamSeason).where(PlayerTeamSeason.player_id == player_id, PlayerTeamSeason.team_id == team_id, PlayerTeamSeason.season == season, PlayerTeamSeason.league_code == codigo_liga)).scalar_one_or_none()
+            vinculo_existente = db.execute(
+                select(PlayerTeamSeason).where(
+                    PlayerTeamSeason.player_id == player_id,
+                    PlayerTeamSeason.team_id == team_id,
+                    PlayerTeamSeason.season == season,
+                    PlayerTeamSeason.league_code == codigo_liga,
+                )
+            ).scalar_one_or_none()
 
             if vinculo_existente:
                 logger.info(f"Atualiza vinculo {player_id}/time={team_id}.")
-                vinculo_existente.jersey = numero_camisa
+                vinculo_existente.jersey = numero_camisa # type: ignore
                 if isinstance(ativo, bool):
-                    vinculo_existente.active = ativo
+                    vinculo_existente.active = ativo # type: ignore
                 else:
-                    vinculo_existente.active = bool(ativo)
-                vinculo_existente.pos = posicao
+                    vinculo_existente.active = bool(ativo) # type: ignore
+                vinculo_existente.pos = posicao # type: ignore
             else:
                 logger.info(f"Vincula {player_id}/time={team_id}/temp={season}.")
-                novo_vinculo = PlayerTeamSeason(player_id=player_id, team_id=team_id, season=season, league_code=codigo_liga, jersey=numero_camisa, active=ativo if isinstance(ativo, bool) else bool(ativo), pos=posicao)
+                novo_vinculo = PlayerTeamSeason(
+                    player_id=player_id,
+                    team_id=team_id,
+                    season=season,
+                    league_code=codigo_liga,
+                    jersey=numero_camisa,
+                    active=ativo if isinstance(ativo, bool) else bool(ativo),
+                    pos=posicao,
+                )
                 db.add(novo_vinculo)
 
         db.commit()
@@ -120,6 +168,7 @@ def carregar_jogadores(team_id=None, season=None):
             logger.warning(f"Nenhum jogador salvo: time={team_id} temp={season}.")
         else:
             logger.info(f"Fim: ins={total_inseridos} atu={total_atualizados}")
+
 
 if __name__ == "__main__":
     carregar_jogadores()

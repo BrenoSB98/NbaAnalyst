@@ -5,7 +5,7 @@ import numpy as np
 from sqlalchemy import select
 
 from app.config import config
-from app.db.models import Game, GameTeamStats, PlayerGameStats, PlayerTeamSeason
+from app.db.models import Game, GameTeamStats, PlayerGameStats
 
 logger = logging.getLogger(__name__)
 
@@ -533,26 +533,18 @@ def _extrair_features_em_memoria(
 
 
 def _buscar_posicoes_jogadores(db, season, player_ids):
+    from app.db.models import Player
+
     mapa_posicao = {}
     if not player_ids:
         return mapa_posicao
-    stmt = (
-        select(PlayerTeamSeason)
-        .where(
-            PlayerTeamSeason.season == season,
-            PlayerTeamSeason.player_id.in_(player_ids),
-        )
-        .order_by(PlayerTeamSeason.active.desc())
-    )
-    vinculos = db.execute(stmt).scalars().all()
-    for vinculo in vinculos:
-        pid = vinculo.player_id
-        if pid in mapa_posicao:
-            continue
-        if not vinculo.pos:
-            mapa_posicao[pid] = "N/D"
+    stmt = select(Player).where(Player.id.in_(player_ids))
+    jogadores = db.execute(stmt).scalars().all()
+    for jogador in jogadores:
+        if jogador.pos:
+            mapa_posicao[jogador.id] = jogador.pos
         else:
-            mapa_posicao[pid] = vinculo.pos.split("-")[0]
+            mapa_posicao[jogador.id] = "N/D"
     return mapa_posicao
 
 
