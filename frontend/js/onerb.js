@@ -1,5 +1,6 @@
 verificarAutenticacao();
 var historico = [];
+var tokensSessao = 0;
 var aguardando = false;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -53,12 +54,16 @@ async function enviarMensagem() {
     var corpo = {
       pergunta: pergunta,
       historico: historico.slice(0, -1),
+      tokens_sessao: tokensSessao,
     };
 
     var resposta = await chamarApiAutenticada("/chat/mensagem", "POST", corpo);
     removerDigitando(idDigitando);
     adicionarMensagemAssistente(resposta.resposta);
     historico.push({ papel: "oraculo", conteudo: resposta.resposta });
+    if (typeof resposta.tokens_sessao === "number") {
+      tokensSessao = resposta.tokens_sessao;
+    }
     carregarLimite();
   } catch (erro) {
     removerDigitando(idDigitando);
@@ -143,6 +148,7 @@ function rolarParaBaixo() {
 
 function limparConversa() {
   historico = [];
+  tokensSessao = 0;
 
   var container = document.getElementById("chat-mensagens");
   var mensagens = container.querySelectorAll(

@@ -24,7 +24,7 @@ class Config:
     BACKEND_ENV = os.getenv("BACKEND_ENV", "development")
 
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
     LIMITE_MENSAGENS_CHAT_DIA = int(os.getenv("LIMITE_MENSAGENS_CHAT_DIA", "20"))

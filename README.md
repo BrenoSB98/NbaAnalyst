@@ -1,12 +1,14 @@
 # NbaAnalytics
 
-Plataforma web de análise estatística da NBA desenvolvida como Trabalho de Conclusão de Curso (TCC) para o curso de **Sistemas de Informação**. O objetivo é tornar dados complexos da NBA acessíveis para **apostadores casuais e amadores**, transformando estatísticas brutas em palpites, gráficos e análises visuais de fácil interpretação.
+Plataforma de análise de dados da NBA desenvolvida como Trabalho de Conclusão de Curso (TCC) para o curso de **Sistemas de Informação**. O sistema transforma estatísticas brutas em visualizações, comparativos e previsões acessíveis, oferecendo uma experiência completa de exploração de dados do basquete profissional.
 
 ---
 
 ## Contextualização
 
-O mercado de apostas esportivas cresceu significativamente no Brasil após a regulamentação das bets, mas a grande maioria dos apostadores ainda toma decisões com base em intuição, sem acesso a dados estruturados. Este projeto propõe uma alternativa: uma plataforma que coleta dados oficiais da NBA via API externa, processa essas informações em um pipeline automatizado e as disponibiliza em uma interface simples, com palpites gerados por um modelo preditivo de machine learning e um assistente conversacional especializado no esporte.
+A NBA gera um volume massivo de dados a cada temporada, sendo pontuações, eficiência, desempenho por jogador, tendências por equipe, padrões de confronto, evolução ao longo dos jogos. A maior parte dessas informações está espalhada em fontes técnicas voltadas para profissionais, com pouca acessibilidade para fãs casuais e estudantes da modalidade.
+
+Este projeto integra coleta automatizada de dados oficiais, modelos preditivos de machine learning e um assistente conversacional especializado em uma única plataforma. O usuário tem em um só lugar: estatísticas completas de times e jogadores, classificação por temporada, comparativos de confronto, previsões de desempenho dos próximos jogos e um chatbot capaz de responder perguntas sobre regras, história, táticas e fatos atuais da liga.
 
 ---
 
@@ -14,15 +16,38 @@ O mercado de apostas esportivas cresceu significativamente no Brasil após a reg
 
 O projeto é composto por cinco camadas principais:
 
-**Backend (FastAPI)** expõe uma API REST que serve os dados ao frontend, gerencia autenticação de usuários via JWT, processa as requisições ao modelo preditivo e se comunica com o assistente de IA. Toda a lógica de negócio está organizada em routers, services e schemas.
+**Backend (FastAPI)** expõe uma API REST que serve os dados ao frontend, gerencia autenticação de usuários via JWT, processa as requisições ao modelo preditivo e se comunica com o assistente de IA. A lógica de negócio está organizada em routers, services e schemas. Inclui também recuperação de senha por e-mail via SMTP e painel administrativo.
 
-**Banco de Dados (PostgreSQL)** armazena jogos, times, jogadores, estatísticas por partida, temporadas, palpites gerados e usuários. As migrações são gerenciadas pelo Alembic. O pgAdmin está disponível para inspeção visual do banco.
+**Banco de Dados (PostgreSQL)** armazena jogos, times, jogadores, estatísticas por partida, temporadas, previsões geradas, predições retroativas e usuários. As migrações são gerenciadas pelo Alembic. O pgAdmin está disponível para inspeção visual do banco.
 
-**Pipeline de Dados (Apache Airflow)** orquestra três DAGs: carga diária incremental (partidas e estatísticas do dia anterior), backfill histórico e retreinamento semanal dos modelos preditivos. Os dados brutos são consumidos da API-Sports (NBA v2).
+**Pipeline de Dados (Apache Airflow)** orquestra cinco DAGs: carga diária incremental, backfill histórico completo, DAG específica de playoffs, retreinamento dos modelos preditivos e cálculo de predições retroativas para validação da acurácia. Os dados brutos são consumidos da API-Sports (NBA v2).
 
-**Inteligência Artificial** divide-se em dois componentes: o **Onerb IA**, um chatbot especializado em NBA construído com LangChain e GPT-4o Mini que responde perguntas em linguagem natural consultando diretamente o banco de dados; e o **Modelo Preditivo**, treinado com XGBoost a partir de estatísticas históricas de jogadores para estimar pontos, assistências, rebotes, roubos e bloqueios nos jogos do dia.
+**Inteligência Artificial** divide-se em dois componentes:
 
-**Frontend (HTML/JS/Bootstrap 5)** é uma aplicação multi-página servida por Nginx, com gráficos interativos em D3.js, autenticação baseada em token e layout responsivo.
+- **Onerb IA**: chatbot especializado em NBA construído com LangChain e o modelo **Llama 3.3 70B Versatile** hospedado no **Groq Cloud**. O chatbot usa _tool calling_ autônomo para escolher entre sete ferramentas que consultam o banco de dados, uma base de conhecimento local com 34 documentos sobre regras/táticas/história e busca web em tempo real via **Tavily**.
+- **Modelo Preditivo**: treinado com XGBoost a partir de estatísticas históricas de jogadores para estimar pontos, assistências, rebotes, roubos e bloqueios nos jogos do dia.
+
+**Frontend (HTML/JS/Bootstrap 5)** é uma aplicação multi-página servida por Nginx, com gráficos interativos em D3.js, autenticação baseada em token JWT e layout responsivo.
+
+---
+
+## Funcionalidades do Onerb IA
+
+O chatbot tem acesso a sete ferramentas que ele escolhe autonomamente conforme a pergunta:
+
+| Ferramenta                | Quando é usada                                              |
+| ------------------------- | ----------------------------------------------------------- |
+| `stats_jogador_temporada` | Médias de um jogador em uma temporada                       |
+| `jogos_time`              | Resultados de um time por mês ou temporada                  |
+| `lideres_liga`            | Top N em pontos, assistências, rebotes, roubos ou tocos     |
+| `comparar_jogadores`      | Comparativo lado a lado entre 2 a 5 jogadores               |
+| `classificacao_temporada` | Standings de uma temporada                                  |
+| `buscar_conhecimento_nba` | Regras, posições, táticas, analytics, história, dinastias   |
+| `buscar_web`              | MVP, campeão, lesões, trades, jogos de hoje, fatos recentes |
+
+O assistente segue uma hierarquia de fontes: estatísticas e jogos vão para o banco; conceitos e regras vão para a base de conhecimento; fatos atuais e novidades vão para a web. Se o banco retornar dados desatualizados ou vazios, a busca web é acionada como complemento.
+
+A cada conversa, o chatbot mantém o histórico completo do diálogo limitado a 30k tokens por requisição (com truncagem automática das mensagens mais antigas) e 200k tokens acumulados por sessão. O histórico é client-side e é zerado ao recarregar a página ou ao deslogar.
 
 ---
 
@@ -56,15 +81,16 @@ O projeto é composto por cinco camadas principais:
 
 </div>
 
-| Camada | Tecnologias |
-|---|---|
-| Backend | Python, FastAPI, SQLAlchemy, Alembic, Pydantic |
-| Banco de Dados | PostgreSQL 15, pgAdmin 4 |
-| Pipeline ETL | Apache Airflow, API-Sports (NBA v2) |
-| Machine Learning | XGBoost, scikit-learn, NumPy |
-| IA Conversacional | LangChain, GPT-4o Mini (OpenAI), ChromaDB |
-| Frontend | HTML5, CSS3, JavaScript, Bootstrap 5, D3.js |
-| Infraestrutura | Docker, Docker Compose, Nginx |
+| Camada            | Tecnologias                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| Backend           | Python 3.11, FastAPI, SQLAlchemy 2, Alembic, Pydantic, JWT                                  |
+| Banco de Dados    | PostgreSQL 15, pgAdmin 4                                                                    |
+| Pipeline ETL      | Apache Airflow, API-Sports (NBA v2)                                                         |
+| Machine Learning  | XGBoost, scikit-learn, NumPy                                                                |
+| IA Conversacional | LangChain, Groq Cloud (Llama 3.3 70B Versatile), Tavily Search, retriever por palavra-chave |
+| Frontend          | HTML5, CSS3, JavaScript, Bootstrap 5, D3.js                                                 |
+| Infraestrutura    | Docker, Docker Compose, Nginx                                                               |
+| E-mail            | SMTP (recuperação de senha, confirmação de conta)                                           |
 
 ---
 
@@ -74,7 +100,9 @@ O projeto é composto por cinco camadas principais:
 
 - [Docker](https://docs.docker.com/get-docker/) e [Docker Compose](https://docs.docker.com/compose/install/) instalados
 - Chave de acesso à [API-Sports](https://api-sports.io/) (plano NBA v2)
-- Chave de API da [OpenAI](https://platform.openai.com/api-keys)
+- Chave de API do [Groq Cloud](https://console.groq.com/) (plano gratuito disponível)
+- Chave de API do [Tavily Search](https://app.tavily.com/) (plano gratuito disponível)
+- Credenciais SMTP para envio de e-mails (Gmail com senha de app, por exemplo)
 
 ### 1. Clonar o repositório
 
@@ -91,41 +119,14 @@ Copie o arquivo de exemplo e preencha com suas credenciais:
 cp .env.example .env
 ```
 
-Abra o arquivo `.env` e preencha os campos obrigatórios:
+Os campos essenciais a preencher no `.env` são as credenciais do banco de dados, as chaves de API (API-Sports, Groq, Tavily), as credenciais SMTP para envio de e-mails e os segredos JWT/Airflow.
 
-```env
-# Temporada NBA
-NBA_SEASON=2025
-
-# Banco de Dados
-POSTGRES_USER=seu_usuario
-POSTGRES_PASSWORD=sua_senha
-POSTGRES_DB=nba_score_db
-
-# pgAdmin
-PGADMIN_EMAIL=seu@email.com
-PGADMIN_PASSWORD=sua_senha_pgadmin
-
-# API-Sports (fonte dos dados NBA)
-API_SPORTS_KEY=sua_chave_api_sports
-
-# OpenAI (chatbot Onerb IA)
-OPENAI_API_KEY=sua_chave_openai
-
-# Segurança JWT
-SECRET_KEY=uma_string_secreta_longa_e_aleatoria
-
-# Airflow
-AIRFLOW__CORE__FERNET_KEY=sua_fernet_key
-AIRFLOW_ADMIN_USERNAME=admin
-AIRFLOW_ADMIN_PASSWORD=sua_senha_airflow
-AIRFLOW_ADMIN_EMAIL=seu@email.com
-AIRFLOW_DB_USER=seu_usuario
-AIRFLOW_DB_PASSWORD=sua_senha
-AIRFLOW_DB_NAME=airflow_db
-```
-
-> **Dica:** para gerar uma `FERNET_KEY` válida para o Airflow, execute `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+> **Dicas para configurar as chaves:**
+>
+> - **Groq**: cadastre-se em [console.groq.com](https://console.groq.com) e gere uma API key gratuita. O plano gratuito tem limite diário de 100.000 tokens, suficiente para uso pessoal e desenvolvimento.
+> - **Tavily**: cadastre-se em [app.tavily.com](https://app.tavily.com) e gere uma API key. O plano gratuito oferece 1.000 buscas/mês.
+> - **FERNET_KEY do Airflow**: gere com `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+> - **SMTP do Gmail**: use uma [senha de aplicativo](https://support.google.com/accounts/answer/185833) em vez da senha pessoal.
 
 ### 3. Subir a aplicação
 
@@ -147,18 +148,21 @@ docker compose exec backend alembic upgrade head
 
 Acesse o Airflow em `http://localhost:8080`, faça login com as credenciais definidas no `.env` e ative as DAGs na seguinte ordem:
 
-1. `nba_backfill_historico` — carga histórica de jogos e estatísticas (executar uma vez)
-2. `nba_carga_diaria_incremental` — passa a rodar automaticamente todo dia às 9h
+1. `nba_historical_backfill_dag` — carga histórica de jogos e estatísticas (executar uma vez)
+2. `nba_daily_incremental_dag` — passa a rodar automaticamente todo dia
+3. `nba_playoffs_dag` — carga específica dos jogos de playoff
+4. `nba_retreinamento_dag` — retreina os modelos preditivos periodicamente
+5. `nba_predicoes_retroativas_dag` — calcula predições retroativas para validar acurácia
 
 ### 6. Acessar a plataforma
 
-| Serviço | Endereço |
-|---|---|
-| **Frontend (plataforma)** | http://localhost:3000 |
-| **Backend (API)** | http://localhost:8000 |
-| **Documentação da API** | http://localhost:8000/docs |
-| **Apache Airflow** | http://localhost:8080 |
-| **pgAdmin** | http://localhost:5050 |
+| Serviço                   | Endereço                     |
+| ------------------------- | ---------------------------- |
+| **Frontend (plataforma)** | <http://localhost:3000>      |
+| **Backend (API)**         | <http://localhost:8000>      |
+| **Documentação da API**   | <http://localhost:8000/docs> |
+| **Apache Airflow**        | <http://localhost:8080>      |
+| **pgAdmin**               | <http://localhost:5050>      |
 
 ---
 
@@ -166,24 +170,45 @@ Acesse o Airflow em `http://localhost:8080`, faça login com as credenciais defi
 
 ```
 NbaAnalytics/
-├── airflow/                    # DAGs e configuração do Airflow
+├── airflow/
 │   └── dags/
-│       ├── nba_daily_incremental_dag.py
-│       ├── nba_historical_backfill_dag.py
-│       └── nba_retreinamento_semanal_dag.py
+│       ├── nba_daily_incremental_dag.py       # Carga diária incremental
+│       ├── nba_historical_backfill_dag.py     # Backfill histórico completo
+│       ├── nba_playoffs_dag.py                # Carga específica de playoffs
+│       ├── nba_predicoes_retroativas_dag.py   # Predições retroativas (acurácia)
+│       └── nba_retreinamento_dag.py           # Retreinamento dos modelos ML
 ├── backend/
+│   ├── alembic/                               # Migrations do banco
 │   └── app/
-│       ├── db/                 # Models, sessão e utilitários do banco
-│       ├── etl/                # Scripts de carga e normalização de dados
-│       ├── routers/            # Endpoints da API REST
-│       ├── schemas/            # Validação de entrada/saída (Pydantic)
-│       └── services/           # Lógica de negócio e ML
-├── chat/                       # Módulo do chatbot Onerb IA (LangChain)
+│       ├── db/                                # Models SQLAlchemy e sessão
+│       ├── etl/                               # Scripts de carga e normalização
+│       ├── routers/                           # Endpoints da API REST
+│       │   ├── admin.py        analytics.py   api.py       auth.py
+│       │   ├── chat.py         confronto.py   game.py      league.py
+│       │   ├── player.py       predictions.py season.py    team.py
+│       │   └── win_rate.py
+│       ├── schemas/                           # Validação Pydantic
+│       └── services/                          # Lógica de negócio e ML
+├── chat/                                      # Módulo do Onerb IA
+│   ├── oraculo.py                             # Pipeline principal + tool calling
+│   ├── db_chat.py                             # 5 ferramentas tipadas do banco
+│   ├── base.py                                # Retriever por palavra-chave
+│   ├── conhecimento_nba.py                    # 34 documentos estáticos
+│   ├── web_search.py                          # Busca web (Tavily) + query enrichment
+│   ├── prompts.py                             # System prompt e descrições das tools
+│   └── requirements.txt
 ├── frontend/
-│   ├── css/                    # Estilos por página
-│   ├── js/                     # Scripts de autenticação e componentes
-│   └── *.html                  # Páginas da aplicação
-└── docker-compose.yml
+│   ├── css/                                   # Estilos por página
+│   ├── img/                                   # Imagens estáticas
+│   ├── js/                                    # Scripts de autenticação e componentes
+│   └── *.html                                 # 17 páginas (login, cadastro, predições,
+│                                              # estatísticas, classificação, times,
+│                                              # jogador, perfil, chatbot Onerb etc)
+├── nginx/                                     # Configuração do servidor web
+├── test/                                      # Testes
+├── docker-compose.yml
+├── docker-compose.prod.yml
+└── .env.example
 ```
 
 ---
@@ -195,12 +220,12 @@ Desenvolvido por **Breno Braido** como TCC do curso de Sistemas de Informação.
 <div>
   <a href="https://github.com/BrenoSB98" target="_blank"> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" width="32" /> </a> &nbsp;
   <a href = "mailto:brenosilvabraido1998@gmail.com"><img src="https://img.shields.io/badge/-Gmail-%23333?style=for-the-badge&logo=gmail&logoColor=white" target="_blank"></a>
-  <a href="https://instagram.com/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-Instagram-%23E4405F?style=for-the-badge&logo=instagram&logoColor=white" target="_blank"></a>  
-  <a href="https://www.linkedin.com/in/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white" target="_blank"></a>  
+  <a href="https://instagram.com/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-Instagram-%23E4405F?style=for-the-badge&logo=instagram&logoColor=white" target="_blank"></a>
+  <a href="https://www.linkedin.com/in/bbraido2" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-%230077B5?style=for-the-badge&logo=linkedin&logoColor=white" target="_blank"></a>
 </div>
 
 ---
 
 <div align="center">
-  <sub>Desenvolvido como Trabalho de Conclusão de Curso — Sistemas de Informação</sub>
+  <sub>Desenvolvido como Trabalho de Conclusão de Curso para o curso de Sistemas de Informação</sub>
 </div>

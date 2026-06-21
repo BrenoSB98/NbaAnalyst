@@ -1,6 +1,6 @@
 import logging
-import sys
 import os
+import sys
 import time
 from datetime import date
 
@@ -13,7 +13,9 @@ from app.schemas.onerb import RequisicaoChat, RespostaChat
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-CHAT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "chat")
+CHAT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "chat"
+)
 if CHAT_DIR not in sys.path:
     sys.path.insert(0, CHAT_DIR)
 
@@ -56,14 +58,14 @@ def obter_limite(usuario_atual=Depends(obter_usuario_atual)):
 @router.get("/diagnostico")
 def diagnostico_chat(pergunta: str, usuario_atual=Depends(obter_usuario_atual)):
     try:
-        from db_chat import ( # type: ignore
-            buscar_contexto_geral,
-            _extrair_possiveis_times,
-            _extrair_possiveis_nomes,
+        from base import buscar_na_base_conhecimento  # type: ignore
+        from db_chat import (  # type: ignore
             _extrair_mes_ano,
+            _extrair_possiveis_nomes,
+            _extrair_possiveis_times,
             _extrair_temporadas,
+            buscar_contexto_geral,
         )
-        from base import buscar_na_base_conhecimento # type: ignore
     except ImportError as erro:
         return {"erro": f"Falha ao importar modulos chat: {erro}"}
 
@@ -116,7 +118,7 @@ def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_a
         )
 
     try:
-        from oraculo import perguntar_ao_oraculo # type: ignore
+        from oraculo import estimar_tokens_troca, perguntar_ao_oraculo  # type: ignore
     except ImportError as erro:
         logger.error(f"Falha ao importar modulo oraculo: {erro}")
         raise HTTPException(
@@ -129,9 +131,13 @@ def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_a
             {"papel": entrada.papel, "conteudo": entrada.conteudo}
         )
 
+    tokens_sessao = getattr(dados, "tokens_sessao", 0) or 0
+
     try:
         resposta = perguntar_ao_oraculo(
-            pergunta=dados.pergunta, historico=historico_convertido
+            pergunta=dados.pergunta,
+            historico=historico_convertido,
+            tokens_sessao=tokens_sessao,
         )
     except Exception as erro:
         logger.error(f"Erro ao consultar o modelo: {erro}")
@@ -139,5 +145,8 @@ def enviar_mensagem(dados: RequisicaoChat, usuario_atual=Depends(obter_usuario_a
             status_code=500, detail="Erro ao consultar o modelo de linguagem."
         )
 
+    tokens_troca = estimar_tokens_troca(dados.pergunta, resposta)
+    novo_total = tokens_sessao + tokens_troca
+
     _incrementar_contagem(usuario_atual.id)
-    return {"resposta": resposta}
+    return {"resposta": resposta, "tokens_sessao": novo_total}

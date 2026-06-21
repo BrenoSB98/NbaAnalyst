@@ -43,7 +43,7 @@ services:
       API_SPORTS_KEY: ${API_SPORTS_KEY:-your_api_key_here}
       API_SPORTS_BASE_URL: ${API_SPORTS_BASE_URL:-https://v2.nba.api-sports.io}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       PASTA_RELATORIOS: /opt/airflow/relatorios_ml
       PASTA_MODELOS: /opt/airflow/modelos_ml
