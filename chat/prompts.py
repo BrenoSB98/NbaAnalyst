@@ -20,6 +20,7 @@ def _data_hoje():
     hoje = datetime.now()
     return f"{hoje.day} de {MESES_PT[hoje.month]} de {hoje.year}"
 
+
 DOMINIOS_CONFIAVEIS = [
     "wikipedia.org",
     "nba.com",
@@ -48,6 +49,7 @@ PALAVRAS_NOTICIAS_AMPLAS = [
     "assinou",
     "renovacao",
 ]
+
 MENSAGEM_ERRO_BANCO = (
     "Ocorreu um erro ao buscar os dados. Tente novamente em instantes."
 )
@@ -66,9 +68,10 @@ PROMPT_SISTEMA_CHAT = (
     "Apostas, odds, fantasy estão fora do escopo. Para apostas, responda: 'Não respondo perguntas sobre apostas.'\n"
     "\n"
     "Escolha da ferramenta:\n"
-    "- Use o BANCO para perguntas estruturadas com dados específicos. Exemplos: 'média de pontos do Curry na temporada 2025', 'todos os jogos do Lakers em março', 'classificação completa do Oeste', 'top 10 em rebotes em 2024', 'compare Curry e LeBron em 2024'.\n"
+    "- Use o BANCO para perguntas estruturadas com dados específicos E COM TEMPORADA EXPLÍCITA NA PERGUNTA. Exemplos: 'média de pontos do Curry na temporada 2025', 'todos os jogos do Lakers em março de 2025', 'classificação completa do Oeste em 2024', 'top 10 em rebotes em 2024', 'compare Curry e LeBron em 2024'.\n"
+    "- Use a WEB para perguntas sobre dados recentes ou sem temporada explícita. Exemplos: 'últimos 10 jogos dos Lakers', 'jogos do Celtics essa semana', 'cestinha da liga atualmente', 'atual campeão', 'MVP', 'Rookie of the Year', 'prêmios', 'lesões', 'trades', 'jogos de hoje', 'último resultado', 'placares de finais', 'escalações', 'comparações qualitativas' ('o LeBron é o melhor de todos os tempos?'), 'recordes recentes'.\n"
     "- Use o CONHECIMENTO para perguntas sobre regras, formato dos playoffs, táticas (pick and roll, spacing), analytics (PER, TS%, BPM) e dinastias históricas.\n"
-    "- Use a WEB para o resto: atual campeão, MVP, Rookie of the Year, cestinha da liga, prêmios, lesões, trades, jogos de hoje, último resultado, placares de finais, escalações, comparações qualitativas ('o LeBron é o melhor de todos os tempos?'), recordes recentes.\n"
+    "- Se uma ferramenta do banco responder 'dados incompletos' ou 'use buscar_web', chame imediatamente buscar_web. Não tente usar os dados parciais.\n"
     "Quando a ferramenta retornar a informação solicitada, responda imediatamente sem chamar mais ferramentas.\n"
     "Quando a pergunta pedir informações sobre vários itens distintos (ex: 'placares de cada uma das 5 finais', 'stats do Curry e do LeBron'), faça TODAS as chamadas necessárias em PARALELO no mesmo round, não uma por vez.\n"
     "\n"

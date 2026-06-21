@@ -296,9 +296,15 @@ def jogos_time(nome_time, ano, mes=None):
                     {"temp": ano, "tid": time_row.id},
                 ).fetchall()
                 label = f"temporada {ano}"
+        MIN_JOGOS_RETORNO = 3
         if not jogos:
             return (
-                f"Nenhum jogo do {time_row.name} encontrado em {label}.\n"
+                f"Nenhum jogo do {time_row.name} encontrado em {label} no banco. Para resultados recentes ou em curso, use buscar_web.\n"
+                + cobertura_banco()
+            )
+        if len(jogos) < MIN_JOGOS_RETORNO:
+            return (
+                f"Apenas {len(jogos)} jogo(s) do {time_row.name} encontrado(s) em {label} no banco — dados incompletos. Para resultados recentes ou em curso, use buscar_web em vez do banco.\n"
                 + cobertura_banco()
             )
         return _formatar_lista_jogos(time_row.name, label, jogos, time_row.id)
@@ -325,7 +331,12 @@ def lideres_liga(estatistica, temporada, top_n=10):
             ).fetchall()
         if not linhas:
             return (
-                f"Sem dados de líderes em {estatistica} para a temporada {temporada}.\n"
+                f"Sem dados de líderes em {estatistica} para a temporada {temporada} no banco. Para dados de temporada em curso, use buscar_web.\n"
+                + cobertura_banco()
+            )
+        if len(linhas) < 3:
+            return (
+                f"Apenas {len(linhas)} jogador(es) com dados suficientes em {estatistica} na temporada {temporada} no banco — dados incompletos. Para resultados de temporada em curso, use buscar_web.\n"
                 + cobertura_banco()
             )
         saida = []
@@ -406,7 +417,12 @@ def classificacao_temporada(conferencia, temporada):
             linhas = conn.execute(text(consulta), {"t": temporada}).fetchall()
         if not linhas:
             return (
-                f"Sem dados de classificação para a temporada {temporada}.\n"
+                f"Sem dados de classificação para a temporada {temporada} no banco. Para classificação de temporada em curso, use buscar_web.\n"
+                + cobertura_banco()
+            )
+        if len(linhas) < 20:
+            return (
+                f"Apenas {len(linhas)} time(s) com dados na temporada {temporada} no banco — dados incompletos. Para classificação de temporada em curso, use buscar_web.\n"
                 + cobertura_banco()
             )
         saida = []
